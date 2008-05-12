@@ -1,0 +1,17 @@
+list of user-visible changes between releases of osec:
+
+[1.0.0]
+* switch from Berkley DB (db4) to Constant Database:
+   - faster
+   - minor database size
+* reporter is a separate program (osec_reporter filter) now
+* no libing and libxml
+* osec now can work in read-only mode. So you can place osec and it's database to read-only
+storage, e.g. CD-ROM.
+
+[0.6.0]
+* global database locking during work
+* rewrite Reporter object
+* use session key to avoid races with system time
+* more safe deletion of keys from database
+* more safe internal encode/decode scheme

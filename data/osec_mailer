@@ -1,0 +1,23 @@
+#!/bin/sh
+
+PROG="${0##*/}"
+
+. /etc/osec/pipe.conf
+
+TEMPFILE=
+exit_handler()
+{
+	local rc=$?
+	trap - EXIT
+	rm -rf -- "$TEMPFILE"
+	exit $rc
+}
+
+trap exit_handler HUP PIPE INT QUIT TERM EXIT
+
+TEMPFILE="$(mktemp -t "$PROG.avail.XXXXXX")"
+
+cat >"$TEMPFILE"
+
+grep -qs '^No changes' "$TEMPFILE" ||
+	(cat "$TEMPFILE" |eval $MAIL_PIPE)

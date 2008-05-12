@@ -1,0 +1,4 @@
+to next release:
+    - osecd daemon (with D_NOTIFY support)
+    - signing of the databases
+    - SMP (multithread)

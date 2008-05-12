@@ -1,0 +1,6 @@
+#!/bin/sh
+. /etc/osec/pipe.conf
+
+((/usr/bin/osec -D /var/lib/osec -f /etc/osec/dirs.conf; \
+ rc=$?; [ $rc -eq 0 ] || echo "Program exited abnormally, exit code = $rc" >&2) |
+ eval "$REPORT_PIPE") 2>&1 | eval "$SEND_PIPE"
