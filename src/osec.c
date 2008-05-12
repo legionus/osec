@@ -52,13 +52,13 @@ gen_db_name(char *dirname, char **dbname) {
 	unsigned int j = strlen(db_path) + 10;
 	unsigned int len = j + strlen(dirname);
 
-	(*dbname) = (char *) x_malloc(sizeof(char) * len);
+	(*dbname) = (char *) xmalloc(sizeof(char) * len);
 	sprintf((*dbname), "%s/osec.cdb.", db_path);
 
 	while (dirname[i] != '\0') {
 		if ((j+3) >= len) {
 			len += 32;
-			(*dbname) = (char *) x_realloc((*dbname), sizeof(char) * len);
+			(*dbname) = (char *) xrealloc((*dbname), sizeof(char) * len);
 		}
 
 		if (!isprint(dirname[i]) || (dirname[i] == '/')) {
@@ -76,11 +76,11 @@ gen_db_name(char *dirname, char **dbname) {
 	(*dbname)[j++] = '\0';
 
 	if (j < len)
-		(*dbname) = (char *) x_realloc((*dbname), sizeof(char) * j);
+		(*dbname) = (char *) xrealloc((*dbname), sizeof(char) * j);
 }
 
 static int
-append(struct cdb_make *cdbm, char *fname, size_t flen) {
+osec_append(struct cdb_make *cdbm, char *fname, size_t flen) {
 	DIR *d;
 	int retval = 1;
 	struct dirent *dir;
@@ -88,8 +88,8 @@ append(struct cdb_make *cdbm, char *fname, size_t flen) {
 	struct stat st;
 
 	if (lstat(fname, &st) == -1) {
-		osec_error("%s: lstat: %s\n", fname, strerror(errno));
-		return 0;
+		retval = osec_error("%s: lstat: %s\n", fname, strerror(errno));
+		return retval;
 	}
 
 	ost.uid = st.st_uid;
@@ -126,11 +126,11 @@ append(struct cdb_make *cdbm, char *fname, size_t flen) {
 
 		len += flen + 1;
 
-		subname = (char *) x_malloc(sizeof(char) * len);
+		subname = (char *) xmalloc(sizeof(char) * len);
 		sprintf(subname, "%s/%s", fname, dir->d_name);
 
-		retval = append(cdbm, subname, len);
-		x_free(subname);
+		retval = osec_append(cdbm, subname, len);
+		xfree(subname);
 
 		if (!retval)
 			break;
@@ -143,14 +143,14 @@ append(struct cdb_make *cdbm, char *fname, size_t flen) {
 }
 
 static int
-create_db(int fd, char *dir, size_t len) {
+create_database(int fd, char *dir, size_t len) {
 	struct cdb_make cdbm;
 	int retval = 1;
 
 	if (cdb_make_start(&cdbm, fd) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_start");
 
-	retval = append(&cdbm, dir, len);
+	retval = osec_append(&cdbm, dir, len);
 
 	if (cdb_make_finish(&cdbm) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_finish");
@@ -175,7 +175,7 @@ show_changes(int new_fd, int old_fd) {
 	cdb_seqinit(&cpos, &new_cdb);
 	while(cdb_seqnext(&cpos, &new_cdb) > 0) {
 		klen = cdb_keylen(&new_cdb);
-		key = (char *) x_malloc(klen + 1);
+		key = (char *) xmalloc(klen + 1);
 
 		if (cdb_read(&new_cdb, key, klen, cdb_keypos(&new_cdb)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
@@ -196,7 +196,7 @@ show_changes(int new_fd, int old_fd) {
 		else
 			check_new(key, &new_st);
 
-		x_free(key);
+		xfree(key);
 	}
 }
 
@@ -220,7 +220,7 @@ show_oldfiles(int new_fd, int old_fd) {
 	cdb_seqinit(&cpos, &old_cdb);
 	while(cdb_seqnext(&cpos, &old_cdb) > 0) {
 		klen = cdb_keylen(&old_cdb);
-		key = (char *) x_malloc(klen + 1);
+		key = (char *) xmalloc(klen + 1);
 
 		if (cdb_read(&old_cdb, key, klen, cdb_keypos(&old_cdb)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
@@ -233,14 +233,15 @@ show_oldfiles(int new_fd, int old_fd) {
 		if (cdb_find(&new_cdb, key, klen) == 0)
 			check_removed(key, &old_st);
 
-		x_free(key);
+		xfree(key);
 	}
 }
 
 static int
 process(char *dirname, size_t dlen) {
 	size_t len;
-	int retval = 1, new_fd, old_fd;
+	int retval = 1;
+	int new_fd, old_fd;
 	char *new_dbname, *old_dbname;
 
 	// Generate priv state database name
@@ -257,7 +258,7 @@ process(char *dirname, size_t dlen) {
 
 	// Generate new state database
 	len = strlen(db_path) + 16;
-	new_dbname = (char *) x_malloc(sizeof(char) * len);
+	new_dbname = (char *) xmalloc(sizeof(char) * len);
 	sprintf(new_dbname, "%s/osec.XXXXXXXXX", db_path);
 
 	// Open new database
@@ -269,14 +270,12 @@ process(char *dirname, size_t dlen) {
 		remove(new_dbname);
 
 	// Create new state
-	if (create_db(new_fd, dirname, dlen)) {
+	if (create_database(new_fd, dirname, dlen)) {
 		show_changes(new_fd, old_fd);
 		show_oldfiles(new_fd, old_fd);
 	}
-	else {
-		osec_error("Unable to create database\n");
-		retval = 0;
-	}
+	else
+		retval = osec_error("Unable to create database\n");
 
 	if (old_fd != -1 && close(old_fd) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: close", old_dbname);
@@ -290,15 +289,16 @@ process(char *dirname, size_t dlen) {
 		rename(new_dbname, old_dbname);
 	}
 
-	x_free(old_dbname);
-	x_free(new_dbname);
+	xfree(old_dbname);
+	xfree(new_dbname);
 
 	return retval;
 }
 
 int
 main(int argc, char **argv) {
-	int c, retval = EXIT_SUCCESS;
+	int c;
+	int retval = EXIT_SUCCESS;
 	int allow_root = 0;
 	char *dirslist_file = NULL;
 	char *user = NULL, *group = NULL;
@@ -356,7 +356,7 @@ main(int argc, char **argv) {
 		db_path = def_db_path;
 
 	if (!init_digest())
-		osec_fatal(EXIT_FAILURE, 0, "Unable to initialize library");
+		osec_fatal(EXIT_FAILURE, 0, "Unable to initialize library\n");
 
 	//drop program privileges if we are root
 	if (!allow_root && !geteuid())
@@ -385,14 +385,14 @@ main(int argc, char **argv) {
 			if (line[n-1] == '\n')
 				line[n-1] = '\0';
 
-			if (!process((line + i), (size_t) n))
+			if (process((line + i), (size_t) n))
 				retval = EXIT_FAILURE;
 		}
 
-		x_free(line);
+		xfree(line);
 
 		if (fclose(fd) != 0)
-			osec_fatal(EXIT_FAILURE, errno, "fclose");
+			osec_fatal(EXIT_FAILURE, errno, "%s: fclose", dirslist_file);
 	}
 
 	while (optind < argc) {

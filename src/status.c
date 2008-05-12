@@ -14,7 +14,7 @@ extern int read_only;
 extern int numeric_user_group;
 
 static char *
-get_pwname(char *var, uid_t uid) {
+printf_pwname(const char *var, uid_t uid) {
 	int rc = 0;
 	struct passwd pwbuf, *pw;
 	char *buf, *outl;
@@ -22,7 +22,7 @@ get_pwname(char *var, uid_t uid) {
 
 	if (!numeric_user_group) {
 		pw_bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
-		buf = (char *) x_malloc((size_t) pw_bufsize);
+		buf = (char *) xmalloc((size_t) pw_bufsize);
 
 		getpwuid_r(uid, &pwbuf, &buf[0], (size_t) pw_bufsize, &pw);
 
@@ -31,7 +31,7 @@ get_pwname(char *var, uid_t uid) {
 		else
 			rc = asprintf(&outl, " %s=#%ld", var, (long) uid);
 
-		x_free(buf);
+		xfree(buf);
 	}
 	else
 		rc = asprintf(&outl, " %s=%ld", var, (long) uid);
@@ -43,7 +43,7 @@ get_pwname(char *var, uid_t uid) {
 }
 
 static char *
-get_grname(char *var, gid_t gid) {
+printf_grname(const char *var, gid_t gid) {
 	int rc = 0;
 	struct group grbuf, *gr;
 	char *buf, *outl;
@@ -51,7 +51,7 @@ get_grname(char *var, gid_t gid) {
 
 	if (!numeric_user_group) {
 		gr_bufsize = sysconf(_SC_GETGR_R_SIZE_MAX);
-		buf = (char *) x_malloc((size_t) gr_bufsize);
+		buf = (char *) xmalloc((size_t) gr_bufsize);
 
 		getgrgid_r(gid, &grbuf, &buf[0], (size_t) gr_bufsize, &gr);
 
@@ -60,7 +60,7 @@ get_grname(char *var, gid_t gid) {
 		else
 			rc = asprintf(&outl, " %s=#%ld", var, (long) gid);
 
-		x_free(buf);
+		xfree(buf);
 	}
 	else
 		rc = asprintf(&outl, " %s=%ld", var, (long) gid);
@@ -72,25 +72,25 @@ get_grname(char *var, gid_t gid) {
 }
 
 static void
-show_state(char *mode, char *fname, struct osec_stat *st) {
+show_state(const char *mode, const char *fname, struct osec_stat *st) {
 	char *pwname, *grname;
 
 	printf("%s\tstat\t%s\t", fname, mode);
 
-	pwname = get_pwname((char *) "uid", st->uid);
-	grname = get_grname((char *) "gid", st->gid);
+	pwname = printf_pwname((char *) "uid", st->uid);
+	grname = printf_grname((char *) "gid", st->gid);
 
 	printf("%s%s mode=%lo", pwname, grname, (unsigned long) st->mode);
 
-	x_free(pwname);
-	x_free(grname);
+	xfree(pwname);
+	xfree(grname);
 
 	check_insecure(st);
 	printf("\n");
 }
 
 static void
-show_digest(char *dst) {
+show_digest(const char *dst) {
 	int i = 0;
 	while (i < digest_len)
 		printf("%02x", (unsigned char) dst[i++]);
@@ -122,15 +122,15 @@ check_insecure(struct osec_stat *st) {
 	printf(" [");
 
 	if (st->mode & S_ISUID) {
-		buf = get_pwname((char *) "suid", st->uid);
+		buf = printf_pwname((char *) "suid", st->uid);
 		printf("%s", buf);
-		x_free(buf);
+		xfree(buf);
 	}
 
 	if (st->mode & S_ISGID) {
-		buf = get_pwname((char *) "sgid", st->gid);
+		buf = printf_pwname((char *) "sgid", st->gid);
 		printf("%s", buf);
-		x_free(buf);
+		xfree(buf);
 	}
 
 	if (st->mode & S_IWOTH)
@@ -141,7 +141,7 @@ check_insecure(struct osec_stat *st) {
 }
 
 int
-check_new(char *fname, struct osec_stat *st) {
+check_new(const char *fname, struct osec_stat *st) {
 	if (S_ISREG(st->mode)) {
 		printf("%s\tmd5\tnew\t md5sum=", fname);
 		show_digest(st->digest);
@@ -152,7 +152,7 @@ check_new(char *fname, struct osec_stat *st) {
 }
 
 int
-check_difference(char *fname, struct osec_stat *new_st, struct osec_stat *old_st) {
+check_difference(const char *fname, struct osec_stat *new_st, struct osec_stat *old_st) {
 	int i, differ = 0;
 	char *old[] = { NULL, NULL, NULL },
 	     *new[] = { NULL, NULL, NULL };
@@ -170,14 +170,14 @@ check_difference(char *fname, struct osec_stat *new_st, struct osec_stat *old_st
 	}
 
 	if (old_st->uid != new_st->uid) {
-		old[0] = get_pwname((char *) "uid", old_st->uid);
-		new[0] = get_pwname((char *) "uid", new_st->uid);
+		old[0] = printf_pwname((char *) "uid", old_st->uid);
+		new[0] = printf_pwname((char *) "uid", new_st->uid);
 		differ = 1;
 	}
 
 	if (old_st->gid != new_st->gid) {
-		old[1] = get_grname((char *) "gid", old_st->gid);
-		new[1] = get_grname((char *) "gid", new_st->gid);
+		old[1] = printf_grname((char *) "gid", old_st->gid);
+		new[1] = printf_grname((char *) "gid", new_st->gid);
 		differ = 1;
 	}
 
@@ -196,7 +196,7 @@ check_difference(char *fname, struct osec_stat *new_st, struct osec_stat *old_st
 			if (old[i] == NULL)
 				continue;
 			printf("%s", old[i]);
-			x_free(old[i]);
+			xfree(old[i]);
 		}
 		check_insecure(old_st);
 
@@ -205,7 +205,7 @@ check_difference(char *fname, struct osec_stat *new_st, struct osec_stat *old_st
 			if (new[i] == NULL)
 				continue;
 			printf("%s", new[i]);
-			x_free(new[i]);
+			xfree(new[i]);
 		}
 		check_insecure(new_st);
 
@@ -216,7 +216,7 @@ check_difference(char *fname, struct osec_stat *new_st, struct osec_stat *old_st
 }
 
 int
-check_bad_files(char *fname, struct osec_stat *st) {
+check_bad_files(const char *fname, struct osec_stat *st) {
 	if (!is_bad(st))
 		return 0;
 	show_state((char *) "info", fname, st);
@@ -224,7 +224,7 @@ check_bad_files(char *fname, struct osec_stat *st) {
 }
 
 int
-check_removed(char *fname, struct osec_stat *st) {
+check_removed(const char *fname, struct osec_stat *st) {
 	if (S_ISREG(st->mode)) {
 		printf("%s\tmd5\tremoved\t md5sum=", fname);
 		show_digest(st->digest);

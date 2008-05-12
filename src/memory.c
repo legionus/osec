@@ -3,7 +3,7 @@
 #include "osec.h"
 
 void *
-x_malloc(size_t size) {
+xmalloc(size_t size) {
 	void *ptr;
 	if ((ptr = malloc(size)) == NULL)
 		osec_fatal(EXIT_FAILURE, errno, "malloc");
@@ -11,14 +11,14 @@ x_malloc(size_t size) {
 }
 
 void *
-x_realloc(void *ptr, size_t size) {
+xrealloc(void *ptr, size_t size) {
 	if ((ptr = realloc(ptr, size)) == NULL)
 		osec_fatal(EXIT_FAILURE, errno, "realloc");
 	return ptr;
 }
 
 void
-x_free(void *ptr) {
+xfree(void *ptr) {
 	if (ptr != NULL)
 		free(ptr);
 }

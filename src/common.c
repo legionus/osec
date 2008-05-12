@@ -7,13 +7,14 @@
 #include "config.h"
 #include "osec.h"
 
-void
+int
 osec_error(const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	fprintf(stderr, "%s: ", PACKAGE_NAME);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
+	return 0;
 }
 
 void __attribute__ ((noreturn))
