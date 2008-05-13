@@ -167,10 +167,10 @@ show_changes(int new_fd, int old_fd) {
 	size_t datalen = sizeof(struct osec_stat);
 
 	if (old_fd != -1 && cdb_init(&old_cdb, old_fd) < 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_init1");
+		osec_fatal(EXIT_FAILURE, errno, "cdb_init(old_cdb)");
 
 	if (cdb_init(&new_cdb, new_fd) < 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_init2");
+		osec_fatal(EXIT_FAILURE, errno, "cdb_init(new_cdb)");
 
 	cdb_seqinit(&cpos, &new_cdb);
 	while(cdb_seqnext(&cpos, &new_cdb) > 0) {
@@ -212,10 +212,10 @@ show_oldfiles(int new_fd, int old_fd) {
 		return;
 
 	if (cdb_init(&old_cdb, old_fd) < 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_init1");
+		osec_fatal(EXIT_FAILURE, errno, "cdb_init(old_cdb)");
 
 	if (cdb_init(&new_cdb, new_fd) < 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_init2");
+		osec_fatal(EXIT_FAILURE, errno, "cdb_init(new_cdb)");
 
 	cdb_seqinit(&cpos, &old_cdb);
 	while(cdb_seqnext(&cpos, &old_cdb) > 0) {
@@ -306,7 +306,7 @@ validate_path(const char *path) {
 	if (path[0] != '/' ||
 	    strstr(path, "/../") != NULL ||
 	    strstr(path, "/./" ) != NULL) {
-		osec_error("Absolute path required\n");
+		osec_error("Canonical path required\n");
 		return buf;
 	}
 
