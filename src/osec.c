@@ -295,6 +295,41 @@ process(char *dirname, size_t dlen) {
 	return retval;
 }
 
+static char *
+validate_path(const char *path) {
+	unsigned int i, j = 0;
+	char *buf = NULL;
+	size_t len;
+
+	len = strlen(path);
+
+	if (path[0] != '/' ||
+	    strstr(path, "/../") != NULL ||
+	    strstr(path, "/./" ) != NULL) {
+		osec_error("Absolute path required\n");
+		return buf;
+	}
+
+	buf = (char *) malloc(sizeof(char) * (len+1));
+	buf[j++] = '/';
+
+	for(i = 1; i < len; i++) {
+		if (path[i-1] == '/' && path[i] == '/')
+			continue;
+		buf[j++] = path[i];
+	}
+	buf[j] = '\0';
+
+	if (buf[j-1] == '/')
+		buf[j-1] = '\0';
+
+	if (j < len)
+		buf = realloc(buf, sizeof(char) * j);
+
+	return buf;
+}
+
+
 int
 main(int argc, char **argv) {
 	int c;
@@ -302,6 +337,9 @@ main(int argc, char **argv) {
 	int allow_root = 0;
 	char *dirslist_file = NULL;
 	char *user = NULL, *group = NULL;
+
+	char *path;
+	size_t path_len;
 
 	struct option long_options[] = {
 		{ "help",		no_argument,		0, 'h' },
@@ -385,8 +423,15 @@ main(int argc, char **argv) {
 			if (line[n-1] == '\n')
 				line[n-1] = '\0';
 
-			if (process((line + i), (size_t) n))
+			if ((path = validate_path((line + i))) == NULL)
+				continue;
+
+			path_len = strlen(path) + 1;
+
+			if (process(path, path_len))
 				retval = EXIT_FAILURE;
+
+			xfree(path);
 		}
 
 		xfree(line);
@@ -396,9 +441,15 @@ main(int argc, char **argv) {
 	}
 
 	while (optind < argc) {
-		if (!process(argv[optind], strlen(argv[optind])+1))
+		if ((path = validate_path(argv[optind++])) == NULL)
+			continue;
+
+		path_len = strlen(path) + 1;
+
+		if (!process(path, path_len))
 			retval = EXIT_FAILURE;
-		optind++;
+
+		xfree(path);
 	}
 
 	return retval;
