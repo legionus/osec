@@ -157,7 +157,7 @@ check_difference(const char *fname, struct osec_stat *new_st, struct osec_stat *
 	char *old[] = { NULL, NULL, NULL },
 	     *new[] = { NULL, NULL, NULL };
 
-	if (S_ISREG(new_st->mode) || S_ISREG(old_st->mode)) {
+	if (S_ISREG(new_st->mode) && S_ISREG(old_st->mode)) {
 		if (strncmp(old_st->digest, new_st->digest, digest_len) != 0) {
 			printf("%s\tmd5\tchanged\told md5sum=", fname);
 			show_digest(old_st->digest);

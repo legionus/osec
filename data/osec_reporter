@@ -75,7 +75,16 @@ while(<STDIN>)
 	};
 	foreach (@new_status)
 	{
-		/(.*?)=(.*)/ and $change_normal_files{$fields[0]}{$1}{"new"}=$2;
+		/(.*?)=(.*)/;
+
+		#additional check for files became symlinks
+		if($1 eq "mode" and $2 =~ /^12/) {
+			$symlinks{$fields[0]} = readlink($fields[0]);
+			delete $change_normal_files{$fields[0]};
+		}
+		else {
+			$change_normal_files{$fields[0]}{$1}{"new"}=$2;
+		}
 	};
 
 	#also process bad file transformations
@@ -141,17 +150,6 @@ while(<STDIN>)
 foreach (keys %change_normal_files)
 {
     ($change_normal_files{$_}{"md5sum"} and $info_bad_files{$_}) and $change_bad_files{$_} .=" md5sum";
-}
-
-#additional check for files became symlinks
-foreach (keys %del_normal_files)
-{
-    if(-l $_)
-    {
-	$symlinks{$_}=readlink($_);
-	delete $del_normal_files{$_};
-	$change_normal_files{$_} and delete $change_normal_files{$_};
-    }
 }
 
 my $date = `LC_ALL=C LANG=C LANGUAGE=C date`;
