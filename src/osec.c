@@ -92,6 +92,7 @@ osec_append(struct cdb_make *cdbm, char *fname, size_t flen) {
 		return retval;
 	}
 
+	ost.ino = st.st_ino;
 	ost.uid = st.st_uid;
 	ost.gid = st.st_gid;
 	ost.mode = st.st_mode;

@@ -80,7 +80,8 @@ show_state(const char *mode, const char *fname, struct osec_stat *st) {
 	pwname = printf_pwname((char *) "uid", st->uid);
 	grname = printf_grname((char *) "gid", st->gid);
 
-	printf("%s%s mode=%lo", pwname, grname, (unsigned long) st->mode);
+	printf("%s%s mode=%lo inode=%ld",
+		pwname, grname, (unsigned long) st->mode, (long) st->ino);
 
 	xfree(pwname);
 	xfree(grname);
@@ -154,8 +155,9 @@ check_new(const char *fname, struct osec_stat *st) {
 int
 check_difference(const char *fname, struct osec_stat *new_st, struct osec_stat *old_st) {
 	int i, differ = 0;
-	char *old[] = { NULL, NULL, NULL },
-	     *new[] = { NULL, NULL, NULL };
+#define diff_params 4
+	char *old[] = { NULL, NULL, NULL, NULL },
+	     *new[] = { NULL, NULL, NULL, NULL };
 
 	if (S_ISREG(new_st->mode) && S_ISREG(old_st->mode)) {
 		if (strncmp(old_st->digest, new_st->digest, digest_len) != 0) {
@@ -190,9 +192,19 @@ check_difference(const char *fname, struct osec_stat *new_st, struct osec_stat *
 		differ = 1;
 	}
 
+	if (old_st->ino != new_st->ino) {
+		if (asprintf(&(old[3]), " inode=%ld", (long) old_st->ino) == -1)
+			osec_fatal(EXIT_FAILURE, errno, "asprintf");
+
+		if (asprintf(&(new[3]), " inode=%ld", (long) new_st->ino) == -1)
+			osec_fatal(EXIT_FAILURE, errno, "asprintf");
+		differ = 1;
+	}
+
+
 	if (differ) {
 		printf("%s\tstat\tchanged\told", fname);
-		for (i = 0; i < 3; i++) {
+		for (i = 0; i < diff_params; i++) {
 			if (old[i] == NULL)
 				continue;
 			printf("%s", old[i]);
@@ -201,7 +213,7 @@ check_difference(const char *fname, struct osec_stat *new_st, struct osec_stat *
 		check_insecure(old_st);
 
 		printf("\tnew");
-		for (i = 0; i < 3; i++) {
+		for (i = 0; i < diff_params; i++) {
 			if (new[i] == NULL)
 				continue;
 			printf("%s", new[i]);

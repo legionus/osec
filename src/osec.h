@@ -4,10 +4,11 @@
 #define digest_len 20
 
 struct osec_stat {
-	mode_t	mode;
-	uid_t	uid;
-	gid_t	gid;
-	char	digest[digest_len]; // SHA1
+	ino_t	ino;			/* inode number */
+	mode_t	mode;			/* file's permission bits */
+	uid_t	uid;			/* user ID of owner */
+	gid_t	gid;			/* group ID of owner */
+	char	digest[digest_len];	/* file's checksum */
 };
 
 /* common.c */
