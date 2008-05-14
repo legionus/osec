@@ -11,7 +11,6 @@ AC_CONFIG_HEADER([config.h])
 AC_PROG_CC
 
 # Checks for libraries.
-AM_PATH_LIBGCRYPT(1.4.0)
 AC_CHECK_LIB([cap], [cap_from_text])
 AC_CHECK_LIB([cdb], [cdb_init])
 

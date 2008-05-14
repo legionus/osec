@@ -1,13 +1,13 @@
 #ifndef OSEC_H
 #define OSEC_H
 
-#define digest_len 16
+#define digest_len 20
 
 struct osec_stat {
 	mode_t	mode;
 	uid_t	uid;
 	gid_t	gid;
-	char	digest[digest_len]; // MD5
+	char	digest[digest_len]; // SHA1
 };
 
 /* common.c */
@@ -31,8 +31,6 @@ int check_bad_files(const char *fname, struct osec_stat *st);
 int check_removed(const char *fname, struct osec_stat *st);
 
 /* digest.c */
-int init_digest(void);
-void finalize_digest(void);
 void digest(const char *fname, struct osec_stat *st);
 
 #endif /* OSEC_H */

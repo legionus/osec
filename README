@@ -27,7 +27,6 @@ Requires
 You need following tools to build library:
     o c compiler (gcc 3.2 or higher)
     o libcdb library (0.76 or higher). Latest version available at http://www.corpit.ru/mjt/tinycdb.html
-    o libgcrypt library (1.4.0 or higher) Latest version available at http://www.gnupg.org/
     o libcap library (1.10 or higher)
     o GNU autoconf (2.61 or higher)
     o GNU automake (3.81 or higher)

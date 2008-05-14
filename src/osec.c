@@ -393,9 +393,6 @@ main(int argc, char **argv) {
 	if (db_path == NULL)
 		db_path = def_db_path;
 
-	if (!init_digest())
-		osec_fatal(EXIT_FAILURE, 0, "Unable to initialize library\n");
-
 	//drop program privileges if we are root
 	if (!allow_root && !geteuid())
 		drop_privs((user  != NULL ? user  : def_user),

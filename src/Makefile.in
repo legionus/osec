@@ -44,11 +44,10 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_osec_OBJECTS = osec.$(OBJEXT) common.$(OBJEXT) memory.$(OBJEXT) \
-	privs.$(OBJEXT) status.$(OBJEXT) digest.$(OBJEXT)
+	privs.$(OBJEXT) status.$(OBJEXT) digest.$(OBJEXT) \
+	sha1.$(OBJEXT)
 osec_OBJECTS = $(am_osec_OBJECTS)
 osec_LDADD = $(LDADD)
-am__DEPENDENCIES_1 =
-osec_DEPENDENCIES = $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -87,9 +86,6 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
-LIBGCRYPT_CFLAGS = @LIBGCRYPT_CFLAGS@
-LIBGCRYPT_CONFIG = @LIBGCRYPT_CONFIG@
-LIBGCRYPT_LIBS = @LIBGCRYPT_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
@@ -154,9 +150,10 @@ WARNINGS = -Wall -Wextra -Werror -W -Wshadow -Wpointer-arith -Wcast-align \
 	-Wmissing-format-attribute -Wredundant-decls -Wdisabled-optimization 
 
 AM_CPPFLAGS = -g -std=c99 -D_BSD_SOURCE -D_GNU_SOURCE $(WARNINGS) \
-	$(LIBGCRYPT_CFLAGS)
-LDADD = $(LIBGCRYPT_LIBS)
-osec_SOURCES = osec.c common.c memory.c privs.c status.c digest.c
+	-I./mozilla-sha1
+osec_SOURCES = osec.c common.c memory.c privs.c status.c digest.c \
+		./mozilla-sha1/sha1.c
+
 osec_LIBS = -lcap -lcdb
 all: all-am
 
@@ -229,6 +226,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/osec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/privs.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/status.Po@am__quote@
 
 .c.o:
@@ -244,6 +242,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+sha1.o: ./mozilla-sha1/sha1.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT sha1.o -MD -MP -MF $(DEPDIR)/sha1.Tpo -c -o sha1.o `test -f './mozilla-sha1/sha1.c' || echo '$(srcdir)/'`./mozilla-sha1/sha1.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/sha1.Tpo $(DEPDIR)/sha1.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='./mozilla-sha1/sha1.c' object='sha1.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o sha1.o `test -f './mozilla-sha1/sha1.c' || echo '$(srcdir)/'`./mozilla-sha1/sha1.c
+
+sha1.obj: ./mozilla-sha1/sha1.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT sha1.obj -MD -MP -MF $(DEPDIR)/sha1.Tpo -c -o sha1.obj `if test -f './mozilla-sha1/sha1.c'; then $(CYGPATH_W) './mozilla-sha1/sha1.c'; else $(CYGPATH_W) '$(srcdir)/./mozilla-sha1/sha1.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/sha1.Tpo $(DEPDIR)/sha1.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='./mozilla-sha1/sha1.c' object='sha1.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o sha1.obj `if test -f './mozilla-sha1/sha1.c'; then $(CYGPATH_W) './mozilla-sha1/sha1.c'; else $(CYGPATH_W) '$(srcdir)/./mozilla-sha1/sha1.c'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \

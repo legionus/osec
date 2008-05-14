@@ -143,7 +143,7 @@ check_insecure(struct osec_stat *st) {
 int
 check_new(const char *fname, struct osec_stat *st) {
 	if (S_ISREG(st->mode)) {
-		printf("%s\tmd5\tnew\t md5sum=", fname);
+		printf("%s\tchecksum\tnew\t checksum=", fname);
 		show_digest(st->digest);
 		printf("\n");
 	}
@@ -159,10 +159,10 @@ check_difference(const char *fname, struct osec_stat *new_st, struct osec_stat *
 
 	if (S_ISREG(new_st->mode) && S_ISREG(old_st->mode)) {
 		if (strncmp(old_st->digest, new_st->digest, digest_len) != 0) {
-			printf("%s\tmd5\tchanged\told md5sum=", fname);
+			printf("%s\tchecksum\tchanged\told checksum=", fname);
 			show_digest(old_st->digest);
 
-			printf("\tnew md5sum=");
+			printf("\tnew checksum=");
 			show_digest(new_st->digest);
 
 			printf("\n");
@@ -226,7 +226,7 @@ check_bad_files(const char *fname, struct osec_stat *st) {
 int
 check_removed(const char *fname, struct osec_stat *st) {
 	if (S_ISREG(st->mode)) {
-		printf("%s\tmd5\tremoved\t md5sum=", fname);
+		printf("%s\tchecksum\tremoved\t checksum=", fname);
 		show_digest(st->digest);
 		printf("\n");
 	}

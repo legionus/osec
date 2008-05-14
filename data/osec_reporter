@@ -149,7 +149,7 @@ while(<STDIN>)
 #additional check for checksum changes in bad files
 foreach (keys %change_normal_files)
 {
-    ($change_normal_files{$_}{"md5sum"} and $info_bad_files{$_}) and $change_bad_files{$_} .=" md5sum";
+    ($change_normal_files{$_}{"checksum"} and $info_bad_files{$_}) and $change_bad_files{$_} .=" checksum";
 }
 
 my $date = `LC_ALL=C LANG=C LANGUAGE=C date`;
@@ -207,9 +207,9 @@ if (%change_normal_files)
     {
 	print "\t- $_\n";
 	my %item=%{$change_normal_files{$_}};
-	foreach (keys %item) # print additional info except of md5sum
+	foreach (keys %item) # print additional info except of checksum
 	{
-	    print "\t\t$_: $item{$_}{old} -> $item{$_}{new}\n" unless ($_ eq "md5sum")
+	    print "\t\t$_: $item{$_}{old} -> $item{$_}{new}\n" unless ($_ eq "checksum")
 	} 
     }
 }
