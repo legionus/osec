@@ -20,7 +20,8 @@ it into osec distribution.
 
 Authors
 -------
-Stanislav Ievlev <inger@altlinux.org>
+Written in C++ by Stanislav Ievlev <inger@altlinux.org>.
+Almost completely rewritten from scratch in C by Alexey Gladkov <gladkov.alexey@gmail.com>.
 
 Requires
 --------
@@ -39,6 +40,7 @@ user (and group) using --user (--group) options.
 By default, osec will create database in current directory. You can change this path using
 --dbpath option. If you run osec under administrator account please check that non privilege user
 have write osec in this output directory.
+
 
 Bug reporting
 ------------

@@ -1,3 +1,11 @@
+/* privs.c
+ *
+ * This file is part of Osec (lightweight integrity checker)
+ * Copyright (c) 2002,2003,2004 by Stanislav Ievlev
+ *
+ * This file is covered by the GNU General Public License,
+ * which should be included with osec as the file COPYING.
+ */
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/capability.h>

@@ -1,4 +1,12 @@
 #!/bin/sh
+# osec_mailer
+#
+# This file is part of Osec (lightweight integrity checker)
+# Copyright (c) 2002-2007 by Stanislav Ievlev
+#
+# This file is covered by the GNU General Public License,
+# which should be included with osec as the file COPYING.
+#
 
 PROG="${0##*/}"
 

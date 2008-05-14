@@ -1,4 +1,13 @@
 #!/bin/sh
+# osec.cron
+#
+# This file is part of Osec (lightweight integrity checker)
+# Copyright (c) 2002-2007 by Stanislav Ievlev
+#
+# This file is covered by the GNU General Public License,
+# which should be included with osec as the file COPYING.
+#
+
 . /etc/osec/pipe.conf
 
 ((/usr/bin/osec -D /var/lib/osec -f /etc/osec/dirs.conf; \
