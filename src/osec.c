@@ -33,24 +33,34 @@ int numeric_user_group = 0;
 
 static void __attribute__ ((noreturn))
 print_help(int ret)  {
-	printf("Usage: %s [OPTIONS]\n\n"
+	printf("Usage: "PACKAGE_NAME" [OPTIONS] [DIRECTORY...]\n"
+	       "   or: "PACKAGE_NAME" [OPTIONS] --file=FILE [DIRECTORY...]\n"
+	       "\n"
+	       "This utility help you to see difference between\n"
+	       "two states of your system.\n"
+	       "\n"
 	       "Options:\n"
-	       "  -r, --read-only     work in read-only mode\n"
-	       "  -R, --allow-root    allow run with root priveleges\n"
-	       "  -n, --numeric-ids   dont convert uid/gid into username\n"
-	       "  -u, --user          non-privelege user account name\n"
-	       "  -g, --group         non-privelege group account name\n"
-	       "  -D, --dbpath        path to the directory with databases\n"
-	       "  -f, --file          obtain directories from file FILE\n"
-	       "  -V, --version       print program version and exit.\n"
-	       "  -h, --help          output a brief help message.\n\n",
-	       PACKAGE_NAME);
+	       "  -r, --read-only     work in read-only mode;\n"
+	       "  -R, --allow-root    allow run with root priveleges;\n"
+	       "  -n, --numeric-ids   dont convert uid/gid into username;\n"
+	       "  -u, --user=USER     non-privelege user account name;\n"
+	       "  -g, --group=GROUP   non-privelege group account name;\n"
+	       "  -D, --dbpath=PATH   path to the directory with databases;\n"
+	       "  -f, --file=FILE     obtain directories from file FILE;\n"
+	       "  -v, --version       print program version and exit;\n"
+	       "  -h, --help          output a brief help message.\n"
+	       "\n");
 	exit(ret);
 }
 
 static void __attribute__ ((noreturn))
 print_version(void) {
-        printf("%s version %s\n\n", PACKAGE_NAME, PACKAGE_VERSION);
+        printf(PACKAGE_NAME" version "PACKAGE_VERSION"\n"
+	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
+	       "\n"
+	       "Copyright (C) 2008  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
+	       "This is free software; see the source for copying conditions.  There is NO\n"
+	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
         exit(EXIT_SUCCESS);
 }
 
@@ -368,7 +378,7 @@ main(int argc, char **argv) {
 
 	while ((c = getopt_long (argc, argv, "hvnrRu:g:D:f:", long_options, NULL)) != -1) {
 		switch (c) {
-			case 'V':
+			case 'v':
 				print_version();
 				break;
 			case 'n':
