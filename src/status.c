@@ -21,11 +21,10 @@
 extern int read_only;
 extern int numeric_user_group;
 
-static char *
+static void
 printf_pwname(const char *var, uid_t uid) {
-	int rc = 0;
 	struct passwd pwbuf, *pw;
-	char *buf, *outl;
+	char *buf;
 	long pw_bufsize;
 
 	if (!numeric_user_group) {
@@ -35,26 +34,20 @@ printf_pwname(const char *var, uid_t uid) {
 		getpwuid_r(uid, &pwbuf, &buf[0], (size_t) pw_bufsize, &pw);
 
 		if (pw != NULL)
-			rc = asprintf(&outl, " %s=%s", var, pw->pw_name);
+			printf(" %s=%s", var, pw->pw_name);
 		else
-			rc = asprintf(&outl, " %s=#%ld", var, (long) uid);
+			printf(" %s=#%ld", var, (long) uid);
 
 		xfree(buf);
 	}
 	else
-		rc = asprintf(&outl, " %s=%ld", var, (long) uid);
-
-	if (rc == -1)
-		osec_fatal(EXIT_FAILURE, errno, "asprintf");
-
-	return outl;
+		printf(" %s=%ld", var, (long) uid);
 }
 
-static char *
+static void
 printf_grname(const char *var, gid_t gid) {
-	int rc = 0;
 	struct group grbuf, *gr;
-	char *buf, *outl;
+	char *buf;
 	long gr_bufsize;
 
 	if (!numeric_user_group) {
@@ -64,35 +57,23 @@ printf_grname(const char *var, gid_t gid) {
 		getgrgid_r(gid, &grbuf, &buf[0], (size_t) gr_bufsize, &gr);
 
 		if (gr != NULL)
-			rc = asprintf(&outl, " %s=%s", var, gr->gr_name);
+			printf(" %s=%s", var, gr->gr_name);
 		else
-			rc = asprintf(&outl, " %s=#%ld", var, (long) gid);
+			printf(" %s=#%ld", var, (long) gid);
 
 		xfree(buf);
 	}
 	else
-		rc = asprintf(&outl, " %s=%ld", var, (long) gid);
-
-	if (rc == -1)
-		osec_fatal(EXIT_FAILURE, errno, "asprintf");
-
-	return outl;
+		printf(" %s=%ld", var, (long) gid);
 }
 
 static void
 show_state(const char *mode, const char *fname, struct osec_stat *st) {
-	char *pwname, *grname;
-
 	printf("%s\tstat\t%s\t", fname, mode);
 
-	pwname = printf_pwname((char *) "uid", st->uid);
-	grname = printf_grname((char *) "gid", st->gid);
-
-	printf("%s%s mode=%lo inode=%ld",
-		pwname, grname, (unsigned long) st->mode, (long) st->ino);
-
-	xfree(pwname);
-	xfree(grname);
+	printf_pwname((char *) "uid", st->uid);
+	printf_grname((char *) "gid", st->gid);
+	printf(" mode=%lo inode=%ld", (unsigned long) st->mode, (long) st->ino);
 
 	check_insecure(st);
 	printf("\n");
@@ -123,24 +104,16 @@ is_bad(struct osec_stat *st) {
 
 int
 check_insecure(struct osec_stat *st) {
-	char *buf;
-
 	if (!is_bad(st))
 		return 0;
 
 	printf(" [");
 
-	if (st->mode & S_ISUID) {
-		buf = printf_pwname((char *) "suid", st->uid);
-		printf("%s", buf);
-		xfree(buf);
-	}
+	if (st->mode & S_ISUID)
+		printf_pwname((char *) "suid", st->uid);
 
-	if (st->mode & S_ISGID) {
-		buf = printf_pwname((char *) "sgid", st->gid);
-		printf("%s", buf);
-		xfree(buf);
-	}
+	if (st->mode & S_ISGID)
+		printf_pwname((char *) "sgid", st->gid);
 
 	if (st->mode & S_IWOTH)
 		printf(" ww");
@@ -162,10 +135,15 @@ check_new(const char *fname, struct osec_stat *st) {
 
 int
 check_difference(const char *fname, struct osec_stat *new_st, struct osec_stat *old_st) {
-	int i, differ = 0;
-#define diff_params 4
-	char *old[] = { NULL, NULL, NULL, NULL },
-	     *new[] = { NULL, NULL, NULL, NULL };
+
+#define OSEC_ISSET(state,mask) (((state) & mask) == mask)
+#define OSEC_FMT 0017
+#define OSEC_UID 0010
+#define OSEC_GID 0004
+#define OSEC_MOD 0002
+#define OSEC_INO 0001
+
+	unsigned state = 0;
 
 	if (S_ISREG(new_st->mode) && S_ISREG(old_st->mode)) {
 		if (strncmp(old_st->digest, new_st->digest, digest_len) != 0) {
@@ -179,60 +157,49 @@ check_difference(const char *fname, struct osec_stat *new_st, struct osec_stat *
 		}
 	}
 
-	if (old_st->uid != new_st->uid) {
-		old[0] = printf_pwname((char *) "uid", old_st->uid);
-		new[0] = printf_pwname((char *) "uid", new_st->uid);
-		differ = 1;
-	}
+	if (old_st->uid  != new_st->uid)  state ^= OSEC_UID;
+	if (old_st->gid  != new_st->gid)  state ^= OSEC_GID;
+	if (old_st->mode != new_st->mode) state ^= OSEC_MOD;
+	if (old_st->ino  != new_st->ino)  state ^= OSEC_INO;
 
-	if (old_st->gid != new_st->gid) {
-		old[1] = printf_grname((char *) "gid", old_st->gid);
-		new[1] = printf_grname((char *) "gid", new_st->gid);
-		differ = 1;
-	}
+	if (!(state & OSEC_FMT))
+		return 0;
 
-	if (old_st->mode != new_st->mode) {
-		if (asprintf(&(old[2]), " mode=%lo", (unsigned long) old_st->mode) == -1)
-			osec_fatal(EXIT_FAILURE, errno, "asprintf");
+	printf("%s\tstat\tchanged\told", fname);
 
-		if (asprintf(&(new[2]), " mode=%lo", (unsigned long) new_st->mode) == -1)
-			osec_fatal(EXIT_FAILURE, errno, "asprintf");
-		differ = 1;
-	}
+	/* Old state */
+	if (OSEC_ISSET(state, OSEC_UID))
+		printf_pwname((char *) "uid", old_st->uid);
 
-	if (old_st->ino != new_st->ino) {
-		if (asprintf(&(old[3]), " inode=%ld", (long) old_st->ino) == -1)
-			osec_fatal(EXIT_FAILURE, errno, "asprintf");
+	if (OSEC_ISSET(state, OSEC_GID))
+		printf_grname((char *) "gid", old_st->gid);
 
-		if (asprintf(&(new[3]), " inode=%ld", (long) new_st->ino) == -1)
-			osec_fatal(EXIT_FAILURE, errno, "asprintf");
-		differ = 1;
-	}
+	if (OSEC_ISSET(state, OSEC_MOD))
+		printf(" mode=%lo", (unsigned long) old_st->mode);
 
+	if (OSEC_ISSET(state, OSEC_INO))
+		printf(" inode=%ld", (long) old_st->ino);
 
-	if (differ) {
-		printf("%s\tstat\tchanged\told", fname);
-		for (i = 0; i < diff_params; i++) {
-			if (old[i] == NULL)
-				continue;
-			printf("%s", old[i]);
-			xfree(old[i]);
-		}
-		check_insecure(old_st);
+	check_insecure(old_st);
 
-		printf("\tnew");
-		for (i = 0; i < diff_params; i++) {
-			if (new[i] == NULL)
-				continue;
-			printf("%s", new[i]);
-			xfree(new[i]);
-		}
-		check_insecure(new_st);
+	/* New state */
+	printf("\tnew");
 
-		printf("\n");
-	}
+	if (OSEC_ISSET(state, OSEC_UID))
+		printf_pwname((char *) "uid", new_st->uid);
 
-	return differ;
+	if (OSEC_ISSET(state, OSEC_GID))
+		printf_grname((char *) "gid", new_st->gid);
+
+	if (OSEC_ISSET(state, OSEC_MOD))
+		printf(" mode=%lo", (unsigned long) new_st->mode);
+
+	if (OSEC_ISSET(state, OSEC_INO))
+		printf(" inode=%ld", (long) new_st->ino);
+
+	check_insecure(new_st);
+	printf("\n");
+	return 1;
 }
 
 int
