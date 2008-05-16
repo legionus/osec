@@ -413,9 +413,13 @@ main(int argc, char **argv) {
 		db_path = def_db_path;
 
 	//drop program privileges if we are root
-	if (!allow_root && !geteuid())
+	if (!allow_root && !geteuid()) {
 		drop_privs((user  != NULL ? user  : def_user),
 			   (group != NULL ? group : def_group));
+
+		if (!geteuid())
+			osec_fatal(EXIT_FAILURE, 0, "cannot run from under privilege user\n");
+	}
 
 	if (dirslist_file != NULL) {
 		FILE *fd;
