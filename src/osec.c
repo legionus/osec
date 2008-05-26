@@ -17,6 +17,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/param.h>
 #include <cdb.h>
 
 #include "config.h"
@@ -100,9 +101,10 @@ gen_db_name(char *dirname, char **dbname) {
 static int
 osec_append(struct cdb_make *cdbm, char *fname, size_t flen) {
 	DIR *d;
+	void *val = NULL;
+	size_t vlen = 0;
 	int retval = 1;
 	struct dirent *dir;
-	struct osec_stat ost;
 	struct stat st;
 
 	if (lstat(fname, &st) == -1) {
@@ -110,18 +112,17 @@ osec_append(struct cdb_make *cdbm, char *fname, size_t flen) {
 		return retval;
 	}
 
-	ost.ino = st.st_ino;
-	ost.uid = st.st_uid;
-	ost.gid = st.st_gid;
-	ost.mode = st.st_mode;
+	osec_state(&val, &vlen, &st);
 
-	if (S_ISREG(st.st_mode))
-		digest(fname, &ost);
-	else
-		bzero(ost.digest, digest_len);
+	switch (st.st_mode & S_IFMT) {
+		case S_IFREG: osec_digest(&val, &vlen, fname);  break;
+		case S_IFLNK: osec_symlink(&val, &vlen, fname); break;
+	}
 
-	if (cdb_make_add(cdbm, fname, flen, &ost, sizeof(ost)) != 0)
+	if (cdb_make_add(cdbm, fname, flen, val, vlen) != 0)
 		osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", fname);
+
+	xfree(val);
 
 	if (!S_ISDIR(st.st_mode))
 		return retval;
@@ -180,10 +181,9 @@ create_database(int fd, char *dir, size_t len) {
 static void
 show_changes(int new_fd, int old_fd) {
 	char *key;
-	unsigned cpos, klen;
+	void *old_data, *new_data;
+	unsigned cpos, klen, old_dlen, new_dlen;
 	struct cdb old_cdb, new_cdb;
-	struct osec_stat new_st, old_st;
-	size_t datalen = sizeof(struct osec_stat);
 
 	if (old_fd != -1 && cdb_init(&old_cdb, old_fd) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_init(old_cdb)");
@@ -201,20 +201,29 @@ show_changes(int new_fd, int old_fd) {
 
 		key[klen] = '\0';
 
-		if (cdb_read(&new_cdb, &new_st, datalen, cdb_datapos(&new_cdb)) < 0)
+		new_dlen = cdb_datalen(&new_cdb);
+		new_data = xmalloc(new_dlen);
+
+		if (cdb_read(&new_cdb, new_data, new_dlen, cdb_datapos(&new_cdb)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
 		// Search
 		if (old_fd != -1 && cdb_find(&old_cdb, key, klen) > 0) {
-			if (cdb_read(&old_cdb, &old_st, datalen, cdb_datapos(&old_cdb)) < 0)
+			old_dlen = cdb_datalen(&old_cdb);
+			old_data = xmalloc(old_dlen);
+
+			if (cdb_read(&old_cdb, old_data, old_dlen, cdb_datapos(&old_cdb)) < 0)
 				osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
-			if (!check_difference(key, &new_st, &old_st))
-				check_bad_files(key, &new_st);
+			if (!check_difference(key, new_data, new_dlen, old_data, old_dlen))
+				check_bad_files(key, new_data, new_dlen);
+
+			xfree(old_data);
 		}
 		else
-			check_new(key, &new_st);
+			check_new(key, new_data, new_dlen);
 
+		xfree(new_data);
 		xfree(key);
 	}
 }
@@ -224,8 +233,6 @@ show_oldfiles(int new_fd, int old_fd) {
 	char *key;
 	unsigned cpos, klen;
 	struct cdb old_cdb, new_cdb;
-	struct osec_stat old_st;
-	size_t datalen = sizeof(struct osec_stat);
 
 	if (old_fd == -1)
 		return;
@@ -246,11 +253,16 @@ show_oldfiles(int new_fd, int old_fd) {
 
 		key[klen] = '\0';
 
-		if (cdb_read(&old_cdb, &old_st, datalen, cdb_datapos(&old_cdb)) < 0)
-			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
+		if (cdb_find(&new_cdb, key, klen) == 0) {
+			unsigned dlen = cdb_datalen(&old_cdb);
+			void *data = xmalloc(dlen);
 
-		if (cdb_find(&new_cdb, key, klen) == 0)
-			check_removed(key, &old_st);
+			if (cdb_read(&old_cdb, data, dlen, cdb_datapos(&old_cdb)) < 0)
+				osec_fatal(EXIT_FAILURE, errno, "cdb_read");
+
+			check_removed(key, data, dlen);
+			xfree(data);
+		}
 
 		xfree(key);
 	}

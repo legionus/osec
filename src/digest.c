@@ -18,7 +18,7 @@
 #include "sha1.h"
 
 void
-digest(const char *fname, struct osec_stat *st) {
+digest(const char *fname, char *out) {
 	int fd;
 	ssize_t num;
 	SHA_CTX ctx;
@@ -42,6 +42,6 @@ digest(const char *fname, struct osec_stat *st) {
 	if (close(fd) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: close", fname);
 
-	SHA1_Final((unsigned char *) st->digest, &ctx);
+	SHA1_Final((unsigned char *) out, &ctx);
 	return;
 }
