@@ -45,8 +45,8 @@ am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_osec_OBJECTS = osec.$(OBJEXT) common.$(OBJEXT) memory.$(OBJEXT) \
-	privs.$(OBJEXT) status.$(OBJEXT) digest.$(OBJEXT) db.$(OBJEXT) \
-	sha1.$(OBJEXT)
+	privs.$(OBJEXT) status.$(OBJEXT) digest.$(OBJEXT) \
+	dbvalue.$(OBJEXT) sha1.$(OBJEXT)
 osec_OBJECTS = $(am_osec_OBJECTS)
 osec_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -158,7 +158,7 @@ WARNINGS = -Wall -Wextra -Werror -W -Wshadow -Wcast-align \
 
 AM_CPPFLAGS = -g -std=c99 -D_BSD_SOURCE -D_GNU_SOURCE $(WARNINGS) \
 	-I./mozilla-sha1
-osec_SOURCES = osec.c common.c memory.c privs.c status.c digest.c db.c \
+osec_SOURCES = osec.c common.c memory.c privs.c status.c digest.c dbvalue.c \
 		./mozilla-sha1/sha1.c
 
 osec_LIBS = -lcap -lcdb
@@ -230,7 +230,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/db.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dbvalue.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/digest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/osec.Po@am__quote@
