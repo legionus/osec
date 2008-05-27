@@ -12,6 +12,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <cdb.h>
+
+#define OSEC_DB_VERSION 1
 
 #define OVALUE_LINK 4
 #define OVALUE_CSUM 2
@@ -51,10 +54,14 @@ int check_removed(const char *fname, void *data, size_t len);
 /* digest.c */
 void digest(const char *fname, char *digest);
 
-/* db.c */
+/* dbvalue.c */
 void  *osec_field(const unsigned type, const void *data, const size_t dlen);
 size_t osec_state(void **val, size_t *vlen, const struct stat *st);
 size_t osec_digest(void **val, size_t *vlen, const char *fname);
 size_t osec_symlink(void **val, size_t *vlen, const char *fname);
+
+/* dbvalue.c */
+int  compat_db_version(int fd);
+void write_db_version(struct cdb_make *cdbm);
 
 #endif /* OSEC_H */

@@ -18,7 +18,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/param.h>
-#include <cdb.h>
 
 #include "config.h"
 #include "osec.h"
@@ -172,6 +171,8 @@ create_database(int fd, char *dir, size_t len) {
 
 	retval = osec_append(&cdbm, dir, len);
 
+	write_db_version(&cdbm);
+
 	if (cdb_make_finish(&cdbm) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_finish");
 
@@ -198,6 +199,11 @@ show_changes(int new_fd, int old_fd) {
 
 		if (cdb_read(&new_cdb, key, klen, cdb_keypos(&new_cdb)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
+
+		if (key[0] != '/') {
+			xfree(key);
+			continue;
+		}
 
 		key[klen] = '\0';
 
@@ -251,6 +257,11 @@ show_oldfiles(int new_fd, int old_fd) {
 		if (cdb_read(&old_cdb, key, klen, cdb_keypos(&old_cdb)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
+		if (key[0] != '/') {
+			xfree(key);
+			continue;
+		}
+
 		key[klen] = '\0';
 
 		if (cdb_find(&new_cdb, key, klen) == 0) {
@@ -280,8 +291,12 @@ process(char *dirname, size_t dlen) {
 
 	// Open old database
 	errno = 0;
-	if ((old_fd = open(old_dbname, O_RDONLY|O_NOCTTY|O_NOFOLLOW)) != -1)
+	if ((old_fd = open(old_dbname, O_RDONLY|O_NOCTTY|O_NOFOLLOW)) != -1) {
+		if (!compat_db_version(old_fd))
+			osec_fatal(EXIT_FAILURE, 0, "%s: file not look like osec database\n", old_dbname);
+
 		printf("Processing %s ...\n", dirname);
+	}
 	else if (errno == ENOENT)
 		printf("Init database for %s ...\n", dirname);
 	else
