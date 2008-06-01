@@ -10,6 +10,15 @@
 
 . /etc/osec/pipe.conf
 
+if [ -d /var/lib/osec/.db.v1 ]; then
+	for db in /var/lib/osec/osec.cdb.*; do
+		[ "$db" != '/var/lib/osec/osec.cdb.*' ] ||
+			break
+		osec-migrade-db -D /var/lib/osec "$db"
+	done
+	mkdir /var/lib/osec/.db.v1
+fi
+
 ((/usr/bin/osec -D /var/lib/osec -f /etc/osec/dirs.conf; \
  rc=$?; [ $rc -eq 0 ] || echo "Program exited abnormally, exit code = $rc" >&2) |
  eval "$REPORT_PIPE") 2>&1 | eval "$SEND_PIPE"
