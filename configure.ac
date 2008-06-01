@@ -36,5 +36,5 @@ AC_FUNC_REALLOC
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([strerror])
 
-AC_CONFIG_FILES([Makefile src/Makefile data/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile update/Makefile data/Makefile])
 AC_OUTPUT

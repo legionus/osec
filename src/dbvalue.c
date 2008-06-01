@@ -27,7 +27,7 @@ osec_field(const unsigned type, const void *data, const size_t dlen) {
 	return NULL;
 }
 
-static size_t
+size_t
 append_value(const unsigned type, void **dst, size_t *dlen, const void *src, const size_t slen) {
 
 	*dst = xrealloc(*dst, (*dlen + sizeof(unsigned) + sizeof(size_t) + slen));

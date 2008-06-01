@@ -56,6 +56,7 @@ void digest(const char *fname, char *digest);
 
 /* dbvalue.c */
 void  *osec_field(const unsigned type, const void *data, const size_t dlen);
+size_t append_value(const unsigned type, void **dst, size_t *dlen, const void *src, const size_t slen);
 size_t osec_state(void **val, size_t *vlen, const struct stat *st);
 size_t osec_digest(void **val, size_t *vlen, const char *fname);
 size_t osec_symlink(void **val, size_t *vlen, const char *fname);
