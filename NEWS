@@ -1,5 +1,13 @@
 list of user-visible changes between releases of osec:
 
+[1.2.0]
+* Reduce requires (do not use openssl, libcdbxx and boost);
+* Change checksum algorithm from MD5 to SHA1;
+* Change database format;
+* Show hostname in mail subject (osec_mailer);
+* Track inode changes;
+* Track symlink changes;
+
 [1.0.0]
 * switch from Berkley DB (db4) to Constant Database:
    - faster
