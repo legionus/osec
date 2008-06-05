@@ -54,6 +54,7 @@ add name of rpm packages for files in report.
 %setup -q
 
 %build
+%autoreconf
 %configure
 %make_build
 
@@ -65,7 +66,7 @@ install -pD -m700 data/osec.cron %buildroot/etc/cron.daily/osec
 
 #configs
 mkdir -pm700 %buildroot/etc/osec
-install -pm600 data/pipe.conf %buildroot/etc/osec/
+mv -pm600 %buildroot/etc/pipe.conf %buildroot/etc/osec/
 
 #install directory for the databases
 mkdir -p %buildroot%osec_statedir

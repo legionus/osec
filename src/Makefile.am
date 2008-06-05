@@ -19,5 +19,5 @@ osec_SOURCES = osec.c common.c memory.c privs.c status.c digest.c dbvalue.c \
 osec_LIBS = -lcap -lcdb
 dist_man_MANS = osec.1
 
-man: osec
+osec.1: osec
 	$(HELP2MAN) -i osec.1.inc -N ./osec > osec.1

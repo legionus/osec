@@ -493,7 +493,7 @@ uninstall-man: uninstall-man1
 	uninstall-man uninstall-man1
 
 
-man: osec
+osec.1: osec
 	$(HELP2MAN) -i osec.1.inc -N ./osec > osec.1
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
