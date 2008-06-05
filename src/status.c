@@ -187,7 +187,7 @@ check_symlink(const char *fname, void *ndata, size_t nlen, void *odata, size_t o
 	old_len = strlen(old);
 	new_len = strlen(new);
 
-	if (strncmp(old, new, MIN(old_len, new_len)) != 0)
+	if (strcmp(old, new) != 0)
 		printf("%s\tsymlink\tchanged\told target=%s\tnew target=%s\n",
 			fname, old, new);
 }
