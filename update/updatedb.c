@@ -29,6 +29,41 @@ print_help(int ret)  {
 	exit(ret);
 }
 
+static char *
+decode_dirname(char *dir) {
+	char *ndir = NULL;
+	int len = strlen(dir);
+	int found = 0, i, j = 0;
+
+	ndir = (char *) xmalloc(sizeof(char) * len);
+
+	for (i = 0; i < len; i++) {
+		int c;
+		if (dir[i] == '%') {
+			found = 1;
+			sscanf((dir + i), "%%%d%%", &c);
+			i += snprintf(NULL, 0, "%d", c);
+			i += 1;
+			if (found)
+				ndir[j++] = (char) c;
+		}
+		else {
+			if (found)
+				ndir[j++] = dir[i];
+		}
+	}
+
+	if (!found) {
+		xfree(ndir);
+		return NULL;
+	}
+
+	ndir[j++] = '\0';
+	ndir = (char *) xrealloc(ndir,(sizeof(char) * j));
+
+	return ndir;
+}
+
 static size_t
 osec_empty_digest(void **val, size_t *vlen) {
 	char fdigest[digest_len];
@@ -81,7 +116,7 @@ main(int argc, char **argv) {
 	size_t len = 0;
 	char *dbfile, *dbnewfile, *dbtemp, *dirname = NULL;
 	char *key;
-	unsigned cpos, klen, dlen = 0;
+	unsigned cpos, klen;
 	struct cdb cdbm;
 	struct cdb_make cdbn;
 
@@ -174,18 +209,6 @@ main(int argc, char **argv) {
 			xfree(val);
 		}
 
-		if (dirname != NULL) {
-			if (dlen > klen) {
-				xfree(dirname);
-				dirname = strdup(key);
-				dlen = klen;
-			}
-		}
-		else {
-			dirname = strdup(key);
-			dlen = klen;
-		}
-
 		xfree(key);
 	}
 
@@ -202,7 +225,9 @@ main(int argc, char **argv) {
 
 	remove(dbfile);
 
+	dirname = decode_dirname(dbfile);
 	gen_db_name(dirname, &dbnewfile);
+
 	chmod(dbtemp, S_IRUSR|S_IWUSR|S_IRGRP);
 	rename(dbtemp, dbnewfile);
 
