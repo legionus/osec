@@ -169,7 +169,10 @@ create_database(int fd, char *dir, size_t len) {
 	if (cdb_make_start(&cdbm, fd) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_start");
 
-	retval = osec_append(&cdbm, dir, len);
+	if (access(dir, R_OK) == 0)
+		retval = osec_append(&cdbm, dir, len);
+	else
+		retval = 2;
 
 	write_db_version(&cdbm);
 
@@ -316,12 +319,10 @@ process(char *dirname, size_t dlen) {
 		remove(new_dbname);
 
 	// Create new state
-	if (create_database(new_fd, dirname, dlen)) {
+	if ((retval = create_database(new_fd, dirname, dlen)) == 1) {
 		show_changes(new_fd, old_fd);
 		show_oldfiles(new_fd, old_fd);
 	}
-	else
-		retval = osec_error("Unable to create database\n");
 
 	if (old_fd != -1 && close(old_fd) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: close", old_dbname);
@@ -475,7 +476,7 @@ main(int argc, char **argv) {
 
 			path_len = strlen(path) + 1;
 
-			if (process(path, path_len))
+			if (!process(path, path_len))
 				retval = EXIT_FAILURE;
 
 			xfree(path);
