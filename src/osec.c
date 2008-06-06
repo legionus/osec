@@ -331,10 +331,8 @@ process(char *dirname, size_t dlen) {
 		osec_fatal(EXIT_FAILURE, errno, "%s: close", new_dbname);
 
 	//replace database with new
-	if (retval && !read_only) {
-		chmod(new_dbname, S_IRUSR|S_IWUSR|S_IRGRP);
+	if (retval && !read_only)
 		rename(new_dbname, old_dbname);
-	}
 
 	xfree(old_dbname);
 	xfree(new_dbname);

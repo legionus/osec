@@ -223,13 +223,11 @@ main(int argc, char **argv) {
 	if (close(fd) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: close", dbfile);
 
-	remove(dbfile);
-
 	dirname = decode_dirname(dbfile);
 	gen_db_name(dirname, &dbnewfile);
 
-	chmod(dbtemp, S_IRUSR|S_IWUSR|S_IRGRP);
 	rename(dbtemp, dbnewfile);
+	remove(dbfile);
 
 	xfree(dbtemp);
 	xfree(dirname);
