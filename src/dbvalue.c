@@ -1,3 +1,11 @@
+/* dbvalue.c
+ *
+ * This file is part of Osec (lightweight integrity checker)
+ * Copyright (C) 2008  Alexey Gladkov <gladkov.alexey@gmail.com>
+ *
+ * This file is covered by the GNU General Public License,
+ * which should be included with osec as the file COPYING.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
