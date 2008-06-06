@@ -172,7 +172,6 @@ check_checksum(const char *fname, void *ndata, size_t nlen, void *odata, size_t 
 static void
 check_symlink(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen) {
 	char *old, *new;
-	size_t old_len, new_len;
 
 	if ((old = (char *) osec_field(OVALUE_LINK, odata, olen)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0,
@@ -183,9 +182,6 @@ check_symlink(const char *fname, void *ndata, size_t nlen, void *odata, size_t o
 		osec_fatal(EXIT_FAILURE, 0,
 			"%s: osec_field(ndata): Unable to get 'symlink' from database value\n",
 			fname);
-
-	old_len = strlen(old);
-	new_len = strlen(new);
 
 	if (strcmp(old, new) != 0)
 		printf("%s\tsymlink\tchanged\told target=%s\tnew target=%s\n",
