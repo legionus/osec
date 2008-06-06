@@ -32,7 +32,7 @@ printf_pwname(const char *var, uid_t uid) {
 		pw_bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
 		buf = (char *) xmalloc((size_t) pw_bufsize);
 
-		getpwuid_r(uid, &pwbuf, &buf[0], (size_t) pw_bufsize, &pw);
+		getpwuid_r(uid, &pwbuf, buf, (size_t) pw_bufsize, &pw);
 
 		if (pw != NULL)
 			printf(" %s=%s", var, pw->pw_name);
@@ -47,7 +47,7 @@ printf_pwname(const char *var, uid_t uid) {
 
 static void
 printf_grname(const char *var, gid_t gid) {
-	struct group grbuf, *gr;
+	struct group grbuf, *gr = NULL;
 	char *buf;
 	long gr_bufsize;
 
@@ -55,7 +55,7 @@ printf_grname(const char *var, gid_t gid) {
 		gr_bufsize = sysconf(_SC_GETGR_R_SIZE_MAX);
 		buf = (char *) xmalloc((size_t) gr_bufsize);
 
-		getgrgid_r(gid, &grbuf, &buf[0], (size_t) gr_bufsize, &gr);
+		getgrgid_r(gid, &grbuf, buf, (size_t) gr_bufsize, &gr);
 
 		if (gr != NULL)
 			printf(" %s=%s", var, gr->gr_name);
@@ -95,7 +95,7 @@ check_insecure(osec_stat_t *st) {
 		printf_pwname((char *) "suid", st->uid);
 
 	if (st->mode & S_ISGID)
-		printf_pwname((char *) "sgid", st->gid);
+		printf_grname((char *) "sgid", st->gid);
 
 	if (st->mode & S_IWOTH)
 		printf(" ww");
