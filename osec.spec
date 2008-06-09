@@ -101,7 +101,7 @@ rm -f %osec_statedir/osec.db.*
 
 %changelog
 * Thu Jun 05 2008 Alexey Gladkov <legion@altlinux.ru> 1.2.0-alt1
-- New version;
+- New version (1.2.0);
 - Almost completely rewritten from scratch in C;
 - Reduce requires (do not use openssl, libcdbxx);
 - Change database format;
