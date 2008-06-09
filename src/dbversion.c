@@ -20,7 +20,7 @@ compat_db_version(int fd) {
 	if (cdb_init(&cdbm, fd) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_init(db)");
 
-	if (cdb_find(&cdbm, key, klen) == 0)
+	if (cdb_find(&cdbm, key, (unsigned) klen) == 0)
 		return 0;
 
 	return 1;
@@ -29,6 +29,6 @@ compat_db_version(int fd) {
 void
 write_db_version(struct cdb_make *cdbm) {
 	int ver = OSEC_DB_VERSION;
-	if (cdb_make_add(cdbm, "version", 7, &ver, sizeof(ver)) != 0)
+	if (cdb_make_add(cdbm, "version", (unsigned) 7, &ver, (unsigned) sizeof(ver)) != 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_add");
 }

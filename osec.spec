@@ -19,7 +19,7 @@ Obsoletes: mtree-sec
 %define osec_user osec
 
 # Automatically added by buildreq on Sat Apr 21 2007 (-bi)
-BuildRequires: help2man libcap-devel perl-RPM
+BuildRequires: help2man libcdb-devel libcap-devel perl-RPM
 
 %package cronjob
 Summary: General cron framework for osec

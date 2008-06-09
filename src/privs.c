@@ -25,7 +25,7 @@ drop_privs(char *user, char *group) {
 	struct group *gr;
 
 	//cleanup all process groups
-	if (setgroups(0, NULL) == -1)
+	if (setgroups((size_t) 0, NULL) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "setgroups");
 
 	//drop group

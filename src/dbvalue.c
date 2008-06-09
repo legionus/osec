@@ -71,15 +71,15 @@ osec_digest(void **val, size_t *vlen, const char *fname) {
 
 	digest(fname, fdigest);
 
-	return append_value(OVALUE_CSUM, val, vlen, &fdigest, digest_len);
+	return append_value(OVALUE_CSUM, val, vlen, &fdigest, (size_t) digest_len);
 }
 
 size_t
 osec_symlink(void **val, size_t *vlen, const char *fname) {
 	ssize_t lnklen;
-	char *buf = (char *) xmalloc(MAXPATHLEN);
+	char *buf = (char *) xmalloc((size_t) MAXPATHLEN);
 
-	if ((lnklen = readlink(fname, buf, MAXPATHLEN)) == -1)
+	if ((lnklen = readlink(fname, buf, (size_t) MAXPATHLEN)) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: readlink", fname);
 
 	buf[lnklen] = '\0';

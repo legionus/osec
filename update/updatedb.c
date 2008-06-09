@@ -42,7 +42,7 @@ decode_dirname(char *dir) {
 		if (dir[i] == '%') {
 			found = 1;
 			sscanf((dir + i), "%%%d%%", &c);
-			i += snprintf(NULL, 0, "%d", c);
+			i += snprintf(NULL, (size_t) 0, "%d", c);
 			i += 1;
 			if (found)
 				ndir[j++] = (char) c;
@@ -67,14 +67,14 @@ decode_dirname(char *dir) {
 static size_t
 osec_empty_digest(void **val, size_t *vlen) {
 	char fdigest[digest_len];
-	bzero(&fdigest, digest_len);
-	return append_value(OVALUE_CSUM, val, vlen, &fdigest, digest_len);
+	bzero(&fdigest, (size_t) digest_len);
+	return append_value(OVALUE_CSUM, val, vlen, &fdigest, (size_t) digest_len);
 }
 
 static size_t
 osec_empty_symlink(void **val, size_t *vlen) {
 	char t = '\0';
-	return append_value(OVALUE_LINK, val, vlen, &t, 1);
+	return append_value(OVALUE_LINK, val, vlen, &t, (size_t) 1);
 }
 
 static void
@@ -178,7 +178,7 @@ main(int argc, char **argv) {
 		char *type;
 
 		klen = cdb_keylen(&cdbm);
-		key = (char *) xmalloc(klen + 1);
+		key = (char *) xmalloc((size_t) (klen + 1));
 
 		if (cdb_read(&cdbm, key, klen, cdb_keypos(&cdbm)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
@@ -196,14 +196,14 @@ main(int argc, char **argv) {
 			size_t vlen = 0;
 			struct stat st;
 
-			if (cdb_read(&cdbm, &st, sizeof(st), cdb_datapos(&cdbm)) < 0)
+			if (cdb_read(&cdbm, &st, (unsigned) sizeof(st), cdb_datapos(&cdbm)) < 0)
 				osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
 			osec_empty_digest(&val, &vlen);
 			osec_empty_symlink(&val, &vlen);
 			osec_state(&val, &vlen, &st);
 
-			if (cdb_make_add(&cdbn, key, klen+1, val, vlen) != 0)
+			if (cdb_make_add(&cdbn, key, klen+1, val, (unsigned) vlen) != 0)
 				osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", key);
 
 			xfree(val);

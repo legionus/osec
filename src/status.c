@@ -158,7 +158,7 @@ check_checksum(const char *fname, void *ndata, size_t nlen, void *odata, size_t 
 			"%s: osec_field(ndata): Unable to get 'checksum' from database value\n",
 			fname);
 
-	if (strncmp(old, new, digest_len) != 0) {
+	if (strncmp(old, new, (size_t) digest_len) != 0) {
 		printf("%s\tchecksum\tchanged\told checksum=", fname);
 		show_digest(old);
 
