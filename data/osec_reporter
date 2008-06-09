@@ -195,7 +195,7 @@ if (%symlinks)
 if (%changed_symlinks)
 {
     print "These symlinks changed their target:\n";
-    print "\t- $_ -> '$changed_symlinks{$_}{'old'}', was '$changed_symlinks{$_}{'new'}'\n" foreach (sort keys %changed_symlinks);
+    print "\t- $_ -> '$changed_symlinks{$_}{'new'}', was '$changed_symlinks{$_}{'old'}'\n" foreach (sort keys %changed_symlinks);
     print "\n";
 }
 
