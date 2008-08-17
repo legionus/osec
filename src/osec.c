@@ -284,8 +284,8 @@ show_oldfiles(int new_fd, int old_fd) {
 }
 
 static int
-process(char *dirname, size_t dlen) {
-	size_t len;
+process(char *dirname) {
+	size_t len, dlen;
 	int retval = 1;
 	int new_fd, old_fd;
 	char *new_dbname, *old_dbname;
@@ -320,6 +320,7 @@ process(char *dirname, size_t dlen) {
 		remove(new_dbname);
 
 	// Create new state
+	dlen = strlen(dirname) + 1;
 	if ((retval = create_database(new_fd, dirname, dlen)) == 1) {
 		show_changes(new_fd, old_fd);
 		show_oldfiles(new_fd, old_fd);
@@ -385,7 +386,6 @@ main(int argc, char **argv) {
 	char *user = NULL, *group = NULL;
 
 	char *path;
-	size_t path_len;
 
 	struct option long_options[] = {
 		{ "help",		no_argument,		0, 'h' },
@@ -473,9 +473,7 @@ main(int argc, char **argv) {
 			if ((path = validate_path((line + i))) == NULL)
 				continue;
 
-			path_len = strlen(path) + 1;
-
-			if (!process(path, path_len))
+			if (!process(path))
 				retval = EXIT_FAILURE;
 
 			xfree(path);
@@ -491,9 +489,7 @@ main(int argc, char **argv) {
 		if ((path = validate_path(argv[optind++])) == NULL)
 			continue;
 
-		path_len = strlen(path) + 1;
-
-		if (!process(path, path_len))
+		if (!process(path))
 			retval = EXIT_FAILURE;
 
 		xfree(path);
