@@ -64,6 +64,69 @@ print_version(void) {
         exit(EXIT_SUCCESS);
 }
 
+static int remove_recursive(char *fname) {
+	DIR *d;
+	struct dirent *dir;
+	struct stat st;
+	int retval = 1;
+
+	if (lstat(fname, &st) == -1)
+		osec_fatal(EXIT_FAILURE, errno, "%s: lstat", fname);
+
+	if (!S_ISDIR(st.st_mode)) {
+		remove(fname);
+		return retval;
+	}
+
+	if ((d = opendir(fname)) == NULL) {
+		if (errno == EACCES) {
+			osec_error("%s: opendir: %s\n", fname, strerror(errno));
+			return 0;
+		}
+		else
+			osec_fatal(EXIT_FAILURE, errno, "%s: opendir", fname);
+	}
+
+	while ((dir = readdir(d)) != NULL) {
+		if ((!strncmp(dir->d_name, "..", (size_t) 2) || !strncmp(dir->d_name, ".", (size_t) 1)))
+			continue;
+
+		if ((retval = remove_recursive(dir->d_name)) == 0)
+			break;
+	}
+
+	if (closedir(d) == -1)
+		osec_fatal(EXIT_FAILURE, errno, "%s: closedir", fname);
+
+	if (retval)
+		remove(fname);
+
+	return retval;
+}
+
+static void recreate_tempdir(void) {
+	struct stat st;
+	char *tempdir = NULL;
+
+	/* tempdir = db_path/temp */
+	size_t len = strlen(db_path) + 6;
+
+	tempdir = (char *) xmalloc(sizeof(char) * len);
+	sprintf(tempdir, "%s/temp", db_path);
+
+	if (lstat(tempdir, &st) == -1) {
+		if (errno != ENOENT)
+			osec_fatal(EXIT_FAILURE, errno, "%s: lstat", tempdir);
+	}
+	else if(remove_recursive(tempdir) == 0)
+		osec_fatal(EXIT_FAILURE, 0, "%s: remove_recursive: Unable to remove tempdir\n", tempdir);
+
+	if (mkdir(tempdir, 0700) == -1)
+		osec_fatal(EXIT_FAILURE, errno, "%s: mkdir", tempdir);
+
+	free(tempdir);
+}
+
 static void
 gen_db_name(char *dirname, char **dbname) {
 	int i = 0;
@@ -307,9 +370,9 @@ process(char *dirname) {
 		osec_fatal(EXIT_FAILURE, errno, "%s: open", old_dbname);
 
 	// Generate new state database
-	len = strlen(db_path) + 16;
+	len = strlen(db_path) + 21;
 	new_dbname = (char *) xmalloc(sizeof(char) * len);
-	sprintf(new_dbname, "%s/osec.XXXXXXXXX", db_path);
+	sprintf(new_dbname, "%s/temp/osec.XXXXXXXXX", db_path);
 
 	// Open new database
 	if ((new_fd = mkstemp(new_dbname)) == -1)
@@ -447,6 +510,8 @@ main(int argc, char **argv) {
 		if (!geteuid())
 			osec_fatal(EXIT_FAILURE, 0, "cannot run from under privilege user\n");
 	}
+
+	recreate_tempdir();
 
 	if (dirslist_file != NULL) {
 		FILE *fd;
