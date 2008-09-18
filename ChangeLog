@@ -1,3 +1,22 @@
+2008-09-18  Alexey Gladkov <legion@altlinux.org>
+
+	* data/osec.cron: osec.cron: Add ionice support.
+
+	* data/osec.cron: osec.cron: Add syslog support.
+
+	* src/osec.c: Fix remove_recursive function.
+
+2008-09-17  Alexey Gladkov <legion@altlinux.org>
+
+	* Makefile.in, aclocal.m4, configure, src/Makefile.in,
+	update/Makefile.in: Update Makefiles.
+
+	* src/osec.c: Make temp database in subdirectory.
+
+	* src/common.c: src/common.c: Fix -Wmissing-format-attribute warnings.
+
+	* src/osec.c: Small code optimization.
+
 2006-03-09 16:40  ievlev
 
 	* src/Makefile, testsuite/Makefile, testsuite/test_algo.cc,

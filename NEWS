@@ -1,5 +1,11 @@
 list of user-visible changes between releases of osec:
 
+[1.2.1]
+* Create temprary database in subdirectory;
+* Add syslog messages in osec.cron;
+* Add ionice support in osec.cron;
+* Small code optimization.
+
 [1.2.0]
 * Reduce requires (do not use openssl, libcdbxx and boost);
 * Change checksum algorithm from MD5 to SHA1;
