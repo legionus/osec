@@ -1,5 +1,5 @@
 Name: osec
-Version: 1.2.0
+Version: 1.2.1
 Release: alt1
 
 Summary: Lightweight file permission checker
@@ -100,6 +100,13 @@ rm -f %osec_statedir/osec.db.*
 %attr(770,root,%osec_group) %osec_statedir
 
 %changelog
+* Thu Sep 18 2008 Alexey Gladkov <legion@altlinux.ru> 1.2.1-alt1
+- New version (1.2.1);
+- Create temprary database in subdirectory (ALT#9612);
+- Add syslog messages in osec.cron (ALT#7099);
+- Add ionice support in osec.cron;
+- Small code optimization.
+
 * Thu Jun 05 2008 Alexey Gladkov <legion@altlinux.ru> 1.2.0-alt1
 - New version (1.2.0);
 - Almost completely rewritten from scratch in C;
