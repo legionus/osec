@@ -87,6 +87,9 @@ static int remove_recursive(char *fname) {
 			osec_fatal(EXIT_FAILURE, errno, "%s: opendir", fname);
 	}
 
+	if (chdir(fname) == -1)
+		osec_fatal(EXIT_FAILURE, errno, "%s: chdir", fname);
+
 	while ((dir = readdir(d)) != NULL) {
 		if ((!strncmp(dir->d_name, "..", (size_t) 2) || !strncmp(dir->d_name, ".", (size_t) 1)))
 			continue;
@@ -94,6 +97,9 @@ static int remove_recursive(char *fname) {
 		if ((retval = remove_recursive(dir->d_name)) == 0)
 			break;
 	}
+
+	if (chdir("..") == -1)
+		osec_fatal(EXIT_FAILURE, errno, "%s: chdir", fname);
 
 	if (closedir(d) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: closedir", fname);
