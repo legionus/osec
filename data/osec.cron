@@ -10,6 +10,19 @@
 
 . /etc/osec/pipe.conf
 
+exit_handler()
+{
+        local rc=$?
+        trap - EXIT
+        if [ "$rc" != 0 ]; then
+		[ ! -x /usr/bin/logger ] ||
+			SHREQ=0 logger -p user.info -t "osec[$$]" "Aborted rc=$rc" ||:
+	fi
+        exit $rc
+}
+
+trap exit_handler HUP PIPE INT QUIT TERM EXIT
+
 if [ ! -d /var/lib/osec/.dbver1 ]; then
 	for db in /var/lib/osec/osec.cdb.*; do
 		[ "$db" != '/var/lib/osec/osec.cdb.*' ] ||
@@ -19,6 +32,12 @@ if [ ! -d /var/lib/osec/.dbver1 ]; then
 	mkdir /var/lib/osec/.dbver1
 fi
 
+[ ! -x /usr/bin/logger ] ||
+	SHREQ=0 logger -p user.info -t "osec[$$]" Started ||:
+
 ((/usr/bin/osec -D /var/lib/osec -f /etc/osec/dirs.conf; \
  rc=$?; [ $rc -eq 0 ] || echo "Program exited abnormally, exit code = $rc" >&2) |
  eval "$REPORT_PIPE") 2>&1 | eval "$SEND_PIPE"
+
+[ ! -x /usr/bin/logger ] ||
+	SHREQ=0 logger -p user.info -t "osec[$$]" Finished ||:
