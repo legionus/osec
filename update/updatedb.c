@@ -32,8 +32,9 @@ print_help(int ret)  {
 static char *
 decode_dirname(char *dir) {
 	char *ndir = NULL;
-	int len = strlen(dir);
-	int found = 0, i, j = 0;
+	unsigned int len = strlen(dir);
+	unsigned int i, j = 0;
+	int found = 0, ret;
 
 	ndir = (char *) xmalloc(sizeof(char) * len);
 
@@ -42,8 +43,10 @@ decode_dirname(char *dir) {
 		if (dir[i] == '%') {
 			found = 1;
 			sscanf((dir + i), "%%%d%%", &c);
-			i += snprintf(NULL, (size_t) 0, "%d", c);
-			i += 1;
+			if ((ret = snprintf(NULL, (size_t) 0, "%d", c)) == -1)
+				osec_fatal(EXIT_FAILURE, 0,
+					"%s: snprintf: Unable to get length of char\n", dir);
+			i += (unsigned int) (ret + 1);
 			if (found)
 				ndir[j++] = (char) c;
 		}

@@ -70,7 +70,7 @@ void SHA1_Update(SHA_CTX *ctx, const void *_dataIn, int len) {
       ctx->lenW = 0;
     }
     ctx->sizeLo += 8;
-    ctx->sizeHi += (ctx->sizeLo < 8);
+    ctx->sizeHi += (unsigned int) (ctx->sizeLo < 8);
   }
 }
 

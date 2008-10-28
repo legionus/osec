@@ -24,7 +24,7 @@ digest(const char *fname, char *out) {
 	SHA_CTX ctx;
 
 	void *buf;
-	size_t size = sysconf(_SC_PAGE_SIZE) - 1;
+	size_t size = (size_t) (sysconf(_SC_PAGE_SIZE) - 1);
 
 	if ((fd = open(fname, O_RDONLY)) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: open", fname);
