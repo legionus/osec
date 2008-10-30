@@ -32,7 +32,7 @@ print_help(int ret)  {
 static char *
 decode_dirname(char *dir) {
 	char *ndir = NULL;
-	unsigned int len = strlen(dir);
+	size_t len = strlen(dir);
 	unsigned int i, j = 0;
 	int found = 0, ret;
 
@@ -83,8 +83,8 @@ osec_empty_symlink(void **val, size_t *vlen) {
 static void
 gen_db_name(char *dirname, char **dbname) {
 	int i = 0;
-	unsigned int j = strlen(db_path) + 10;
-	unsigned int len = j + strlen(dirname);
+	size_t j = strlen(db_path) + 10;
+	size_t len = j + strlen(dirname);
 
 	(*dbname) = (char *) xmalloc(sizeof(char) * len);
 	sprintf((*dbname), "%s/osec.cdb.", db_path);
@@ -116,10 +116,10 @@ gen_db_name(char *dirname, char **dbname) {
 int
 main(int argc, char **argv) {
 	int c, fd, fdtemp;
-	size_t len = 0;
+	size_t klen, len = 0;
 	char *dbfile, *dbnewfile, *dbtemp, *dirname = NULL;
 	char *key;
-	unsigned cpos, klen;
+	unsigned cpos;
 	struct cdb cdbm;
 	struct cdb_make cdbn;
 
@@ -183,7 +183,7 @@ main(int argc, char **argv) {
 		klen = cdb_keylen(&cdbm);
 		key = (char *) xmalloc((size_t) (klen + 1));
 
-		if (cdb_read(&cdbm, key, klen, cdb_keypos(&cdbm)) < 0)
+		if (cdb_read(&cdbm, key, (unsigned) klen, cdb_keypos(&cdbm)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
 		key[klen] = '\0';
@@ -206,7 +206,7 @@ main(int argc, char **argv) {
 			osec_empty_symlink(&val, &vlen);
 			osec_state(&val, &vlen, &st);
 
-			if (cdb_make_add(&cdbn, key, klen+1, val, (unsigned) vlen) != 0)
+			if (cdb_make_add(&cdbn, key, (unsigned) klen+1, val, (unsigned) vlen) != 0)
 				osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", key);
 
 			xfree(val);

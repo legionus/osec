@@ -141,8 +141,8 @@ static void recreate_tempdir(void) {
 static void
 gen_db_name(char *dirname, char **dbname) {
 	int i = 0;
-	unsigned int j = strlen(db_path) + 10;
-	unsigned int len = j + strlen(dirname);
+	size_t j = strlen(db_path) + 10;
+	size_t len = j + strlen(dirname);
 
 	(*dbname) = (char *) xmalloc(sizeof(char) * len);
 	sprintf((*dbname), "%s/osec.cdb.", db_path);
