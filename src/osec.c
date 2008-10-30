@@ -261,6 +261,7 @@ create_database(int fd, char *dir, size_t len) {
 
 static void
 show_changes(int new_fd, int old_fd) {
+	int rc;
 	char *key;
 	void *old_data, *new_data;
 	unsigned cpos;
@@ -274,7 +275,8 @@ show_changes(int new_fd, int old_fd) {
 		osec_fatal(EXIT_FAILURE, errno, "cdb_init(new_cdb)");
 
 	cdb_seqinit(&cpos, &new_cdb);
-	while(cdb_seqnext(&cpos, &new_cdb) > 0) {
+
+	while((rc = cdb_seqnext(&cpos, &new_cdb)) > 0) {
 		klen = (size_t) cdb_keylen(&new_cdb);
 		key = (char *) xmalloc(klen + 1);
 
@@ -313,10 +315,14 @@ show_changes(int new_fd, int old_fd) {
 		xfree(new_data);
 		xfree(key);
 	}
+
+	if (rc < 0)
+		osec_fatal(EXIT_FAILURE, errno, "cdb_seqnext(new_cdb)");
 }
 
 static void
 show_oldfiles(int new_fd, int old_fd) {
+	int rc;
 	char *key;
 	unsigned cpos, klen;
 	struct cdb old_cdb, new_cdb;
@@ -331,7 +337,8 @@ show_oldfiles(int new_fd, int old_fd) {
 		osec_fatal(EXIT_FAILURE, errno, "cdb_init(new_cdb)");
 
 	cdb_seqinit(&cpos, &old_cdb);
-	while(cdb_seqnext(&cpos, &old_cdb) > 0) {
+
+	while((rc = cdb_seqnext(&cpos, &old_cdb)) > 0) {
 		klen = cdb_keylen(&old_cdb);
 		key = (char *) xmalloc((size_t) (klen + 1));
 
@@ -358,6 +365,9 @@ show_oldfiles(int new_fd, int old_fd) {
 
 		xfree(key);
 	}
+
+	if (rc < 0)
+		osec_fatal(EXIT_FAILURE, errno, "cdb_seqnext(old_cdb)");
 }
 
 static int
