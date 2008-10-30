@@ -27,6 +27,9 @@ char def_db_path[] = "/tmp/osec";
 char def_user[]    = "osec";
 char def_group[]   = "osec";
 
+char *exclude_matches = NULL;
+size_t exclude_matches_len = 0;
+
 char *db_path = NULL;
 int read_only = 0;
 int numeric_user_group = 0;
@@ -40,15 +43,17 @@ print_help(int ret)  {
 	       "two states of your system.\n"
 	       "\n"
 	       "Options:\n"
-	       "  -r, --read-only     work in read-only mode;\n"
-	       "  -R, --allow-root    allow run with root priveleges;\n"
-	       "  -n, --numeric-ids   dont convert uid/gid into username;\n"
-	       "  -u, --user=USER     non-privelege user account name;\n"
-	       "  -g, --group=GROUP   non-privelege group account name;\n"
-	       "  -D, --dbpath=PATH   path to the directory with databases;\n"
-	       "  -f, --file=FILE     obtain directories from file FILE;\n"
-	       "  -v, --version       print program version and exit;\n"
-	       "  -h, --help          output a brief help message.\n"
+	       "  -r, --read-only           work in read-only mode;\n"
+	       "  -R, --allow-root          allow run with root priveleges;\n"
+	       "  -n, --numeric-ids         dont convert uid/gid into username;\n"
+	       "  -u, --user=USER           non-privelege user account name;\n"
+	       "  -g, --group=GROUP         non-privelege group account name;\n"
+	       "  -D, --dbpath=PATH         path to the directory with databases;\n"
+	       "  -f, --file=FILE           obtain directories from file FILE;\n"
+	       "  -x, --exclude=PATTERN     exclude files matching PATTERN;\n"
+	       "  -X, --exclude-from=FILE   read exclude patterns from FILE;\n"
+	       "  -v, --version             print program version and exit;\n"
+	       "  -h, --help                output a brief help message.\n"
 	       "\n");
 	exit(ret);
 }
@@ -174,6 +179,9 @@ osec_append(struct cdb_make *cdbm, char *fname, size_t flen) {
 	int retval = 1;
 	struct dirent *dir;
 	struct stat st;
+
+	if (is_exclude(fname))
+		return retval;
 
 	if (lstat(fname, &st) == -1) {
 		retval = osec_error("%s: lstat: %s\n", fname, strerror(errno));
@@ -359,6 +367,9 @@ process(char *dirname) {
 	int new_fd, old_fd;
 	char *new_dbname, *old_dbname;
 
+	if (is_exclude(dirname))
+		return 1;
+
 	// Generate priv state database name
 	gen_db_name(dirname, &old_dbname);
 
@@ -466,13 +477,15 @@ main(int argc, char **argv) {
 		{ "file",		required_argument,	0, 'f' },
 		{ "user",		required_argument,	0, 'u' },
 		{ "group",		required_argument,	0, 'g' },
+		{ "exclude",		required_argument,	0, 'x' },
+		{ "exclude-from",	required_argument,	0, 'X' },
 		{ 0, 0, 0, 0 }
 	};
 
 	if (argc == 1)
 		print_help(EXIT_SUCCESS);
 
-	while ((c = getopt_long (argc, argv, "hvnrRu:g:D:f:", long_options, NULL)) != -1) {
+	while ((c = getopt_long (argc, argv, "hvnrRu:g:D:f:x:X:", long_options, NULL)) != -1) {
 		switch (c) {
 			case 'v':
 				print_version();
@@ -497,6 +510,12 @@ main(int argc, char **argv) {
 				break;
 			case 'f':
 				dirslist_file = optarg;
+				break;
+			case 'x':
+				exclude_match_append(optarg);
+				break;
+			case 'X':
+				exclude_matches_file(optarg);
 				break;
 			default:
 			case 'h':
@@ -525,9 +544,8 @@ main(int argc, char **argv) {
 		size_t len = 0;
 		ssize_t n;
 
-		if ((fd = fopen(dirslist_file, "r")) == NULL) {
+		if ((fd = fopen(dirslist_file, "r")) == NULL)
 			osec_fatal(EXIT_FAILURE, errno, "%s: fopen", dirslist_file);
-		}
 
 		while ((n = getline(&line, &len, fd)) != -1) {
 			int i = 0;
@@ -565,6 +583,8 @@ main(int argc, char **argv) {
 
 		xfree(path);
 	}
+
+	xfree(exclude_matches);
 
 	return retval;
 }

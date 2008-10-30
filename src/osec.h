@@ -65,4 +65,9 @@ size_t osec_symlink(void **val, size_t *vlen, const char *fname);
 int  compat_db_version(int fd);
 void write_db_version(struct cdb_make *cdbm);
 
+/* match.c */
+int is_exclude(char *file);
+void exclude_match_append(char *pattern);
+void exclude_matches_file(char *file);
+
 #endif /* OSEC_H */
