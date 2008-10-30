@@ -1,5 +1,5 @@
 Name: osec
-Version: 1.2.1
+Version: 1.2.2
 Release: alt1
 
 Summary: Lightweight file permission checker
@@ -100,6 +100,12 @@ rm -f %osec_statedir/osec.db.*
 %attr(770,root,%osec_group) %osec_statedir
 
 %changelog
+* Thu Oct 30 2008 Alexey Gladkov <legion@altlinux.org> 1.2.2-alt1
+- New version (1.2.2);
+- Dont ignore cdb_seqnext() errors.
+- Add --exclude and --exclude-from options.
+- Fix for gcc-4.3.
+
 * Thu Sep 18 2008 Alexey Gladkov <legion@altlinux.ru> 1.2.1-alt1
 - New version (1.2.1);
 - Create temprary database in subdirectory (ALT#9612);

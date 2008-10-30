@@ -1,3 +1,18 @@
+2008-10-30  Alexey Gladkov <legion@altlinux.org>
+
+	* src/osec.c: Dont ignore cdb_seqnext() errors.
+
+	* src/Makefile.am, src/Makefile.in, src/exclude.c, src/osec.c,
+	  src/osec.h: Add --exclude and --exclude-from options.
+
+2008-10-29  Alexey Gladkov <legion@altlinux.org>
+
+	* .gitignore, aclocal.m4, configure, data/Makefile.in: Update
+	  distribution files.
+
+	* src/digest.c, src/mozilla-sha1/sha1.c, update/updatedb.c: Fix
+	  for gcc-4.3.
+
 2008-09-18  Alexey Gladkov <legion@altlinux.org>
 
 	* data/osec.cron: osec.cron: Add ionice support.
