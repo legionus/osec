@@ -14,7 +14,7 @@ AM_CPPFLAGS += -I./mozilla-sha1
 
 bin_PROGRAMS = osec
 osec_SOURCES = osec.c common.c memory.c privs.c status.c digest.c dbvalue.c \
-		dbversion.c exclude.c ignore.c \
+		dbversion.c exclude.c ignore.c path.c \
 		./mozilla-sha1/sha1.c
 osec_LIBS = -lcap -lcdb
 dist_man_MANS = osec.1

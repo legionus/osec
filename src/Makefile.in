@@ -47,7 +47,7 @@ PROGRAMS = $(bin_PROGRAMS)
 am_osec_OBJECTS = osec.$(OBJEXT) common.$(OBJEXT) memory.$(OBJEXT) \
 	privs.$(OBJEXT) status.$(OBJEXT) digest.$(OBJEXT) \
 	dbvalue.$(OBJEXT) dbversion.$(OBJEXT) exclude.$(OBJEXT) \
-	ignore.$(OBJEXT) sha1.$(OBJEXT)
+	ignore.$(OBJEXT) path.$(OBJEXT) sha1.$(OBJEXT)
 osec_OBJECTS = $(am_osec_OBJECTS)
 osec_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -161,7 +161,7 @@ WARNINGS = -Wall -Wextra -Werror -W -Wshadow -Wcast-align \
 AM_CPPFLAGS = -g -std=c99 -D_BSD_SOURCE -D_GNU_SOURCE $(WARNINGS) \
 	-I./mozilla-sha1
 osec_SOURCES = osec.c common.c memory.c privs.c status.c digest.c dbvalue.c \
-		dbversion.c exclude.c ignore.c \
+		dbversion.c exclude.c ignore.c path.c \
 		./mozilla-sha1/sha1.c
 
 osec_LIBS = -lcap -lcdb
@@ -240,6 +240,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ignore.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/osec.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/path.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/privs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/status.Po@am__quote@

@@ -80,4 +80,8 @@ void exclude_matches_file(char *file);
 /* ignore.c */
 void process_ignore(char *param);
 
+/* path.c */
+void recreate_tempdir(void);
+char *validate_path(const char *path);
+
 #endif /* OSEC_H */
