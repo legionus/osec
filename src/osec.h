@@ -16,6 +16,13 @@
 
 #define OSEC_DB_VERSION 1
 
+#define OSEC_ISSET(state,mask) (((state) & mask) == mask)
+#define OSEC_FMT 0017
+#define OSEC_UID 0010
+#define OSEC_GID 0004
+#define OSEC_MOD 0002
+#define OSEC_INO 0001
+
 #define OVALUE_LINK 4
 #define OVALUE_CSUM 2
 #define OVALUE_STAT 1
@@ -65,9 +72,12 @@ size_t osec_symlink(void **val, size_t *vlen, const char *fname);
 int  compat_db_version(int fd);
 void write_db_version(struct cdb_make *cdbm);
 
-/* match.c */
+/* exclude.c */
 int is_exclude(char *file);
 void exclude_match_append(char *pattern);
 void exclude_matches_file(char *file);
+
+/* ignore.c */
+void process_ignore(char *param);
 
 #endif /* OSEC_H */

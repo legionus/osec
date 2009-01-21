@@ -19,8 +19,8 @@
 
 #include "osec.h"
 
-extern int read_only;
 extern int numeric_user_group;
+extern unsigned ignore;
 
 static void
 printf_pwname(const char *var, uid_t uid) {
@@ -190,14 +190,6 @@ check_symlink(const char *fname, void *ndata, size_t nlen, void *odata, size_t o
 
 int
 check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen) {
-
-#define OSEC_ISSET(state,mask) (((state) & mask) == mask)
-#define OSEC_FMT 0017
-#define OSEC_UID 0010
-#define OSEC_GID 0004
-#define OSEC_MOD 0002
-#define OSEC_INO 0001
-
 	osec_stat_t *new_st, *old_st;
 	unsigned state = 0;
 
@@ -217,10 +209,10 @@ check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_
 	else if (S_ISLNK(new_st->mode) && S_ISLNK(old_st->mode))
 		check_symlink(fname, ndata, nlen, odata, olen);
 
-	if (old_st->uid  != new_st->uid)  state ^= OSEC_UID;
-	if (old_st->gid  != new_st->gid)  state ^= OSEC_GID;
-	if (old_st->mode != new_st->mode) state ^= OSEC_MOD;
-	if (old_st->ino  != new_st->ino)  state ^= OSEC_INO;
+	if (!OSEC_ISSET(ignore, OSEC_UID) && old_st->uid  != new_st->uid)  state ^= OSEC_UID;
+	if (!OSEC_ISSET(ignore, OSEC_GID) && old_st->gid  != new_st->gid)  state ^= OSEC_GID;
+	if (!OSEC_ISSET(ignore, OSEC_MOD) && old_st->mode != new_st->mode) state ^= OSEC_MOD;
+	if (!OSEC_ISSET(ignore, OSEC_INO) && old_st->ino  != new_st->ino)  state ^= OSEC_INO;
 
 	if (!(state & OSEC_FMT))
 		return 0;

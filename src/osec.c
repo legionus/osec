@@ -33,6 +33,7 @@ size_t exclude_matches_len = 0;
 char *db_path = NULL;
 int read_only = 0;
 int numeric_user_group = 0;
+unsigned ignore = 0;
 
 static void __attribute__ ((noreturn))
 print_help(int ret)  {
@@ -52,6 +53,8 @@ print_help(int ret)  {
 	       "  -f, --file=FILE           obtain directories from file FILE;\n"
 	       "  -x, --exclude=PATTERN     exclude files matching PATTERN;\n"
 	       "  -X, --exclude-from=FILE   read exclude patterns from FILE;\n"
+	       "  -i, --ignore=LIST         dont show changes: user, group,\n"
+	       "                            mode or inode;\n"
 	       "  -v, --version             print program version and exit;\n"
 	       "  -h, --help                output a brief help message.\n"
 	       "\n");
@@ -69,7 +72,8 @@ print_version(void) {
         exit(EXIT_SUCCESS);
 }
 
-static int remove_recursive(char *fname) {
+static int
+remove_recursive(char *fname) {
 	DIR *d;
 	struct dirent *dir;
 	struct stat st;
@@ -115,7 +119,8 @@ static int remove_recursive(char *fname) {
 	return retval;
 }
 
-static void recreate_tempdir(void) {
+static void
+recreate_tempdir(void) {
 	struct stat st;
 	char *tempdir = NULL;
 
@@ -466,7 +471,6 @@ validate_path(const char *path) {
 	return buf;
 }
 
-
 int
 main(int argc, char **argv) {
 	int c;
@@ -483,6 +487,7 @@ main(int argc, char **argv) {
 		{ "read-only",		no_argument,		0, 'r' },
 		{ "allow-root",		no_argument,		0, 'R' },
 		{ "numeric-ids",	no_argument,		0, 'n' },
+		{ "ignore",		required_argument,	0, 'i' },
 		{ "dbpath",		required_argument,	0, 'D' },
 		{ "file",		required_argument,	0, 'f' },
 		{ "user",		required_argument,	0, 'u' },
@@ -495,7 +500,7 @@ main(int argc, char **argv) {
 	if (argc == 1)
 		print_help(EXIT_SUCCESS);
 
-	while ((c = getopt_long (argc, argv, "hvnrRu:g:D:f:x:X:", long_options, NULL)) != -1) {
+	while ((c = getopt_long (argc, argv, "hvnrRi:u:g:D:f:x:X:", long_options, NULL)) != -1) {
 		switch (c) {
 			case 'v':
 				print_version();
@@ -514,6 +519,9 @@ main(int argc, char **argv) {
 				break;
 			case 'g':
 				group = optarg;
+				break;
+			case 'i':
+				process_ignore(optarg);
 				break;
 			case 'D':
 				db_path = optarg;
