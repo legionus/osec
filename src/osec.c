@@ -201,27 +201,20 @@ create_database(int fd, char *dir, size_t len) {
 }
 
 static void
-show_changes(int new_fd, int old_fd) {
+show_changes(struct cdb *new_cdb, struct cdb *old_cdb) {
 	int rc;
 	char *key;
 	void *old_data, *new_data;
 	unsigned cpos;
-	struct cdb old_cdb, new_cdb;
 	size_t klen, old_dlen, new_dlen;
 
-	if (old_fd != -1 && cdb_init(&old_cdb, old_fd) < 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_init(old_cdb)");
+	cdb_seqinit(&cpos, new_cdb);
 
-	if (cdb_init(&new_cdb, new_fd) < 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_init(new_cdb)");
-
-	cdb_seqinit(&cpos, &new_cdb);
-
-	while((rc = cdb_seqnext(&cpos, &new_cdb)) > 0) {
-		klen = (size_t) cdb_keylen(&new_cdb);
+	while((rc = cdb_seqnext(&cpos, new_cdb)) > 0) {
+		klen = (size_t) cdb_keylen(new_cdb);
 		key = (char *) xmalloc(klen + 1);
 
-		if (cdb_read(&new_cdb, key, (unsigned) klen, cdb_keypos(&new_cdb)) < 0)
+		if (cdb_read(new_cdb, key, (unsigned) klen, cdb_keypos(new_cdb)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
 		if (key[0] != '/') {
@@ -231,18 +224,18 @@ show_changes(int new_fd, int old_fd) {
 
 		key[klen] = '\0';
 
-		new_dlen = (size_t) cdb_datalen(&new_cdb);
+		new_dlen = (size_t) cdb_datalen(new_cdb);
 		new_data = xmalloc(new_dlen);
 
-		if (cdb_read(&new_cdb, new_data, (unsigned) new_dlen, cdb_datapos(&new_cdb)) < 0)
+		if (cdb_read(new_cdb, new_data, (unsigned) new_dlen, cdb_datapos(new_cdb)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
 		// Search
-		if (old_fd != -1 && cdb_find(&old_cdb, key, (unsigned) klen) > 0) {
-			old_dlen = (size_t) cdb_datalen(&old_cdb);
+		if (old_cdb != NULL && cdb_find(old_cdb, key, (unsigned) klen) > 0) {
+			old_dlen = (size_t) cdb_datalen(old_cdb);
 			old_data = xmalloc(old_dlen);
 
-			if (cdb_read(&old_cdb, old_data, (unsigned) old_dlen, cdb_datapos(&old_cdb)) < 0)
+			if (cdb_read(old_cdb, old_data, (unsigned) old_dlen, cdb_datapos(old_cdb)) < 0)
 				osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
 			if (!check_difference(key, new_data, new_dlen, old_data, old_dlen))
@@ -262,28 +255,18 @@ show_changes(int new_fd, int old_fd) {
 }
 
 static void
-show_oldfiles(int new_fd, int old_fd) {
+show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb) {
 	int rc;
 	char *key;
 	unsigned cpos, klen;
-	struct cdb old_cdb, new_cdb;
 
-	if (old_fd == -1)
-		return;
+	cdb_seqinit(&cpos, old_cdb);
 
-	if (cdb_init(&old_cdb, old_fd) < 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_init(old_cdb)");
-
-	if (cdb_init(&new_cdb, new_fd) < 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_init(new_cdb)");
-
-	cdb_seqinit(&cpos, &old_cdb);
-
-	while((rc = cdb_seqnext(&cpos, &old_cdb)) > 0) {
-		klen = cdb_keylen(&old_cdb);
+	while((rc = cdb_seqnext(&cpos, old_cdb)) > 0) {
+		klen = cdb_keylen(old_cdb);
 		key = (char *) xmalloc((size_t) (klen + 1));
 
-		if (cdb_read(&old_cdb, key, klen, cdb_keypos(&old_cdb)) < 0)
+		if (cdb_read(old_cdb, key, klen, cdb_keypos(old_cdb)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
 		if (key[0] != '/') {
@@ -293,11 +276,11 @@ show_oldfiles(int new_fd, int old_fd) {
 
 		key[klen] = '\0';
 
-		if (cdb_find(&new_cdb, key, klen) == 0) {
-			unsigned dlen = cdb_datalen(&old_cdb);
+		if (cdb_find(new_cdb, key, klen) == 0) {
+			unsigned dlen = cdb_datalen(old_cdb);
 			void *data = xmalloc((size_t) dlen);
 
-			if (cdb_read(&old_cdb, data, dlen, cdb_datapos(&old_cdb)) < 0)
+			if (cdb_read(old_cdb, data, dlen, cdb_datapos(old_cdb)) < 0)
 				osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
 			check_removed(key, data, (size_t) dlen);
@@ -317,13 +300,13 @@ process(char *dirname) {
 	int retval = 1;
 	int new_fd, old_fd;
 	char *new_dbname, *old_dbname;
+	struct cdb old_cdb, new_cdb;
 
 	if (is_exclude(dirname))
 		return 1;
 
 	// Generate priv state database name
 	gen_db_name(dirname, &old_dbname);
-
 	// Open old database
 	errno = 0;
 	if ((old_fd = open(old_dbname, O_RDONLY|O_NOCTTY|O_NOFOLLOW)) != -1) {
@@ -353,8 +336,18 @@ process(char *dirname) {
 	// Create new state
 	dlen = strlen(dirname) + 1;
 	if ((retval = create_database(new_fd, dirname, dlen)) == 1) {
-		show_changes(new_fd, old_fd);
-		show_oldfiles(new_fd, old_fd);
+		if (cdb_init(&new_cdb, new_fd) < 0)
+			osec_fatal(EXIT_FAILURE, errno, "cdb_init(new_cdb)");
+
+		if (old_fd != -1) {
+			if (cdb_init(&old_cdb, old_fd) < 0)
+				osec_fatal(EXIT_FAILURE, errno, "cdb_init(old_cdb)");
+
+			show_changes(&new_cdb, &old_cdb);
+			show_oldfiles(&new_cdb, &old_cdb);
+		}
+		else
+			show_changes(&new_cdb, NULL);
 	}
 
 	if (old_fd != -1 && close(old_fd) == -1)

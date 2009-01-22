@@ -51,9 +51,10 @@ void  xfree(void *ptr);
 void drop_privs(char *user, char *group);
 
 /* status.c */
+void check_new(const char *fname, void *data, size_t len);
+
 /* Return 1 if check is true. Otherwise, 0 is returned. */
 int check_insecure(osec_stat_t *st);
-int check_new(const char *fname, void *data, size_t len);
 int check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen);
 int check_bad_files(const char *fname, void *data, size_t len);
 int check_removed(const char *fname, void *data, size_t len);
