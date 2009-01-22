@@ -19,6 +19,9 @@
 
 #include "osec.h"
 
+void  *read_buf;
+size_t read_bufsize;
+
 // FIXME: use config file for this variables.
 char def_db_path[] = "/tmp/osec";
 char *db_path = NULL;
@@ -175,6 +178,10 @@ main(int argc, char **argv) {
 
 	if (cdb_make_start(&cdbn, fdtemp) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_start");
+
+	// Allocate buffer for reading files.
+	read_bufsize = (size_t) (sysconf(_SC_PAGE_SIZE) - 1);
+	read_buf = xmalloc(read_bufsize);
 
 	cdb_seqinit(&cpos, &cdbm);
 	while(cdb_seqnext(&cpos, &cdbm) > 0) {

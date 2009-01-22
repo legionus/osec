@@ -19,6 +19,9 @@
 
 #include "osec.h"
 
+extern size_t pw_bufsize;
+extern size_t gr_bufsize;
+
 extern int numeric_user_group;
 extern unsigned ignore;
 
@@ -26,20 +29,16 @@ static void
 printf_pwname(const char *var, uid_t uid) {
 	struct passwd pwbuf, *pw;
 	char *buf;
-	long pw_bufsize;
 
 	if (!numeric_user_group) {
-		pw_bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
-		buf = (char *) xmalloc((size_t) pw_bufsize);
+		buf = (char *) alloca(pw_bufsize);
 
-		getpwuid_r(uid, &pwbuf, buf, (size_t) pw_bufsize, &pw);
+		getpwuid_r(uid, &pwbuf, buf, pw_bufsize, &pw);
 
 		if (pw != NULL)
 			printf(" %s=%s", var, pw->pw_name);
 		else
 			printf(" %s=#%ld", var, (long) uid);
-
-		xfree(buf);
 	}
 	else
 		printf(" %s=%ld", var, (long) uid);
@@ -49,20 +48,16 @@ static void
 printf_grname(const char *var, gid_t gid) {
 	struct group grbuf, *gr = NULL;
 	char *buf;
-	long gr_bufsize;
 
 	if (!numeric_user_group) {
-		gr_bufsize = sysconf(_SC_GETGR_R_SIZE_MAX);
-		buf = (char *) xmalloc((size_t) gr_bufsize);
+		buf = (char *) alloca(gr_bufsize);
 
-		getgrgid_r(gid, &grbuf, buf, (size_t) gr_bufsize, &gr);
+		getgrgid_r(gid, &grbuf, buf, gr_bufsize, &gr);
 
 		if (gr != NULL)
 			printf(" %s=%s", var, gr->gr_name);
 		else
 			printf(" %s=#%ld", var, (long) gid);
-
-		xfree(buf);
 	}
 	else
 		printf(" %s=%ld", var, (long) gid);
@@ -123,7 +118,7 @@ show_digest(const char *dst) {
 		printf("%02x", (unsigned char) dst[i++]);
 }
 
-int
+void
 check_new(const char *fname, void *data, size_t dlen) {
 	osec_stat_t *st;
 
@@ -141,7 +136,6 @@ check_new(const char *fname, void *data, size_t dlen) {
 		printf("\n");
 	}
 	show_state((char *) "new", fname, st);
-	return 1;
 }
 
 static void

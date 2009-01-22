@@ -69,7 +69,7 @@ remove_recursive(char *fname) {
 void
 recreate_tempdir(void) {
 	struct stat st;
-	char *tempdir = NULL;
+	char *tempdir;
 
 	/* tempdir = db_path/temp */
 	size_t len = strlen(db_path) + 6;
@@ -87,7 +87,7 @@ recreate_tempdir(void) {
 	if (mkdir(tempdir, 0700) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: mkdir", tempdir);
 
-	free(tempdir);
+	xfree(tempdir);
 }
 
 char *

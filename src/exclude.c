@@ -20,9 +20,14 @@ extern size_t exclude_matches_len;
 void
 exclude_match_append(char *pattern) {
 	size_t len = strlen(pattern) + 1;
+
 	exclude_matches = (char *) xrealloc(exclude_matches,
-			(sizeof(char) * (exclude_matches_len + len)));
-	strcpy((exclude_matches + exclude_matches_len), pattern);
+			(sizeof(char) * (exclude_matches_len + sizeof(size_t) + len)));
+
+	memcpy((exclude_matches + exclude_matches_len), &len, sizeof(size_t));
+	exclude_matches_len += sizeof(size_t);
+
+	memcpy((exclude_matches + exclude_matches_len), pattern, len);
 	exclude_matches_len += len;
 }
 
@@ -37,9 +42,7 @@ exclude_matches_file(char *file) {
 
 	while (getline(&line, &len, fd) != -1)
 		exclude_match_append(line);
-
-	if (line)
-		free(line);
+	xfree(line);
 
 	if (fclose(fd) != 0)
 		osec_fatal(EXIT_FAILURE, errno, "%s: fclose", file);
@@ -47,16 +50,18 @@ exclude_matches_file(char *file) {
 
 int
 is_exclude(char *str) {
-	size_t len = 0;
+	size_t siz, len = 0;
 
 	if (!exclude_matches_len)
 		return 0;
 
 	while(len < exclude_matches_len) {
+		memcpy(&siz, (exclude_matches + len), sizeof(size_t));
+		len += sizeof(size_t);
+
 		if (fnmatch((exclude_matches + len), str, FNM_NOESCAPE) == 0)
 			return 1;
-
-		len += strlen((exclude_matches + len)) + 1;
+		len += siz;
 	}
 	return 0;
 }

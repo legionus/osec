@@ -17,24 +17,22 @@
 #include "osec.h"
 #include "sha1.h"
 
+extern void  *read_buf;
+extern size_t read_bufsize;
+
 void
 digest(const char *fname, char *out) {
 	int fd;
 	ssize_t num;
 	SHA_CTX ctx;
 
-	void *buf;
-	size_t size = (size_t) (sysconf(_SC_PAGE_SIZE) - 1);
-
 	if ((fd = open(fname, O_RDONLY)) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: open", fname);
 
 	SHA1_Init(&ctx);
 
-	buf = xmalloc(size);
-	while ((num = read(fd, buf, size)) > 0)
-		SHA1_Update(&ctx, buf, (int) num);
-	xfree(buf);
+	while ((num = read(fd, read_buf, read_bufsize)) > 0)
+		SHA1_Update(&ctx, read_buf, (int) num);
 
 	if (num == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: read", fname);
@@ -43,5 +41,4 @@ digest(const char *fname, char *out) {
 		osec_fatal(EXIT_FAILURE, errno, "%s: close", fname);
 
 	SHA1_Final((unsigned char *) out, &ctx);
-	return;
 }

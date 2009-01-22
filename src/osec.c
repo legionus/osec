@@ -22,6 +22,13 @@
 #include "config.h"
 #include "osec.h"
 
+// Global variables
+void  *read_buf;
+size_t read_bufsize;
+
+size_t pw_bufsize;
+size_t gr_bufsize;
+
 // FIXME: use config file for this variables.
 char def_db_path[] = "/tmp/osec";
 char def_user[]    = "osec";
@@ -366,6 +373,17 @@ process(char *dirname) {
 	return retval;
 }
 
+static void
+allocate_globals(void) {
+	// Allocate buffer to read the files (digest.c).
+	read_bufsize = (size_t) (sysconf(_SC_PAGE_SIZE) - 1);
+	read_buf = xmalloc(read_bufsize);
+
+	// (status.c)
+	pw_bufsize = (size_t) sysconf(_SC_GETPW_R_SIZE_MAX);
+	gr_bufsize = (size_t) sysconf(_SC_GETGR_R_SIZE_MAX);
+}
+
 int
 main(int argc, char **argv) {
 	int c;
@@ -451,6 +469,8 @@ main(int argc, char **argv) {
 
 	recreate_tempdir();
 
+	allocate_globals();
+
 	if (dirslist_file != NULL) {
 		FILE *fd;
 		char *line = NULL;
@@ -497,6 +517,7 @@ main(int argc, char **argv) {
 		xfree(path);
 	}
 
+	xfree(read_buf);
 	xfree(exclude_matches);
 
 	return retval;
