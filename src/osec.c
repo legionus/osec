@@ -180,7 +180,7 @@ osec_append(struct cdb_make *cdbm, char *fname, size_t flen) {
 }
 
 static int
-create_database(int fd, char *dir, size_t len) {
+create_cdb(int fd, char *dir, size_t len) {
 	struct cdb_make cdbm;
 	int retval = 1;
 
@@ -335,7 +335,7 @@ process(char *dirname) {
 
 	// Create new state
 	dlen = strlen(dirname) + 1;
-	if ((retval = create_database(new_fd, dirname, dlen)) == 1) {
+	if ((retval = create_cdb(new_fd, dirname, dlen)) == 1) {
 		if (cdb_init(&new_cdb, new_fd) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_init(new_cdb)");
 
