@@ -23,6 +23,8 @@
 #include "osec.h"
 
 // Global variables
+char *pathname;
+
 void  *read_buf;
 size_t read_bufsize;
 
@@ -113,36 +115,33 @@ gen_db_name(char *dirname, char **dbname) {
 }
 
 static int
-osec_append(struct cdb_make *cdbm, char *fname, size_t flen) {
+osec_append(struct cdb_make *cdbm, char *fname) {
 	DIR *d;
 	void *val = NULL;
-	size_t vlen = 0;
-	int retval = 1;
+	int rc, retval = 1;
 	struct dirent *dir;
 	struct stat st;
+	size_t len, vlen = 0;
 
 	if (is_exclude(fname))
 		return retval;
 
 	if (lstat(fname, &st) == -1) {
-		retval = osec_error("%s: lstat: %s\n", fname, strerror(errno));
-		return retval;
+		osec_error("%s: lstat: %s\n", fname, strerror(errno));
+		return 0;
 	}
+
+	dirstack_push(fname);
 
 	osec_state(&val, &vlen, &st);
 
-	switch (st.st_mode & S_IFMT) {
-		case S_IFREG: osec_digest(&val, &vlen, fname);  break;
-		case S_IFLNK: osec_symlink(&val, &vlen, fname); break;
+	if (dirstack_get(&pathname, &len)) {
+		if (cdb_make_add(cdbm, pathname, (unsigned) len, val, (unsigned) vlen) != 0)
+			osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", fname);
 	}
-
-	if (cdb_make_add(cdbm, fname, (unsigned) flen, val, (unsigned) vlen) != 0)
-		osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", fname);
-
+	else
+		osec_fatal(EXIT_FAILURE, 0, "dirstack_get: Unable to get path");
 	xfree(val);
-
-	if (!S_ISDIR(st.st_mode))
-		return retval;
 
 	if ((d = opendir(fname)) == NULL) {
 		if (errno == EACCES) {
@@ -153,44 +152,71 @@ osec_append(struct cdb_make *cdbm, char *fname, size_t flen) {
 			osec_fatal(EXIT_FAILURE, errno, "%s: opendir", fname);
 	}
 
-	while ((dir = readdir(d)) != NULL) {
-		char *subname;
-		size_t len = strlen(dir->d_name);
+	if (chdir(fname) == -1)
+		osec_fatal(EXIT_FAILURE, errno, "%s: chdir\n", fname);
 
-		if ((len <= 2) &&
-		    (!strncmp(dir->d_name, "..", (size_t) 2) || !strncmp(dir->d_name, ".", (size_t) 1)))
+	while ((dir = readdir(d)) != NULL) {
+		if (!strcmp(dir->d_name, "..") || !strcmp(dir->d_name, "."))
 			continue;
 
-		len += flen + 1;
+		if (lstat(dir->d_name, &st) == -1) {
+			retval = osec_error("%s: lstat: %s\n", fname, strerror(errno));
+			continue;
+		}
 
-		subname = (char *) xmalloc(sizeof(char) * len);
-		sprintf(subname, "%s/%s", fname, dir->d_name);
+		dirstack_push(dir->d_name);
 
-		retval = osec_append(cdbm, subname, len);
-		xfree(subname);
+		if (dirstack_get(&pathname, &len)) {
+			val = NULL;
+			vlen = 0;
 
-		if (!retval)
-			break;
+			osec_state(&val, &vlen, &st);
+
+			switch (st.st_mode & S_IFMT) {
+				case S_IFREG: osec_digest(&val, &vlen, pathname);  break;
+				case S_IFLNK: osec_symlink(&val, &vlen, pathname); break;
+			}
+
+			if (cdb_make_add(cdbm, pathname, (unsigned) len, val, (unsigned) vlen) != 0)
+				osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", fname);
+
+			xfree(val);
+		}
+		else
+			osec_fatal(EXIT_FAILURE, 0, "dirstack_get: Unable to get path");
+
+		dirstack_pop();
+
+		if (!S_ISDIR(st.st_mode))
+			continue;
+
+		rc = osec_append(cdbm, dir->d_name);
+
+		if (retval)
+			retval = rc;
 	}
+
+	if (chdir("..") == -1)
+		osec_fatal(EXIT_FAILURE, errno, "%s: chdir", fname);
 
 	if (closedir(d) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: closedir", fname);
+
+	dirstack_pop();
 
 	return retval;
 }
 
 static int
-create_cdb(int fd, char *dir, size_t len) {
+create_cdb(int fd, char *dir) {
 	struct cdb_make cdbm;
 	int retval = 1;
 
 	if (cdb_make_start(&cdbm, fd) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_start");
 
-	if (access(dir, R_OK) == 0)
-		retval = osec_append(&cdbm, dir, len);
-	else
-		retval = 2;
+	retval = (access(dir, R_OK) == 0) ?
+		osec_append(&cdbm, dir) : 2;
 
 	write_db_version(&cdbm);
 
@@ -296,7 +322,7 @@ show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb) {
 
 static int
 process(char *dirname) {
-	size_t len, dlen;
+	size_t len;
 	int retval = 1;
 	int new_fd, old_fd;
 	char *new_dbname, *old_dbname;
@@ -307,6 +333,7 @@ process(char *dirname) {
 
 	// Generate priv state database name
 	gen_db_name(dirname, &old_dbname);
+
 	// Open old database
 	errno = 0;
 	if ((old_fd = open(old_dbname, O_RDONLY|O_NOCTTY|O_NOFOLLOW)) != -1) {
@@ -334,8 +361,7 @@ process(char *dirname) {
 		remove(new_dbname);
 
 	// Create new state
-	dlen = strlen(dirname) + 1;
-	if ((retval = create_cdb(new_fd, dirname, dlen)) == 1) {
+	if ((retval = create_cdb(new_fd, dirname)) == 1) {
 		if (cdb_init(&new_cdb, new_fd) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_init(new_cdb)");
 
@@ -368,6 +394,9 @@ process(char *dirname) {
 
 static void
 allocate_globals(void) {
+	// This variable is to display the full path.
+	pathname = xmalloc(MAXPATHLEN);
+
 	// Allocate buffer to read the files (digest.c).
 	read_bufsize = (size_t) (sysconf(_SC_PAGE_SIZE) - 1);
 	read_buf = xmalloc(read_bufsize);
@@ -510,6 +539,7 @@ main(int argc, char **argv) {
 		xfree(path);
 	}
 
+	xfree(pathname);
 	xfree(read_buf);
 	xfree(exclude_matches);
 

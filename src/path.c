@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -18,6 +19,52 @@
 #include "osec.h"
 
 extern char *db_path;
+
+static char **dirstack;
+static size_t dirstack_next = 0, dirstack_size = 0;
+
+int
+dirstack_get(char **out, size_t *outlen) {
+	size_t i, n, len = 0;
+
+	if (dirstack_size == 0)
+		return 0;
+
+	for (i=0; i < dirstack_next && i < MAXPATHLEN; i++) {
+		n = strlen(dirstack[i]);
+		strncpy((*out + len), dirstack[i], n);
+		len += n;
+
+		if ((i+1) < dirstack_next) {
+			(*out)[len] = '/';
+			len += 1;
+		}
+	}
+	(*out)[len] = '\0';
+	*outlen = (len+1);
+	return 1;
+}
+
+void
+dirstack_push(char *name) {
+	if (dirstack_next == dirstack_size) {
+		dirstack_size += 10;
+		dirstack = (char **) xrealloc(dirstack, sizeof(char *) * dirstack_size);
+	}
+	dirstack[dirstack_next] = name;
+	dirstack_next++;
+}
+
+void
+dirstack_pop(void) {
+	dirstack_next--;
+	if (dirstack_next == 0) {
+		xfree(dirstack);
+		dirstack = NULL;
+		dirstack_size = 0;
+		return;
+	}
+}
 
 static int
 remove_recursive(char *fname) {
