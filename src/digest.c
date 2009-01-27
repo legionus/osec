@@ -31,6 +31,9 @@ digest(const char *fname, char *out) {
 
 	SHA1_Init(&ctx);
 
+	/* Let the kernel know we are going to read everything in sequence. */
+	(void) posix_fadvise (fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+
 	while ((num = read(fd, read_buf, read_bufsize)) > 0)
 		SHA1_Update(&ctx, read_buf, (int) num);
 
