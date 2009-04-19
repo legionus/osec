@@ -203,10 +203,10 @@ check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_
 	else if (S_ISLNK(new_st->mode) && S_ISLNK(old_st->mode))
 		check_symlink(fname, ndata, nlen, odata, olen);
 
-	if (!OSEC_ISSET(ignore, OSEC_UID) && old_st->uid  != new_st->uid)  state ^= OSEC_UID;
-	if (!OSEC_ISSET(ignore, OSEC_GID) && old_st->gid  != new_st->gid)  state ^= OSEC_GID;
-	if (!OSEC_ISSET(ignore, OSEC_MOD) && old_st->mode != new_st->mode) state ^= OSEC_MOD;
-	if (!OSEC_ISSET(ignore, OSEC_INO) && old_st->ino  != new_st->ino)  state ^= OSEC_INO;
+	if (!OSEC_ISSET(ignore, OSEC_UID) && old_st->uid  != new_st->uid)  state |= OSEC_UID;
+	if (!OSEC_ISSET(ignore, OSEC_GID) && old_st->gid  != new_st->gid)  state |= OSEC_GID;
+	if (!OSEC_ISSET(ignore, OSEC_MOD) && old_st->mode != new_st->mode) state |= OSEC_MOD;
+	if (!OSEC_ISSET(ignore, OSEC_INO) && old_st->ino  != new_st->ino)  state |= OSEC_INO;
 
 	if (!(state & OSEC_FMT))
 		return 0;
