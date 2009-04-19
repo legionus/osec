@@ -15,10 +15,10 @@ extern unsigned ignore;
 
 static void
 set_ignore(char *param) {
-	if      (!strncmp("user",  param, 4)) ignore |= OSEC_UID;
-	else if (!strncmp("group", param, 5)) ignore |= OSEC_GID;
-	else if (!strncmp("mode",  param, 4)) ignore |= OSEC_MOD;
-	else if (!strncmp("inode", param, 5)) ignore |= OSEC_INO;
+	if      (!strcmp("user",  param)) ignore |= OSEC_UID;
+	else if (!strcmp("group", param)) ignore |= OSEC_GID;
+	else if (!strcmp("mode",  param)) ignore |= OSEC_MOD;
+	else if (!strcmp("inode", param)) ignore |= OSEC_INO;
 }
 
 void
