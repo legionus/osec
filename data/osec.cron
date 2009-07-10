@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -eu
 # osec.cron
 #
 # This file is part of Osec (lightweight integrity checker)
@@ -10,14 +10,12 @@
 
 . /etc/osec/pipe.conf
 
-IONICE=
-[ ! -x /usr/bin/ionice ] ||
-	IONICE='/usr/bin/ionice -c3'
-
 syslog()
 {
-	[ ! -x /usr/bin/logger ] ||
-		SHREQ=0 /usr/bin/logger -p user.info -t "osec[$$]" "$*" ||:
+	local log
+	if log="$(which logger 2>/dev/null)"; then
+		SHREQ=0 "$log" -p user.info -t "osec[$$]" "$*" ||:
+	fi
 }
 
 exit_handler()
@@ -29,16 +27,27 @@ exit_handler()
         exit $rc
 }
 
+cmd=
 run_osec()
 {
 	local rc=0
-	$IONICE /usr/bin/osec -D /var/lib/osec -f /etc/osec/dirs.conf ||
+	$cmd /usr/bin/osec -D /var/lib/osec -f /etc/osec/dirs.conf ||
 		rc=$?
 	if [ $rc -ne 0 ]; then
 		echo "Program exited abnormally, exit code = $rc" >&2
 		syslog "/usr/bin/osec exited abnormally, exit code = $rc"
 	fi
 }
+
+if [ -n "${NICE_PRIORITY-}" ] && nice_cmd="$(which nice 2>/dev/null)"; then
+	$nice_cmd -n "$NICE_PRIORITY" true 2>/dev/null &&
+		cmd="$nice_cmd -n $NICE_PRIORITY --"
+fi
+
+if [ -n "${IONICE_PRIORITY-}" ] && ionice_cmd="$(which ionice 2>/dev/null)"; then
+	$ionice_cmd -t -c $IONICE_PRIORITY true 2>/dev/null &&
+		cmd="$cmd $ionice_cmd -t -c $IONICE_PRIORITY --"
+fi
 
 trap exit_handler HUP PIPE INT QUIT TERM EXIT
 
@@ -49,7 +58,7 @@ if [ ! -d /var/lib/osec/.dbver1 ]; then
 	for db in /var/lib/osec/osec.cdb.*; do
 		[ "$db" != '/var/lib/osec/osec.cdb.*' ] ||
 			break
-		$IONICE /usr/bin/osec-migrade-db -D /var/lib/osec "$db"
+		$cmd /usr/bin/osec-migrade-db -D /var/lib/osec "$db"
 	done
 	mkdir /var/lib/osec/.dbver1
 	syslog "Migration finished"
