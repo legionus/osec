@@ -1,10 +1,11 @@
 Name: osec
-Version: 1.2.2
+Version: 1.2.3
 Release: alt1
 
 Summary: Lightweight file permission checker
 License: GPL3
 Group: System/Base
+Url: https://sourceforge.net/projects/o-security/
 Packager: Alexey Gladkov <legion@altlinux.ru>
 
 Source: osec-%version.tar
@@ -100,6 +101,11 @@ rm -f %osec_statedir/osec.db.*
 %attr(770,root,%osec_group) %osec_statedir
 
 %changelog
+* Thu Jul 30 2009 Alexey Gladkov <legion@altlinux.ru> 1.2.3-alt1
+- New version (1.2.3);
+- Add --ignore option;
+- osec.cron: Add nice support.
+
 * Thu Oct 30 2008 Alexey Gladkov <legion@altlinux.org> 1.2.2-alt1
 - New version (1.2.2);
 - Dont ignore cdb_seqnext() errors.
