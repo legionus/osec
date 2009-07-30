@@ -1,5 +1,14 @@
 list of user-visible changes between releases of osec:
 
+[1.2.3]
+* Add --ignore option;
+* osec.cron: Add nice support.
+
+[1.2.2]
+* Add --exclude and --exclude-from options;
+* Fix for gcc-4.3;
+* Fix build for x86_64;
+
 [1.2.1]
 * Create temprary database in subdirectory;
 * Add syslog messages in osec.cron;
