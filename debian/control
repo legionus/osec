@@ -2,7 +2,7 @@ Source: osec
 Section: misc
 Priority: extra
 Maintainer: Konstantin Lepikhov <lakostis@unsafe.ru>
-Build-Depends: debhelper (>= 5), autotools-dev, libcdb-dev, libcap-dev, help2man, dpatch
+Build-Depends: debhelper (>= 5), autoconf, automake1.9, autotools-dev, libcdb-dev, libcap-dev, help2man, dpatch
 Standards-Version: 3.8.0
 
 Package: osec
