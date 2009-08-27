@@ -23,7 +23,7 @@ Description: General cron framework for osec
 Package: osec-mailreport
 Architecture: all
 Provides: osec-reporter
-Depends: osec (>= ${binary:Version}), osec (<< ${source:Version}.1~), mailutils
+Depends: osec (>= ${binary:Version}), osec (<< ${source:Version}.1~), mailx
 Description: Collection of reporters for osec
  This package contains a set of reporters to use with osec:
  osec_reporter - creates human readable reports;
