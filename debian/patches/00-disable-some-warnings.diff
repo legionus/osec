@@ -1,0 +1,39 @@
+#! /bin/sh -e
+## DP: 00-disable-some-warnings.diff
+if [ $# -ne 1 ]; then 
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1  
+fi
+case "$1" in 
+    -patch) patch -f --no-backup-if-mismatch -p1 < $0;;
+    -unpatch) patch -f --no-backup-if-mismatch -R -p1 < $0;;
+    *)
+        echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+        exit 1;;
+esac
+
+exit 0
+
+@DPATCH@
+diff -uNpar osec-1.2.3.orig/src/Makefile.am osec-1.2.3/src/Makefile.am
+--- osec-1.2.3.orig/src/Makefile.am	2009-08-24 10:18:14.000000000 +0000
++++ osec-1.2.3/src/Makefile.am	2009-08-26 15:32:45.000000000 +0000
+@@ -1,7 +1,7 @@
+ HELP2MAN = help2man
+ 
+ WARNINGS = -Wall -Wextra -Werror -W -Wshadow -Wcast-align \
+-	-Wwrite-strings -Wconversion -Waggregate-return -Wstrict-prototypes \
++	-Wwrite-strings -Waggregate-return -Wstrict-prototypes \
+ 	-Wmissing-prototypes -Wmissing-declarations -Wmissing-noreturn \
+ 	-Wmissing-format-attribute -Wredundant-decls -Wdisabled-optimization \
+ 	\
+diff -uNpar osec-1.2.3.orig/update/Makefile.am osec-1.2.3.patch/update/Makefile.am
+--- osec-1.2.3.orig/update/Makefile.am	2009-08-24 10:18:14.000000000 +0000
++++ osec-1.2.3.patch/update/Makefile.am	2009-08-26 15:32:55.000000000 +0000
+@@ -1,5 +1,5 @@
+ WARNINGS = -Wall -Wextra -Werror -W -Wshadow -Wcast-align \
+-	-Wwrite-strings -Wconversion -Waggregate-return -Wstrict-prototypes \
++	-Wwrite-strings -Waggregate-return -Wstrict-prototypes \
+ 	-Wmissing-prototypes -Wmissing-declarations -Wmissing-noreturn \
+ 	-Wmissing-format-attribute -Wredundant-decls -Wdisabled-optimization \
+ 	\

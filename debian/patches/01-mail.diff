@@ -1,0 +1,30 @@
+#! /bin/sh -e
+## DP: 01-mail.diff
+if [ $# -ne 1 ]; then 
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1  
+fi
+case "$1" in 
+    -patch) patch -f --no-backup-if-mismatch -p1 < $0;;
+    -unpatch) patch -f --no-backup-if-mismatch -R -p1 < $0;;
+    *)
+        echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+        exit 1;;
+esac
+
+exit 0
+
+@DPATCH@
+diff -uNpar osec-1.2.3.orig/data/pipe.conf osec-1.2.3/data/pipe.conf
+--- osec-1.2.3.orig/data/pipe.conf	2009-08-26 19:45:41.000000000 +0400
++++ osec-1.2.3/data/pipe.conf	2009-08-27 16:28:07.000000000 +0400
+@@ -1,5 +1,8 @@
++# hostname (not portable but works)
++HOSTNAME='uname -n'
++
+ # mail command
+-MAIL_PIPE='/bin/mail -s "[osec] Daily security check -- $HOSTNAME" root'
++MAIL_PIPE='/usr/bin/mail -s "[osec] Daily security check -- $HOSTNAME" root'
+ 
+ # osec report generator
+ REPORT_PIPE=/usr/bin/osec_reporter
