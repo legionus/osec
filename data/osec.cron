@@ -9,6 +9,9 @@
 # which should be included with osec as the file COPYING.
 #
 
+NICE_ARGS=
+IONICE_ARGS='-t'
+
 . /etc/osec/pipe.conf
 
 syslog()
@@ -42,12 +45,12 @@ run_osec()
 
 if [ -n "${NICE_PRIORITY-}" ] && nice_cmd="$(which nice 2>/dev/null)"; then
 	$nice_cmd -n "$NICE_PRIORITY" true 2>/dev/null &&
-		cmd="$nice_cmd -n $NICE_PRIORITY --"
+		cmd="$nice_cmd $NICE_ARGS -n $NICE_PRIORITY --"
 fi
 
 if [ -n "${IONICE_PRIORITY-}" ] && ionice_cmd="$(which ionice 2>/dev/null)"; then
 	$ionice_cmd -t -c $IONICE_PRIORITY true 2>/dev/null &&
-		cmd="$cmd $ionice_cmd -t -c $IONICE_PRIORITY --"
+		cmd="$cmd $ionice_cmd $IONICE_ARGS -c $IONICE_PRIORITY --"
 fi
 
 trap exit_handler HUP PIPE INT QUIT TERM EXIT
