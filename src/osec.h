@@ -14,6 +14,8 @@
 #include <unistd.h>
 #include <cdb.h>
 
+#define OSEC_O_FLAGS (O_RDONLY | O_NOCTTY | O_NONBLOCK | O_NOFOLLOW)
+
 #define OSEC_DB_VERSION 1
 
 #define OSEC_ISSET(state,mask) (((state) & mask) == mask)

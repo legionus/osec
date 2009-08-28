@@ -306,7 +306,7 @@ process(char *dirname) {
 
 	// Open old database
 	errno = 0;
-	if ((old_fd = open(old_dbname, O_RDONLY|O_NOCTTY|O_NOFOLLOW)) != -1) {
+	if ((old_fd = open(old_dbname, OSEC_O_FLAGS)) != -1) {
 		if (!compat_db_version(old_fd))
 			osec_fatal(EXIT_FAILURE, 0, "%s: file not look like osec database\n", old_dbname);
 

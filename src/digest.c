@@ -26,7 +26,7 @@ digest(const char *fname, char *out) {
 	ssize_t num;
 	SHA_CTX ctx;
 
-	if ((fd = open(fname, O_RDONLY)) == -1)
+	if ((fd = open(fname, OSEC_O_FLAGS)) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: open", fname);
 
 	SHA1_Init(&ctx);
