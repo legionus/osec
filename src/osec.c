@@ -1,7 +1,7 @@
 /* osec.c
  *
  * This file is part of Osec (lightweight integrity checker)
- * Copyright (C) 2008  Alexey Gladkov <gladkov.alexey@gmail.com>
+ * Copyright (C) 2008-2009  Alexey Gladkov <gladkov.alexey@gmail.com>
  *
  * This file is covered by the GNU General Public License,
  * which should be included with osec as the file COPYING.
@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/param.h>
+#include <fts.h>
 
 #include "config.h"
 #include "osec.h"
@@ -75,7 +76,7 @@ print_version(void) {
         printf(PACKAGE_NAME" version "PACKAGE_VERSION"\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "\n"
-	       "Copyright (C) 2008  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
+	       "Copyright (C) 2008-2009  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "This is free software; see the source for copying conditions.  There is NO\n"
 	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
         exit(EXIT_SUCCESS);
@@ -115,108 +116,77 @@ gen_db_name(char *dirname, char **dbname) {
 }
 
 static int
-osec_append(struct cdb_make *cdbm, char *fname) {
-	DIR *d;
-	void *val = NULL;
-	int rc, retval = 1;
-	struct dirent *dir;
-	struct stat st;
-	size_t len, vlen = 0;
-
-	if (is_exclude(fname))
-		return retval;
-
-	if (lstat(fname, &st) == -1) {
-		osec_error("%s: lstat: %s\n", fname, strerror(errno));
-		return 0;
+dsort(const FTSENT **a, const FTSENT **b) {
+	if (S_ISDIR((*a)->fts_statp->st_mode)) {
+		if (!S_ISDIR((*b)->fts_statp->st_mode))
+			return 1;
 	}
-
-	dirstack_push(fname);
-
-	osec_state(&val, &vlen, &st);
-
-	if (dirstack_get(&pathname, &len)) {
-		if (cdb_make_add(cdbm, pathname, (unsigned) len, val, (unsigned) vlen) != 0)
-			osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", fname);
-	}
-	else
-		osec_fatal(EXIT_FAILURE, 0, "dirstack_get: Unable to get path");
-	xfree(val);
-
-	if ((d = opendir(fname)) == NULL) {
-		if (errno == EACCES) {
-			osec_error("%s: opendir: %s\n", fname, strerror(errno));
-			return retval;
-		}
-		else
-			osec_fatal(EXIT_FAILURE, errno, "%s: opendir", fname);
-	}
-
-	if (chdir(fname) == -1)
-		osec_fatal(EXIT_FAILURE, errno, "%s: chdir\n", fname);
-
-	while ((dir = readdir(d)) != NULL) {
-		if (!strcmp(dir->d_name, "..") || !strcmp(dir->d_name, "."))
-			continue;
-
-		if (lstat(dir->d_name, &st) == -1) {
-			retval = osec_error("%s: lstat: %s\n", fname, strerror(errno));
-			continue;
-		}
-
-		dirstack_push(dir->d_name);
-
-		if (dirstack_get(&pathname, &len)) {
-			val = NULL;
-			vlen = 0;
-
-			osec_state(&val, &vlen, &st);
-
-			switch (st.st_mode & S_IFMT) {
-				case S_IFREG: osec_digest(&val, &vlen, pathname);  break;
-				case S_IFLNK: osec_symlink(&val, &vlen, pathname); break;
-			}
-
-			if (cdb_make_add(cdbm, pathname, (unsigned) len, val, (unsigned) vlen) != 0)
-				osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", fname);
-
-			xfree(val);
-		}
-		else
-			osec_fatal(EXIT_FAILURE, 0, "dirstack_get: Unable to get path");
-
-		dirstack_pop();
-
-		if (!S_ISDIR(st.st_mode))
-			continue;
-
-		rc = osec_append(cdbm, dir->d_name);
-
-		if (retval)
-			retval = rc;
-	}
-
-	if (chdir("..") == -1)
-		osec_fatal(EXIT_FAILURE, errno, "%s: chdir", fname);
-
-	if (closedir(d) == -1)
-		osec_fatal(EXIT_FAILURE, errno, "%s: closedir", fname);
-
-	dirstack_pop();
-
-	return retval;
+	else if (S_ISDIR((*b)->fts_statp->st_mode))
+		return -1;
+	return (strcmp((*a)->fts_name, (*b)->fts_name));
 }
 
 static int
 create_cdb(int fd, char *dir) {
+	FTS *t;
+	FTSENT *p;
+	char *argv[2];
+
+	void *val = NULL;
+	size_t vlen = 0;
+
 	struct cdb_make cdbm;
 	int retval = 1;
+
+	argv[0] = dir;
+	argv[1] = NULL;
 
 	if (cdb_make_start(&cdbm, fd) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_start");
 
-	retval = (access(dir, R_OK) == 0) ?
-		osec_append(&cdbm, dir) : 2;
+	if ((t = fts_open(argv, FTS_PHYSICAL, dsort)) == NULL)
+		osec_fatal(EXIT_FAILURE, errno, "%s: fts_open", dir);
+
+	while ((p = fts_read(t))) {
+		val = NULL;
+		vlen = 0;
+
+		switch(p->fts_info) {
+			case FTS_DNR:
+			case FTS_ERR:
+			case FTS_NS:
+				osec_fatal(EXIT_FAILURE, errno, "%s: fts_read", p->fts_path);
+                        case FTS_D:
+                        case FTS_DC:
+                        case FTS_F:
+                        case FTS_SL:
+                        case FTS_SLNONE:
+				break;
+			default:
+				continue;
+		}
+
+		osec_state(&val, &vlen, p->fts_statp);
+
+		switch(p->fts_info) {
+                        case FTS_F:
+                    		osec_digest(&val, &vlen, p->fts_path);
+                    		break;
+                        case FTS_SL:
+                        case FTS_SLNONE:
+                    		osec_symlink(&val, &vlen, p->fts_path);
+                    		break;
+		}
+
+		if (cdb_make_add(&cdbm, p->fts_path, (unsigned) p->fts_pathlen+1,
+		                 val, (unsigned) vlen) != 0)
+			osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", p->fts_path);
+
+		xfree(val);
+	}
+
+	if (fts_close(t) == -1)
+		osec_fatal(EXIT_FAILURE, errno, "%s: fts_close", dir);
 
 	write_db_version(&cdbm);
 

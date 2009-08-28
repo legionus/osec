@@ -1,3 +1,7 @@
+2009-08-28  Alexey Gladkov <gladkov.alexey@gmail.com>
+	* src/osec.c, src/osec.h, src/path.c: Use fts(3) to traverse
+	  a file hierarchy.
+
 2008-10-30  Alexey Gladkov <legion@altlinux.org>
 
 	* src/osec.c: Dont ignore cdb_seqnext() errors.

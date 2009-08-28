@@ -82,10 +82,6 @@ void exclude_matches_file(char *file);
 void process_ignore(char *param);
 
 /* path.c */
-int  dirstack_get(char **path, size_t *len);
-void dirstack_push(char *dname);
-void dirstack_pop(void);
-
 void recreate_tempdir(void);
 char *validate_path(const char *path);
 
