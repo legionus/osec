@@ -41,13 +41,13 @@ print_help(int ret)  {
 
 static void __attribute__ ((noreturn))
 print_version(void) {
-        printf("osec2txt version "PACKAGE_VERSION"\n"
+	printf("osec2txt version "PACKAGE_VERSION"\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "\n"
 	       "Copyright (C) 2009  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "This is free software; see the source for copying conditions.  There is NO\n"
 	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
-        exit(EXIT_SUCCESS);
+	exit(EXIT_SUCCESS);
 }
 
 static void

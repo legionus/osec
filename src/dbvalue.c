@@ -45,7 +45,7 @@ append_value(const unsigned type, void **dst, size_t *dlen, const void *src, con
 
 	memcpy(*dst + *dlen, &slen, sizeof(size_t));
 	*dlen += sizeof(size_t);
-	
+
 	memcpy(*dst + *dlen, src, slen);
 	*dlen += slen;
 

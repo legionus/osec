@@ -73,13 +73,13 @@ print_help(int ret)  {
 
 static void __attribute__ ((noreturn))
 print_version(void) {
-        printf(PACKAGE_NAME" version "PACKAGE_VERSION"\n"
+	printf(PACKAGE_NAME" version "PACKAGE_VERSION"\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "\n"
 	       "Copyright (C) 2008-2009  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "This is free software; see the source for copying conditions.  There is NO\n"
 	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
-        exit(EXIT_SUCCESS);
+	exit(EXIT_SUCCESS);
 }
 
 static void
@@ -156,11 +156,11 @@ create_cdb(int fd, char *dir) {
 			case FTS_ERR:
 			case FTS_NS:
 				osec_fatal(EXIT_FAILURE, errno, "%s: fts_read", p->fts_path);
-                        case FTS_D:
-                        case FTS_DC:
-                        case FTS_F:
-                        case FTS_SL:
-                        case FTS_SLNONE:
+			case FTS_D:
+			case FTS_DC:
+			case FTS_F:
+			case FTS_SL:
+			case FTS_SLNONE:
 				break;
 			default:
 				continue;
@@ -169,13 +169,13 @@ create_cdb(int fd, char *dir) {
 		osec_state(&val, &vlen, p->fts_statp);
 
 		switch(p->fts_info) {
-                        case FTS_F:
-                    		osec_digest(&val, &vlen, p->fts_path);
-                    		break;
-                        case FTS_SL:
-                        case FTS_SLNONE:
-                    		osec_symlink(&val, &vlen, p->fts_path);
-                    		break;
+			case FTS_F:
+				osec_digest(&val, &vlen, p->fts_path);
+				break;
+			case FTS_SL:
+			case FTS_SLNONE:
+				osec_symlink(&val, &vlen, p->fts_path);
+				break;
 		}
 
 		if (cdb_make_add(&cdbm, p->fts_path, (unsigned) p->fts_pathlen+1,
