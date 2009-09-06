@@ -1,0 +1,115 @@
+#!/bin/sh -efu
+
+PROG="${0##*/}"
+PROG_VERSION=@PROG_VERSION@
+TEST=
+
+show_help() {
+	cat <<EOF
+Usage: $PROG [options] [perms] < /path/osecdb.txt
+
+Options:
+  -v, --verbose   print a message for each action;
+  -V, --version   print program version and exit;
+  -h, --help      show this text and exit.
+
+EOF
+	exit
+}
+
+print_version() {
+	cat <<EOF
+$PROG version $PROG_VERSION
+Written by Alexey Gladkov <gladkov.alexey@gmail.com>
+
+Copyright (C) 2009  Alexey Gladkov <gladkov.alexey@gmail.com>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+	exit
+}
+
+parse_line() {
+	local IFS='	'
+	set $line
+
+	fn= uid= gid= mode=
+
+	for a in "$@"; do
+		case "$a" in
+			file=*) fn="${a#file=}"   ;;
+			uid=*)  uid="${a#uid=}"   ;;
+			gid=*)  gid="${a#gid=}"   ;;
+			mode=*) mode="${a#mode=}" ;;
+		esac
+	done
+}
+
+perms() {
+	[ -n "$fn" -a -n "$uid" -a -n "$gid" -a -n "$mode" ] ||
+		return 0
+	if [ ! -e "$fn" -a ! -L "$fn" ]; then
+		printf '%s: Not found\n' "$fn" >&2
+		return 0
+	fi
+
+	local stat="$(stat -c '%u:%g %a' "$fn")"
+
+	[ "$uid:$gid" = "${stat% *}" ] ||
+		$TEST chown -h -- "$uid:$gid" "$fn"
+
+	case "$mode" in
+		100*) # regular file
+			mode="${mode#100}"
+			;;
+		40*) # directory
+			mode="${mode#40}"
+			;;
+		*)
+			continue
+			;;
+	esac
+	[ "$mode" = "${stat#* }" ] ||
+		$TEST chmod -- "$mode" "$fn"
+}
+
+TEMP=`getopt -n $PROG -o 'v,h,V' -l 'verbose,help,version' -- "$@"` ||
+	show_help
+eval set -- "$TEMP"
+while :; do
+	case "$1" in
+		-h|--help) show_help
+			;;
+		-V|--version) print_version
+			;;
+		-v|--version) verbose=-v
+			;;
+		--) shift; break
+			;;
+		*) fatal "Unrecognized option: $1"
+			;;
+	esac
+	shift
+done
+
+actions=
+while read
+case "${1-}" in
+	perms) actions="$actions perms" ;;
+	*)
+		show_help
+		;;
+esac
+
+eof=
+while [ -z "$eof" ]; do
+	read line || eof=1
+
+	[ -n "$line" ] || continue
+
+	parse_line
+
+	for a in $actions; do
+		$a
+	done
+done
