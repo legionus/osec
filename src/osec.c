@@ -26,8 +26,8 @@
 // Global variables
 char *pathname;
 
-void  *read_buf;
-size_t read_bufsize;
+extern void  *read_buf;
+extern size_t read_bufsize;
 
 size_t pw_bufsize;
 size_t gr_bufsize;

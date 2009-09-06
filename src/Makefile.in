@@ -32,7 +32,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = osec$(EXEEXT)
+bin_PROGRAMS = osec$(EXEEXT) osec2txt$(EXEEXT) txt2osec$(EXEEXT)
 subdir = src
 DIST_COMMON = $(dist_man_MANS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
@@ -52,6 +52,13 @@ am_osec_OBJECTS = osec.$(OBJEXT) common.$(OBJEXT) memory.$(OBJEXT) \
 	ignore.$(OBJEXT) path.$(OBJEXT) sha1.$(OBJEXT)
 osec_OBJECTS = $(am_osec_OBJECTS)
 osec_LDADD = $(LDADD)
+am_osec2txt_OBJECTS = osec2txt.$(OBJEXT)
+osec2txt_OBJECTS = $(am_osec2txt_OBJECTS)
+osec2txt_DEPENDENCIES = common.o memory.o dbvalue.o digest.o sha1.o
+am_txt2osec_OBJECTS = txt2osec.$(OBJEXT)
+txt2osec_OBJECTS = $(am_txt2osec_OBJECTS)
+txt2osec_DEPENDENCIES = common.o memory.o dbvalue.o digest.o sha1.o \
+	dbversion.o
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -60,8 +67,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(osec_SOURCES)
-DIST_SOURCES = $(osec_SOURCES)
+SOURCES = $(osec_SOURCES) $(osec2txt_SOURCES) $(txt2osec_SOURCES)
+DIST_SOURCES = $(osec_SOURCES) $(osec2txt_SOURCES) $(txt2osec_SOURCES)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -190,6 +197,12 @@ osec_SOURCES = osec.c common.c memory.c privs.c status.c digest.c dbvalue.c \
 
 osec_LIBS = -lcap -lcdb
 dist_man_MANS = osec.1
+osec2txt_SOURCES = osec2txt.c
+osec2txt_LDADD = common.o memory.o dbvalue.o digest.o sha1.o
+osec2txt_LIBS = -lcdb
+txt2osec_SOURCES = txt2osec.c
+txt2osec_LDADD = common.o memory.o dbvalue.o digest.o sha1.o dbversion.o
+txt2osec_LIBS = -lcdb
 all: all-am
 
 .SUFFIXES:
@@ -264,6 +277,12 @@ clean-binPROGRAMS:
 osec$(EXEEXT): $(osec_OBJECTS) $(osec_DEPENDENCIES) 
 	@rm -f osec$(EXEEXT)
 	$(LINK) $(osec_OBJECTS) $(osec_LDADD) $(LIBS)
+osec2txt$(EXEEXT): $(osec2txt_OBJECTS) $(osec2txt_DEPENDENCIES) 
+	@rm -f osec2txt$(EXEEXT)
+	$(LINK) $(osec2txt_OBJECTS) $(osec2txt_LDADD) $(LIBS)
+txt2osec$(EXEEXT): $(txt2osec_OBJECTS) $(txt2osec_DEPENDENCIES) 
+	@rm -f txt2osec$(EXEEXT)
+	$(LINK) $(txt2osec_OBJECTS) $(txt2osec_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -279,10 +298,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ignore.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/osec.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/osec2txt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/path.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/privs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/status.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/txt2osec.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

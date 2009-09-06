@@ -17,8 +17,8 @@
 #include "osec.h"
 #include "sha1.h"
 
-extern void  *read_buf;
-extern size_t read_bufsize;
+void  *read_buf;
+size_t read_bufsize;
 
 void
 digest(const char *fname, char *out) {
