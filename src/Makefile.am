@@ -1,4 +1,4 @@
-HELP2MAN = help2man
+HELP2MAN = help2man -N -s1 -S '$(PACKAGE_STRING)'
 
 WARNINGS = -Wall -Wextra -Werror -W -Wshadow -Wcast-align \
 	-Wwrite-strings -Wconversion -Waggregate-return -Wstrict-prototypes \
@@ -17,7 +17,7 @@ osec_SOURCES = osec.c common.c memory.c privs.c status.c digest.c dbvalue.c \
 		dbversion.c exclude.c ignore.c path.c \
 		./mozilla-sha1/sha1.c
 osec_LIBS = -lcap -lcdb
-dist_man_MANS = osec.1
+dist_man_MANS = osec.1 osec2txt.1 txt2osec.1
 
 osec2txt_SOURCES = osec2txt.c
 osec2txt_LDADD = common.o memory.o dbvalue.o digest.o sha1.o
@@ -27,5 +27,5 @@ txt2osec_SOURCES = txt2osec.c
 txt2osec_LDADD = common.o memory.o dbvalue.o digest.o sha1.o dbversion.o
 txt2osec_LIBS = -lcdb
 
-osec.1: osec
-	$(HELP2MAN) -i osec.1.inc -N ./osec > osec.1
+%.1: % %.1.inc
+	$(HELP2MAN) -i $@.inc ./$< >$@
