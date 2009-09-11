@@ -1,7 +1,7 @@
 /* txt2osec.c
  *
  * This file is part of Osec (lightweight integrity checker)
- *  Copyright (C) 2008  Alexey Gladkov <gladkov.alexey@gmail.com>
+ *  Copyright (C) 2009  Alexey Gladkov <gladkov.alexey@gmail.com>
  *
  * This file is covered by the GNU General Public License,
  * which should be included with osec as the file COPYING.
@@ -116,7 +116,7 @@ main(int argc, char **argv) {
 		void *val = NULL;
 		size_t vlen = 0;
 
-		int found_csum = 0;
+		int found_csum = 0, found_link = 0;
 		char *fn = NULL, *slink = NULL;
 		osec_stat_t ost;
 		csum[0] = '\0';
@@ -167,6 +167,7 @@ main(int argc, char **argv) {
 			}
 			else if (strncmp(s, "symlink=", 8) == 0) {
 				slink = (s + 8);
+				found_link = 1;
 			}
 			else {
 				continue;
@@ -177,7 +178,7 @@ main(int argc, char **argv) {
 		append_value(OVALUE_STAT, &val, &vlen, &ost, sizeof(ost));
 		if (found_csum)
 			append_value(OVALUE_CSUM, &val, &vlen, &csum, (size_t) digest_len);
-		if (slink)
+		if (found_link && strlen(slink) > 0)
 			append_value(OVALUE_LINK, &val, &vlen, slink, (size_t) strlen(slink)+1);
 
 		if (cdb_make_add(&cdbm, fn, (unsigned) strlen(fn)+1, val, (unsigned) vlen) != 0)
