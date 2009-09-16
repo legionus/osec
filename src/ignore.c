@@ -19,6 +19,7 @@ set_ignore(char *param) {
 	else if (!strcmp("group", param)) ignore |= OSEC_GID;
 	else if (!strcmp("mode",  param)) ignore |= OSEC_MOD;
 	else if (!strcmp("inode", param)) ignore |= OSEC_INO;
+	else if (!strcmp("mtime", param)) ignore |= OSEC_MTS;
 }
 
 void

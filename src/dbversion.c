@@ -1,7 +1,7 @@
 /* dbversion.c
  *
  * This file is part of Osec (lightweight integrity checker)
- * Copyright (C) 2008  Alexey Gladkov <gladkov.alexey@gmail.com>
+ * Copyright (C) 2008-2009  Alexey Gladkov <gladkov.alexey@gmail.com>
  *
  * This file is covered by the GNU General Public License,
  * which should be included with osec as the file COPYING.
@@ -22,6 +22,9 @@ compat_db_version(int fd) {
 
 	if (cdb_find(&cdbm, key, (unsigned) klen) == 0)
 		return 0;
+
+	if (cdb_read(&cdbm, &dbversion, sizeof(dbversion), cdb_datapos(&cdbm)) < 0)
+		osec_fatal(EXIT_FAILURE, errno, "cdb_read(dbversion)");
 
 	return 1;
 }

@@ -1,7 +1,7 @@
 /* osec.h
  *
  * This file is part of Osec (lightweight integrity checker)
- * Copyright (C) 2008  Alexey Gladkov <gladkov.alexey@gmail.com>
+ * Copyright (C) 2008-2009  Alexey Gladkov <gladkov.alexey@gmail.com>
  *
  * This file is covered by the GNU General Public License,
  * which should be included with osec as the file COPYING.
@@ -16,10 +16,12 @@
 
 #define OSEC_O_FLAGS (O_RDONLY | O_NOCTTY | O_NONBLOCK | O_NOFOLLOW)
 
-#define OSEC_DB_VERSION 1
+#define OSEC_DB_VERSION 2
+int dbversion;
 
 #define OSEC_ISSET(state,mask) (((state) & mask) == mask)
-#define OSEC_FMT 0017
+#define OSEC_FMT 0037
+#define OSEC_MTS 0020
 #define OSEC_UID 0010
 #define OSEC_GID 0004
 #define OSEC_MOD 0002
@@ -35,6 +37,7 @@ typedef struct osec_stat {
 	mode_t	mode;	/* file's permission bits */
 	uid_t	uid;	/* user ID of owner */
 	gid_t	gid;	/* group ID of owner */
+	int64_t	mtime;	/* time of last modification */
 } osec_stat_t;
 
 #define digest_len 20 // SHA1

@@ -3,7 +3,7 @@
 #
 # This file is part of Osec (lightweight integrity checker)
 # Copyright (c) 2002-2007  by Stanislav Ievlev
-# Copyright (c) 2008  by Alexey Gladkov
+# Copyright (c) 2008-2009  by Alexey Gladkov
 #
 # This file is covered by the GNU General Public License,
 # which should be included with osec as the file COPYING.
@@ -220,6 +220,10 @@ if (%change_normal_files)
 	my %item=%{$change_normal_files{$_}};
 	foreach (keys %item) # print additional info except of checksum
 	{
+	    if ("$_" eq "mtime") {
+		    $item{$_}{old} = localtime($item{$_}{old});
+		    $item{$_}{new} = localtime($item{$_}{new});
+	    }
 	    print "\t\t$_: $item{$_}{old} -> $item{$_}{new}\n" unless ($_ eq "checksum")
 	} 
     }

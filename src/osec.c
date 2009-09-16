@@ -312,8 +312,10 @@ process(char *dirname) {
 
 		printf("Processing %s ...\n", dirname);
 	}
-	else if (errno == ENOENT)
+	else if (errno == ENOENT) {
+		dbversion = 0;
 		printf("Init database for %s ...\n", dirname);
+	}
 	else
 		osec_fatal(EXIT_FAILURE, errno, "%s: open", old_dbname);
 

@@ -1,7 +1,7 @@
 /* dbvalue.c
  *
  * This file is part of Osec (lightweight integrity checker)
- * Copyright (C) 2008  Alexey Gladkov <gladkov.alexey@gmail.com>
+ * Copyright (C) 2008-2009  Alexey Gladkov <gladkov.alexey@gmail.com>
  *
  * This file is covered by the GNU General Public License,
  * which should be included with osec as the file COPYING.
@@ -56,11 +56,12 @@ size_t
 osec_state(void **val, size_t *vlen, const struct stat *st) {
 	osec_stat_t ost;
 
-	ost.dev  = st->st_dev;
-	ost.ino  = st->st_ino;
-	ost.uid  = st->st_uid;
-	ost.gid  = st->st_gid;
-	ost.mode = st->st_mode;
+	ost.dev   = st->st_dev;
+	ost.ino   = st->st_ino;
+	ost.uid   = st->st_uid;
+	ost.gid   = st->st_gid;
+	ost.mode  = st->st_mode;
+	ost.mtime = st->st_mtime;
 
 	return append_value(OVALUE_STAT, val, vlen, &ost, sizeof(ost));
 }

@@ -1,7 +1,7 @@
 /* status.c
  *
  * This file is part of Osec (lightweight integrity checker)
- * Copyright (C) 2008  Alexey Gladkov <gladkov.alexey@gmail.com>
+ * Copyright (C) 2008-2009  Alexey Gladkov <gladkov.alexey@gmail.com>
  *
  * This file is covered by the GNU General Public License,
  * which should be included with osec as the file COPYING.
@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -106,6 +107,8 @@ show_state(const char *mode, const char *fname, osec_stat_t *st) {
 	printf_pwname((char *) "uid", st->uid);
 	printf_grname((char *) "gid", st->gid);
 	printf(" mode=%lo inode=%ld", (unsigned long) st->mode, (long) st->ino);
+	if (dbversion > 1)
+		printf(" mtime=%lld", st->mtime);
 
 	check_insecure(st);
 	printf("\n");
@@ -203,10 +206,12 @@ check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_
 	else if (S_ISLNK(new_st->mode) && S_ISLNK(old_st->mode))
 		check_symlink(fname, ndata, nlen, odata, olen);
 
-	if (!OSEC_ISSET(ignore, OSEC_UID) && old_st->uid  != new_st->uid)  state |= OSEC_UID;
-	if (!OSEC_ISSET(ignore, OSEC_GID) && old_st->gid  != new_st->gid)  state |= OSEC_GID;
-	if (!OSEC_ISSET(ignore, OSEC_MOD) && old_st->mode != new_st->mode) state |= OSEC_MOD;
-	if (!OSEC_ISSET(ignore, OSEC_INO) && old_st->ino  != new_st->ino)  state |= OSEC_INO;
+	if (!OSEC_ISSET(ignore, OSEC_UID) && old_st->uid   != new_st->uid)    state |= OSEC_UID;
+	if (!OSEC_ISSET(ignore, OSEC_GID) && old_st->gid   != new_st->gid)    state |= OSEC_GID;
+	if (!OSEC_ISSET(ignore, OSEC_MOD) && old_st->mode  != new_st->mode)   state |= OSEC_MOD;
+	if (!OSEC_ISSET(ignore, OSEC_INO) && old_st->ino   != new_st->ino)    state |= OSEC_INO;
+	if (dbversion > 1 &&
+	   (!OSEC_ISSET(ignore, OSEC_MTS) && old_st->mtime != new_st->mtime)) state |= OSEC_MTS;
 
 	if (!(state & OSEC_FMT))
 		return 0;
@@ -226,6 +231,9 @@ check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_
 	if (OSEC_ISSET(state, OSEC_INO))
 		printf(" inode=%ld", (long) old_st->ino);
 
+	if (OSEC_ISSET(state, OSEC_MTS))
+		printf(" mtime=%lld", old_st->mtime);
+
 	check_insecure(old_st);
 
 	/* New state */
@@ -242,6 +250,9 @@ check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_
 
 	if (OSEC_ISSET(state, OSEC_INO))
 		printf(" inode=%ld", (long) new_st->ino);
+
+	if (OSEC_ISSET(state, OSEC_MTS))
+		printf(" mtime=%lld", new_st->mtime);
 
 	check_insecure(new_st);
 	printf("\n");
