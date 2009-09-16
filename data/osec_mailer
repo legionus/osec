@@ -3,6 +3,7 @@
 #
 # This file is part of Osec (lightweight integrity checker)
 # Copyright (c) 2002-2007 by Stanislav Ievlev
+# Copyright (c) 2009 by Alexey Gladkov
 #
 # This file is covered by the GNU General Public License,
 # which should be included with osec as the file COPYING.
@@ -27,5 +28,20 @@ TEMPFILE="$(mktemp -t "$PROG.avail.XXXXXX")"
 
 cat >"$TEMPFILE"
 
-grep -qs '^No changes' "$TEMPFILE" ||
-	(cat "$TEMPFILE" |eval $MAIL_PIPE)
+ADDED=0
+REMOVED=0
+CHANGED=0
+while read l; do
+	case "$l" in
+		'No changes') exit 0 ;;
+		'New files added to control:')	t='ADDED'	;;
+		'Changed controlled files:')	t='CHANGED'	;;
+		'Removed from control:')	t='REMOVED'	;;
+		'- /'*) [ -z "${t-}" ] || eval "$t=\$((\$t+1))"	;;
+	esac
+done < "$TEMPFILE"
+
+STAT="chg=$CHANGED,add=$ADDED,del=$REMOVED"
+
+cat "$TEMPFILE" |
+	eval $MAIL_PIPE
