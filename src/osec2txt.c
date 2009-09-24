@@ -74,6 +74,7 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 	show_field("mode","%lo", (unsigned long) st->mode);
 	show_field("uid", "%ld", (long) st->uid);
 	show_field("gid", "%ld", (long) st->gid);
+	show_field("mtime", "%lld", (dbversion > 1) ? st->mtime : 0);
 
 	if (show_varname)
 		dprintf(fd, "checksum=");
@@ -137,6 +138,9 @@ main(int argc, char **argv) {
 	// Open database
 	if ((fd = open(dbfile, O_RDONLY | O_NOFOLLOW | O_NOCTTY)) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: open", dbfile);
+
+	if (!compat_db_version(fd))
+		osec_fatal(EXIT_FAILURE, 0, "%s: file not look like osec database\n", dbfile);
 
 	if (cdb_init(&cdbm, fd) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_init(cdbm)");

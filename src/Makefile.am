@@ -20,7 +20,7 @@ osec_LIBS = -lcap -lcdb
 dist_man_MANS = osec.1 osec2txt.1 txt2osec.1
 
 osec2txt_SOURCES = osec2txt.c
-osec2txt_LDADD = common.o memory.o dbvalue.o digest.o sha1.o
+osec2txt_LDADD = common.o memory.o dbvalue.o dbversion.o digest.o sha1.o
 osec2txt_LIBS = -lcdb
 
 txt2osec_SOURCES = txt2osec.c

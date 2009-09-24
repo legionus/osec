@@ -154,6 +154,9 @@ main(int argc, char **argv) {
 			else if (strncmp(s, "gid=", 4) == 0) {
 				ost.gid = (gid_t) atol(s + 4);
 			}
+			else if (strncmp(s, "mtime=", 6) == 0) {
+				ost.mtime = (int64_t) atoll(s + 6);
+			}
 			else if (strncmp(s, "checksum=", 9) == 0) {
 				s += 9;
 				if (strlen(s) == (digest_len*2)) {
