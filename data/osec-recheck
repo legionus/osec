@@ -1,0 +1,50 @@
+#!/bin/sh -eu
+
+PROG="${0##*/}"
+
+show_help() {
+	printf 'Usage: %s <osec-db-path>\n' "$PROG"
+	exit
+}
+
+osecdb=
+get_dirlist() {
+	for db in "$osecdb"/osec.cdb.*; do
+		[ -f "$db" ] || continue
+
+		db="${db##*/}"
+		db="${db#osec.cdb.}"
+		dname=
+
+		r="$db" l="${#db}" m=
+		while [ $l -gt 1 ]; do
+			m="$m?"
+			l=$(($l-1))
+		done
+		p=
+		while [ -n "$r" ]; do
+			c="${r%$m}"
+			r="${r#?}"
+			m="${m#?}"
+			if [ "$p" = '%' ]; then
+				[ "$c" != '%' ] && c="\\x$c" || c='%%'
+			fi
+			p="$c"
+			[ "$c" != '%' ] || continue
+			[ "$c" != '\' ] || c='\\'
+			dname="$dname$c"
+		done
+		/usr/bin/printf "$dname\n"
+	done
+}
+
+[ "$#" -gt 0 ] &&
+	[ -d "$1" ] ||
+	show_help
+
+osecdb="$1"
+shift
+
+dirlist="$(get_dirlist)"
+[ -z "$dirlist" ] ||
+	exec osec "$@" -D "$osecdb" $dirlist
