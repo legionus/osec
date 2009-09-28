@@ -1,5 +1,15 @@
 list of user-visible changes between releases of osec:
 
+[1.2.4]
+* Use fts(3) to traverse a file hierarchy;
+* Add osec2txt and txt2osec utilities;
+* Add simple restore utility;
+* Add osec-recheck;
+* Add time of last modification to report;
+* Add .deb build support (Konstantin A. Lepikhov).
+* osec.cron: Add allow customize ionice arguments;
+* osec_mailer: Add number of added, deleted and changed files to a mail report;
+
 [1.2.3]
 * Add --ignore option;
 * osec.cron: Add nice support.

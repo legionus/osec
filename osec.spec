@@ -84,8 +84,10 @@ mkdir -p -- .%osec_statedir
 rm -f %osec_statedir/osec.db.*
 
 %files
-%doc ChangeLog NEWS README
+%doc ChangeLog NEWS README src/restore data/osec-recheck
 %_bindir/osec
+%_bindir/osec2txt
+%_bindir/txt2osec
 %_bindir/osec-migrade-db
 %_man1dir/*
 
