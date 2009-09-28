@@ -51,6 +51,7 @@ main(int argc, char **argv) {
 	size_t len = 0;
 	ssize_t nread;
 
+	int finalize = 0;
 	struct cdb_make cdbm;
 
 	int line_end = 0;
@@ -178,6 +179,10 @@ main(int argc, char **argv) {
 			s = (d + 1);
 		}
 
+		if (!fn)
+			continue;
+		finalize = 1;
+
 		append_value(OVALUE_STAT, &val, &vlen, &ost, sizeof(ost));
 		if (found_csum)
 			append_value(OVALUE_CSUM, &val, &vlen, &csum, (size_t) digest_len);
@@ -192,6 +197,15 @@ main(int argc, char **argv) {
 
 	xfree(line);
 	fclose(fp);
+
+	if (!finalize) {
+		osec_error("%s: file does not look like a osecdb text dump with prefixes fields.\n", infile);
+		if (close(fd) == -1)
+			osec_fatal(EXIT_FAILURE, errno, "%s: close", dbfile);
+		if (unlink(dbfile) == -1)
+			osec_fatal(EXIT_FAILURE, errno, "%s: unlink", dbfile);
+		return 1;
+	}
 
 	write_db_version(&cdbm);
 
