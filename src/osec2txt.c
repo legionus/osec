@@ -69,7 +69,7 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 	((show_varname) ? dprintf(fd,"%s=" F "\t",V,(A)) : dprintf(fd,F "\t",(A)))
 
 	show_field("file", "%s", key);
-	show_field("dev", "%lld", st->dev);
+	show_field("dev", "%lld", (long long) st->dev);
 	show_field("ino", "%ld", st->ino);
 	show_field("mode","%lo", (unsigned long) st->mode);
 	show_field("uid", "%ld", (long) st->uid);
@@ -161,7 +161,7 @@ main(int argc, char **argv) {
 		klen = cdb_keylen(&cdbm);
 		key = (char *) xmalloc((size_t) (klen + 1));
 
-		if (cdb_read(&cdbm, key, klen, cdb_keypos(&cdbm)) < 0)
+		if (cdb_read(&cdbm, key, (unsigned)klen, cdb_keypos(&cdbm)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read(key)");
 
 		if (key[0] != '/') {
@@ -174,7 +174,7 @@ main(int argc, char **argv) {
 		dlen = cdb_datalen(&cdbm);
 		data = xmalloc((size_t) dlen);
 
-		if (cdb_read(&cdbm, data, dlen, cdb_datapos(&cdbm)) < 0)
+		if (cdb_read(&cdbm, data, (unsigned)dlen, cdb_datapos(&cdbm)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read(data)");
 
 		dump_record(outfd, key, data, dlen);

@@ -31,13 +31,15 @@ int dbversion;
 #define OVALUE_CSUM 2
 #define OVALUE_STAT 1
 
+typedef long long int osec_time_t;
+
 typedef struct osec_stat {
-	dev_t	dev;	/* ID of device containing file */
-	ino_t	ino;	/* inode number */
-	mode_t	mode;	/* file's permission bits */
-	uid_t	uid;	/* user ID of owner */
-	gid_t	gid;	/* group ID of owner */
-	int64_t	mtime;	/* time of last modification */
+	dev_t		dev;	/* ID of device containing file */
+	ino_t		ino;	/* inode number */
+	mode_t		mode;	/* file's permission bits */
+	uid_t		uid;	/* user ID of owner */
+	gid_t		gid;	/* group ID of owner */
+	osec_time_t	mtime;	/* time of last modification */
 } osec_stat_t;
 
 #define digest_len 20 // SHA1
