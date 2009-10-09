@@ -135,14 +135,18 @@ create_cdb(int fd, char *dir) {
 	void *val = NULL;
 	size_t vlen = 0;
 
+	struct stat st;
 	struct cdb_make cdbm;
 	int retval = 1;
 
-	argv[0] = dir;
-	argv[1] = NULL;
-
 	if (cdb_make_start(&cdbm, fd) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_start");
+
+	if (lstat(dir, &st) == -1 || !S_ISDIR(st.st_mode))
+		goto skip;
+
+	argv[0] = dir;
+	argv[1] = NULL;
 
 	if ((t = fts_open(argv, FTS_PHYSICAL, dsort)) == NULL)
 		osec_fatal(EXIT_FAILURE, errno, "%s: fts_open", dir);
@@ -188,7 +192,7 @@ create_cdb(int fd, char *dir) {
 	if (fts_close(t) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: fts_close", dir);
 
-	write_db_version(&cdbm);
+skip:	write_db_version(&cdbm);
 
 	if (cdb_make_finish(&cdbm) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_finish");
