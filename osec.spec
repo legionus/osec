@@ -1,5 +1,5 @@
 Name: osec
-Version: 1.2.3
+Version: 1.2.4
 Release: alt1
 
 Summary: Lightweight file permission checker
@@ -33,7 +33,9 @@ Summary: Collection of reporters for osec
 Group: System/Base
 Provides: %name-reporter
 Requires: %name = %version-%release
+Requires: %name-cronjob
 Requires: /bin/mail
+Requires: perl-base
 PreReq: coreutils
 
 %description
@@ -103,6 +105,16 @@ rm -f %osec_statedir/osec.db.*
 %attr(770,root,%osec_group) %osec_statedir
 
 %changelog
+* Fri Oct 02 2009 Alexey Gladkov <legion@altlinux.ru> 1.2.4-alt1
+- New version (1.2.4);
+- Use fts(3) to traverse a file hierarchy;
+- Add osec2txt and txt2osec utilities;
+- Add simple restore utility;
+- Add osec-recheck;
+- Add time of last modification to report;
+- osec.cron: Add allow customize ionice arguments;
+- osec_mailer: Add number of added, deleted and changed files to a mail report.
+
 * Thu Jul 30 2009 Alexey Gladkov <legion@altlinux.ru> 1.2.3-alt1
 - New version (1.2.3);
 - Add --ignore option;
