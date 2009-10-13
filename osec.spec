@@ -1,6 +1,6 @@
 Name: osec
 Version: 1.2.4
-Release: alt1
+Release: alt2
 
 Summary: Lightweight file permission checker
 License: GPL3
@@ -105,6 +105,10 @@ rm -f %osec_statedir/osec.db.*
 %attr(770,root,%osec_group) %osec_statedir
 
 %changelog
+* Wed Oct 14 2009 Alexey Gladkov <legion@altlinux.ru> 1.2.4-alt2
+- osec.cron: Add number of added, deleted and changed files;
+- osec.cron, osec_mailer: Add IGNORE_NO_CHANGES option.
+
 * Fri Oct 02 2009 Alexey Gladkov <legion@altlinux.ru> 1.2.4-alt1
 - New version (1.2.4);
 - Use fts(3) to traverse a file hierarchy;
