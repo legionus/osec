@@ -9,6 +9,7 @@
 # which should be included with osec as the file COPYING.
 #
 
+PROG="${0##*/}"
 NICE_ARGS=
 IONICE_ARGS='-t'
 
@@ -22,11 +23,14 @@ syslog()
 	fi
 }
 
+TEMPFILE=
 exit_handler()
 {
-        local rc=$?
-        trap - EXIT
-        [ "$rc" = 0 ] ||
+	local rc=$?
+	trap - EXIT
+	[ -z "$TEMPFILE" ] ||
+		rm -rf -- "$TEMPFILE"
+	[ "$rc" = 0 ] ||
 		syslog "Aborted rc=$rc"
         exit $rc
 }
@@ -54,6 +58,7 @@ if [ -n "${IONICE_PRIORITY-}" ] && ionice_cmd="$(which ionice 2>/dev/null)"; the
 fi
 
 trap exit_handler HUP PIPE INT QUIT TERM EXIT
+TEMPFILE="$(mktemp -t "$PROG.XXXXXX")"
 
 syslog "Started"
 
@@ -68,7 +73,25 @@ if [ ! -d /var/lib/osec/.dbver1 ]; then
 	syslog "Migration finished"
 fi
 
-(run_osec |eval "$REPORT_PIPE") 2>&1 |
-	eval "$SEND_PIPE"
+run_osec |eval "$REPORT_PIPE" >"$TEMPFILE"
+
+ADDED=0 REMOVED=0 CHANGED=0
+while read l; do
+	case "$l" in
+		'No changes')
+			[ -z "${IGNORE_NO_CHANGES-}" ] ||
+				exit 0
+			;;
+		'New files added to control:')	t='ADDED'	;;
+		'Changed controlled files:')	t='CHANGED'	;;
+		'Removed from control:')	t='REMOVED'	;;
+		'- /'*) [ -z "${t-}" ] || eval "$t=\$((\$t+1))"	;;
+	esac
+done < "$TEMPFILE"
+
+STAT="chg=$CHANGED,add=$ADDED,del=$REMOVED"
+export ADDED REMOVED CHANGED STAT
+
+cat "$TEMPFILE" |eval "$SEND_PIPE"
 
 syslog "Finished"
