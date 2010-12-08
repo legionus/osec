@@ -3,9 +3,9 @@
 
 AC_PREREQ(2.61)
 AC_INIT(osec, 1.2.4, gladkov.alexey@gmail.com)
-AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/osec.c])
 AC_CONFIG_HEADER([config.h])
+AM_INIT_AUTOMAKE([dist-bzip2])
 
 # Checks for programs.
 AC_PROG_CC

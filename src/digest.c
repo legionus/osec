@@ -23,7 +23,7 @@ size_t read_bufsize;
 void
 digest(const char *fname, char *out) {
 	int fd;
-	ssize_t num;
+	long num;
 	SHA_CTX ctx;
 
 	if ((fd = open(fname, OSEC_O_FLAGS)) == -1)
@@ -35,7 +35,7 @@ digest(const char *fname, char *out) {
 	(void) posix_fadvise (fd, 0, 0, POSIX_FADV_SEQUENTIAL);
 
 	while ((num = read(fd, read_buf, read_bufsize)) > 0)
-		SHA1_Update(&ctx, read_buf, (int) num);
+		SHA1_Update(&ctx, read_buf, (unsigned long) num);
 
 	if (num == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: read", fname);
