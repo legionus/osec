@@ -14,12 +14,14 @@
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+
+#include "osec.h"
 #include "txt2osec.h"
 
 extern char str[PATH_MAX];
+extern char *pathname;
 extern int line_nr;
 extern int yyerror(const char *s);
-extern void lkfatal(const int exitnum, const int errnum, const char *fmt, ...);
 extern void stringovfl(void);
 
 char *p, *pmax;
@@ -90,5 +92,5 @@ Symlink		symlink|Symlink
 void
 stringovfl(void)
 {
-	lkfatal(1, 0, "string too long");
+	osec_fatal(1, 0, "%s:%d: string too long\n", pathname, line_nr);
 }

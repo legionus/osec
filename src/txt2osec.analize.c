@@ -538,17 +538,19 @@ char *yytext;
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+
+#include "osec.h"
 #include "txt2osec.h"
 
 extern char str[PATH_MAX];
+extern char *pathname;
 extern int line_nr;
 extern int yyerror(const char *s);
-extern void lkfatal(const int exitnum, const int errnum, const char *fmt, ...);
 extern void stringovfl(void);
 
 char *p, *pmax;
 
-#line 552 "txt2osec.analize.c"
+#line 554 "txt2osec.analize.c"
 
 #define INITIAL 0
 #define STR 1
@@ -729,10 +731,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 50 "txt2osec.analize.l"
+#line 52 "txt2osec.analize.l"
 
 
-#line 736 "txt2osec.analize.c"
+#line 738 "txt2osec.analize.c"
 
 	if ( !(yy_init) )
 		{
@@ -817,118 +819,118 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 52 "txt2osec.analize.l"
+#line 54 "txt2osec.analize.l"
 { /* No action and no return */ }
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 53 "txt2osec.analize.l"
+#line 55 "txt2osec.analize.l"
 { line_nr++; }
 	YY_BREAK
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 54 "txt2osec.analize.l"
+#line 56 "txt2osec.analize.l"
 { line_nr++; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 55 "txt2osec.analize.l"
+#line 57 "txt2osec.analize.l"
 { yylval = strtoll(yytext,NULL,0);   return(NUMBER); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 56 "txt2osec.analize.l"
+#line 58 "txt2osec.analize.l"
 { yylval = strtoll(yytext+1,NULL,8); return(OCTAL); }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 57 "txt2osec.analize.l"
+#line 59 "txt2osec.analize.l"
 { return(FILENAME); }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 58 "txt2osec.analize.l"
+#line 60 "txt2osec.analize.l"
 { return(CHECKSUM); }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 59 "txt2osec.analize.l"
+#line 61 "txt2osec.analize.l"
 { return(SYMLINK); }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 60 "txt2osec.analize.l"
+#line 62 "txt2osec.analize.l"
 { return(DEVICE); }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 61 "txt2osec.analize.l"
+#line 63 "txt2osec.analize.l"
 { return(INODE); }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 62 "txt2osec.analize.l"
+#line 64 "txt2osec.analize.l"
 { return(UID); }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 63 "txt2osec.analize.l"
+#line 65 "txt2osec.analize.l"
 { return(GID); }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 64 "txt2osec.analize.l"
+#line 66 "txt2osec.analize.l"
 { return(MTIME); }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 65 "txt2osec.analize.l"
+#line 67 "txt2osec.analize.l"
 { return(MODE); }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 66 "txt2osec.analize.l"
+#line 68 "txt2osec.analize.l"
 { return(EQUALS); }
 	YY_BREAK
 case 16:
 /* rule 16 can match eol */
 YY_RULE_SETUP
-#line 67 "txt2osec.analize.l"
+#line 69 "txt2osec.analize.l"
 { line_nr++;
 			  BEGIN(0);
 			  return(EOL); }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 70 "txt2osec.analize.l"
+#line 72 "txt2osec.analize.l"
 { p = (char *) str;
 			  pmax = p + sizeof(str) - 1;
 			  BEGIN(STR); }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 73 "txt2osec.analize.l"
+#line 75 "txt2osec.analize.l"
 { if (p >= pmax) stringovfl();
 			  *p++='"'; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 75 "txt2osec.analize.l"
+#line 77 "txt2osec.analize.l"
 { if (p >= pmax) stringovfl();
 			  *p++='\\'; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 77 "txt2osec.analize.l"
+#line 79 "txt2osec.analize.l"
 { if (p >= pmax) stringovfl();
 	                  *p++='\n'; }
 	YY_BREAK
 case 21:
 /* rule 21 can match eol */
 YY_RULE_SETUP
-#line 79 "txt2osec.analize.l"
+#line 81 "txt2osec.analize.l"
 { char *ptmp = p;
 			  p += strlen(yytext);
 			  if (p >= pmax) stringovfl();
@@ -936,22 +938,22 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 83 "txt2osec.analize.l"
+#line 85 "txt2osec.analize.l"
 { *p = '\0';
 			  BEGIN(0);
 			  return(STRLITERAL); }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 86 "txt2osec.analize.l"
+#line 88 "txt2osec.analize.l"
 { return(ERROR); /* report any unknown characters */}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 88 "txt2osec.analize.l"
+#line 90 "txt2osec.analize.l"
 ECHO;
 	YY_BREAK
-#line 955 "txt2osec.analize.c"
+#line 957 "txt2osec.analize.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(STR):
 	yyterminate();
@@ -1913,13 +1915,13 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 88 "txt2osec.analize.l"
+#line 90 "txt2osec.analize.l"
 
 
 
 void
 stringovfl(void)
 {
-	lkfatal(1, 0, "string too long");
+	osec_fatal(1, 0, "%s:%d: string too long\n", pathname, line_nr);
 }
 

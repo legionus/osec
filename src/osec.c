@@ -24,6 +24,7 @@
 #include "osec.h"
 
 // Global variables
+char *progname;
 char *pathname;
 
 extern void  *read_buf;
@@ -47,8 +48,8 @@ unsigned ignore = 0;
 
 static void __attribute__ ((noreturn))
 print_help(int ret)  {
-	printf("Usage: "PACKAGE_NAME" [OPTIONS] [DIRECTORY...]\n"
-	       "   or: "PACKAGE_NAME" [OPTIONS] --file=FILE [DIRECTORY...]\n"
+	printf("Usage: %1$s [OPTIONS] [DIRECTORY...]\n"
+	       "   or: %1$s [OPTIONS] --file=FILE [DIRECTORY...]\n"
 	       "\n"
 	       "This utility help you to see difference between\n"
 	       "two states of your system.\n"
@@ -67,18 +68,19 @@ print_help(int ret)  {
 	       "                            mode or inode;\n"
 	       "  -v, --version             print program version and exit;\n"
 	       "  -h, --help                output a brief help message.\n"
-	       "\n");
+	       "\n", progname);
 	exit(ret);
 }
 
 static void __attribute__ ((noreturn))
 print_version(void) {
-	printf(PACKAGE_NAME" version "PACKAGE_VERSION"\n"
+	printf("%s version "PACKAGE_VERSION"\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "\n"
 	       "Copyright (C) 2008-2009  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "This is free software; see the source for copying conditions.  There is NO\n"
-	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
+	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
+	       progname);
 	exit(EXIT_SUCCESS);
 }
 
@@ -407,6 +409,8 @@ main(int argc, char **argv) {
 		{ "exclude-from",	required_argument,	0, 'X' },
 		{ 0, 0, 0, 0 }
 	};
+
+	progname = basename(argv[0]);
 
 	if (argc == 1)
 		print_help(EXIT_SUCCESS);

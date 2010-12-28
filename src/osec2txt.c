@@ -21,25 +21,28 @@
 #include "config.h"
 #include "osec.h"
 
+char *progname = NULL;
+
 static void __attribute__ ((noreturn))
 print_help(int ret)  {
-	printf("Usage: osec2txt [options] <DBFILE> <OUTFILE>\n"
+	printf("Usage: %s [options] <DBFILE> <OUTFILE>\n"
 	       "\n"
 	       "Options:\n"
 	       "  -V, --version   print program version and exit;\n"
 	       "  -h, --help      output a brief help message.\n"
-	       "\n");
+	       "\n", progname);
 	exit(ret);
 }
 
 static void __attribute__ ((noreturn))
 print_version(void) {
-	printf("osec2txt version "PACKAGE_VERSION"\n"
+	printf("%s version "PACKAGE_VERSION"\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "\n"
 	       "Copyright (C) 2009-2010  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "This is free software; see the source for copying conditions.  There is NO\n"
-	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
+	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
+	       progname);
 	exit(EXIT_SUCCESS);
 }
 
@@ -119,6 +122,8 @@ main(int argc, char **argv) {
 		{ "version",		no_argument,		0, 'V' },
 		{ 0, 0, 0, 0 }
 	};
+
+	progname = basename(argv[0]);
 
 	while ((c = getopt_long (argc, argv, "hV", long_options, NULL)) != -1) {
 		switch (c) {

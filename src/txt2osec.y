@@ -31,6 +31,7 @@ extern FILE *yyin;
 
 char str[PATH_MAX];
 
+char *progname = NULL;
 char *pathname = NULL;
 int line_nr    = 1;
 
@@ -61,8 +62,6 @@ long flags = 0;
 
 void print_help(int ret);
 void print_version(void);
-void lkfatal(const int exitnum, const int errnum, const char *fmt, ...);
-void fatal(const int exitnum, const int errnum, const char *fmt, ...);
 int yyerror(const char *s);
 int yylex (void);
 
@@ -101,9 +100,11 @@ csumline	: CHECKSUM EQUALS STRLITERAL
 		{
 		  size_t n = strlen(str);
 		  if (n < (digest_len * 2))
-			lkfatal(1, 0, "Checksum value too short: %s\n", str);
+			osec_fatal(1, 0, "%s:%d: Checksum value too short: %s\n",
+			           pathname, line_nr, str);
 		  if (n > (digest_len * 2))
-			lkfatal(1, 0, "Checksum value too long: %s\n", str);
+			osec_fatal(1, 0, "%s:%d: Checksum value too long: %s\n",
+			           pathname, line_nr, str);
 		  chsum = strdup(str);
 		  flags |= FLAG_CSUM; }
 		;
@@ -119,17 +120,23 @@ devline		: DEVICE EQUALS NUMBER
 		  flags |= FLAG_DEV; }
 		;
 inoline		: INODE EQUALS NUMBER
-		{ if ($3 > LONG_MAX) lkfatal(1, 0, "Inode value too long: %lld\n", $3);
+		{ if ($3 > LONG_MAX)
+			osec_fatal(1, 0, "%s:%d: Inode value too long: %lld\n",
+			           pathname, line_nr, $3);
 		  ost.ino = (ino_t) $3;
 		  flags |= FLAG_INO; }
 		;
 uidline		: UID EQUALS NUMBER
-		{ if ($3 > LONG_MAX) lkfatal(1, 0, "UID value too long: %lld\n", $3);
+		{ if ($3 > LONG_MAX)
+			osec_fatal(1, 0, "%s:%d: UID value too long: %lld\n",
+			           pathname, line_nr, $3);
 		  ost.uid = (uid_t) $3;
 		  flags |= FLAG_UID; }
 		;
 gidline		: GID EQUALS NUMBER
-		{ if ($3 > LONG_MAX) lkfatal(1, 0, "GID value too long: %lld\n", $3);
+		{ if ($3 > LONG_MAX)
+			osec_fatal(1, 0, "%s:%d: GID value too long: %lld\n",
+			           pathname, line_nr, $3);
 		  ost.gid = (gid_t) $3;
 		  flags |= FLAG_GID; }
 		;
@@ -144,7 +151,8 @@ modeline	: MODE EQUALS OCTAL
 endline		: EOL
 		{
 			if (!F_ISSET(flags, FLAG_FILE | FLAG_DEV | FLAG_INO | FLAG_UID | FLAG_GID | FLAG_MODE))
-				lkfatal(EXIT_FAILURE, 0, "Wrong file format\n");
+				osec_fatal(EXIT_FAILURE, 0, "%s:%d: Wrong file format\n",
+				           pathname, line_nr);
 
 			append_value(OVALUE_STAT, &val, &vlen, &ost, sizeof(ost));
 
@@ -153,7 +161,8 @@ endline		: EOL
 				unsigned int h, i;
 
 				if (!S_ISREG(ost.mode))
-					lkfatal(EXIT_FAILURE, 0, "Wrong file format: checksum field for not regular file\n");
+					osec_fatal(EXIT_FAILURE, 0, "%s:%d: Wrong file format: checksum field for not regular file\n",
+					           pathname, line_nr);
 
 				for (i = 0; i < digest_len; i++) {
 					sscanf(s, "%02x", &h);
@@ -166,14 +175,15 @@ endline		: EOL
 
 			if (F_ISSET(flags, FLAG_LINK)) {
 				if (!S_ISLNK(ost.mode))
-					lkfatal(EXIT_FAILURE, 0, "Wrong file format: symlink field for not symbolic link\n");
+					osec_fatal(EXIT_FAILURE, 0, "%s:%d: Wrong file format: symlink field for not symbolic link\n",
+					           pathname, line_nr);
 
 				append_value(OVALUE_LINK, &val, &vlen, slink, (size_t) strlen(slink)+1);
 				xfree(slink);
 			}
 
 			if (cdb_make_add(&cdbm, fname, (unsigned) strlen(fname)+1, val, (unsigned) vlen) != 0)
-				lkfatal(EXIT_FAILURE, errno, "%s: cdb_make_add", fname);
+				osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", fname);
 
 			xfree(fname);
 			xfree(val);
@@ -193,42 +203,28 @@ yyerror(const char *s)
 	return(0);
 }
 
-void
-__attribute__ ((noreturn))
-__attribute__ ((format (printf, 3, 4)))
-lkfatal(const int exitnum, const int errnum, const char *fmt, ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	fprintf(stderr, "txt2osec: %s:%d: ", pathname, line_nr);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	if (errnum > 0)
-		fprintf(stderr, ": %s\n", strerror(errnum));
-	exit(exitnum);
-}
-
 void __attribute__ ((noreturn))
 print_help(int ret)
 {
-	printf("Usage: txt2osec [options] <FILENAME> <DBFILE>\n"
+	printf("Usage: %s [options] <FILENAME> <DBFILE>\n"
 	       "\n"
 	       "Options:\n"
 	       "  -V, --version   print program version and exit;\n"
 	       "  -h, --help      output a brief help message.\n"
-	       "\n");
+	       "\n", progname);
 	exit(ret);
 }
 
 void __attribute__ ((noreturn))
 print_version(void)
 {
-	printf("txt2osec version "PACKAGE_VERSION"\n"
+	printf("%s version "PACKAGE_VERSION"\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "\n"
 	       "Copyright (C) 2010  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "This is free software; see the source for copying conditions.  There is NO\n"
-	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
+	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
+		progname);
 	exit(EXIT_SUCCESS);
 }
 
@@ -244,6 +240,8 @@ main(int argc, char **argv)
 		{ "version",		no_argument,		0, 'V' },
 		{ 0, 0, 0, 0 }
 	};
+
+	progname = basename(argv[0]);
 
 	while ((c = getopt_long (argc, argv, "hV", long_options, NULL)) != -1) {
 		switch (c) {

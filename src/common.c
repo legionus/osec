@@ -15,12 +15,14 @@
 #include "config.h"
 #include "osec.h"
 
+extern char *progname;
+
 int
 __attribute__ ((format (printf, 1, 2)))
 osec_error(const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
-	fprintf(stderr, "%s: ", PACKAGE_NAME);
+	fprintf(stderr, "%s: ", progname);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	return 0;
@@ -32,7 +34,7 @@ __attribute__ ((format (printf, 3, 4)))
 osec_fatal(const int exitnum, const int errnum, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
-	fprintf(stderr, "%s: ", PACKAGE_NAME);
+	fprintf(stderr, "%s: ", progname);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (errnum > 0)
