@@ -35,7 +35,7 @@ POST_UNINSTALL = :
 bin_PROGRAMS = osec$(EXEEXT) osec2txt$(EXEEXT) txt2osec$(EXEEXT)
 subdir = src
 DIST_COMMON = $(dist_man_MANS) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in
+	$(srcdir)/Makefile.in txt2osec.analize.c txt2osec.c txt2osec.h
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -56,10 +56,13 @@ am_osec2txt_OBJECTS = osec2txt.$(OBJEXT)
 osec2txt_OBJECTS = $(am_osec2txt_OBJECTS)
 osec2txt_DEPENDENCIES = common.o memory.o dbvalue.o dbversion.o \
 	digest.o sha1.o
-am_txt2osec_OBJECTS = txt2osec.$(OBJEXT)
+am_txt2osec_OBJECTS = txt2osec-txt2osec.$(OBJEXT) \
+	txt2osec-txt2osec.analize.$(OBJEXT)
 txt2osec_OBJECTS = $(am_txt2osec_OBJECTS)
 txt2osec_DEPENDENCIES = common.o memory.o dbvalue.o digest.o sha1.o \
 	dbversion.o
+txt2osec_LINK = $(CCLD) $(txt2osec_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -68,6 +71,9 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+LEXCOMPILE = $(LEX) $(LFLAGS) $(AM_LFLAGS)
+YLWRAP = $(top_srcdir)/ylwrap
+YACCCOMPILE = $(YACC) $(YFLAGS) $(AM_YFLAGS)
 SOURCES = $(osec_SOURCES) $(osec2txt_SOURCES) $(txt2osec_SOURCES)
 DIST_SOURCES = $(osec_SOURCES) $(osec2txt_SOURCES) $(txt2osec_SOURCES)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
@@ -123,6 +129,9 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
+LEX = @LEX@
+LEXLIB = @LEXLIB@
+LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
@@ -141,6 +150,8 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
+YACC = @YACC@
+YFLAGS = @YFLAGS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -193,6 +204,7 @@ WARNINGS = -Wall -Wextra -Werror -W -Wshadow -Wcast-align \
 
 AM_CPPFLAGS = -g -std=c99 -D_BSD_SOURCE -D_GNU_SOURCE $(WARNINGS) \
 	-I./block-sha1
+AM_YFLAGS = -d
 osec_SOURCES = osec.c common.c memory.c privs.c status.c digest.c dbvalue.c \
 		dbversion.c exclude.c ignore.c path.c \
 		./block-sha1/sha1.c
@@ -202,13 +214,16 @@ dist_man_MANS = osec.1 osec2txt.1 txt2osec.1
 osec2txt_SOURCES = osec2txt.c
 osec2txt_LDADD = common.o memory.o dbvalue.o dbversion.o digest.o sha1.o
 osec2txt_LIBS = -lcdb
-txt2osec_SOURCES = txt2osec.c
+BUILT_SOURCES = txt2osec.h txt2osec.c
+txt2osec_SOURCES = txt2osec.y txt2osec.analize.l
+txt2osec_CFLAGS = -Wno-conversion
 txt2osec_LDADD = common.o memory.o dbvalue.o digest.o sha1.o dbversion.o
 txt2osec_LIBS = -lcdb
-all: all-am
+all: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .o .obj
+.SUFFIXES: .c .l .o .obj .y
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -282,9 +297,14 @@ osec$(EXEEXT): $(osec_OBJECTS) $(osec_DEPENDENCIES)
 osec2txt$(EXEEXT): $(osec2txt_OBJECTS) $(osec2txt_DEPENDENCIES) 
 	@rm -f osec2txt$(EXEEXT)
 	$(LINK) $(osec2txt_OBJECTS) $(osec2txt_LDADD) $(LIBS)
+txt2osec.h: txt2osec.c
+	@if test ! -f $@; then \
+	  rm -f txt2osec.c; \
+	  $(MAKE) $(AM_MAKEFLAGS) txt2osec.c; \
+	else :; fi
 txt2osec$(EXEEXT): $(txt2osec_OBJECTS) $(txt2osec_DEPENDENCIES) 
 	@rm -f txt2osec$(EXEEXT)
-	$(LINK) $(txt2osec_OBJECTS) $(txt2osec_LDADD) $(LIBS)
+	$(txt2osec_LINK) $(txt2osec_OBJECTS) $(txt2osec_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -305,7 +325,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/privs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/status.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/txt2osec.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/txt2osec-txt2osec.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/txt2osec-txt2osec.analize.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -334,6 +355,40 @@ sha1.obj: ./block-sha1/sha1.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='./block-sha1/sha1.c' object='sha1.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o sha1.obj `if test -f './block-sha1/sha1.c'; then $(CYGPATH_W) './block-sha1/sha1.c'; else $(CYGPATH_W) '$(srcdir)/./block-sha1/sha1.c'; fi`
+
+txt2osec-txt2osec.o: txt2osec.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(txt2osec_CFLAGS) $(CFLAGS) -MT txt2osec-txt2osec.o -MD -MP -MF $(DEPDIR)/txt2osec-txt2osec.Tpo -c -o txt2osec-txt2osec.o `test -f 'txt2osec.c' || echo '$(srcdir)/'`txt2osec.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/txt2osec-txt2osec.Tpo $(DEPDIR)/txt2osec-txt2osec.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='txt2osec.c' object='txt2osec-txt2osec.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(txt2osec_CFLAGS) $(CFLAGS) -c -o txt2osec-txt2osec.o `test -f 'txt2osec.c' || echo '$(srcdir)/'`txt2osec.c
+
+txt2osec-txt2osec.obj: txt2osec.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(txt2osec_CFLAGS) $(CFLAGS) -MT txt2osec-txt2osec.obj -MD -MP -MF $(DEPDIR)/txt2osec-txt2osec.Tpo -c -o txt2osec-txt2osec.obj `if test -f 'txt2osec.c'; then $(CYGPATH_W) 'txt2osec.c'; else $(CYGPATH_W) '$(srcdir)/txt2osec.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/txt2osec-txt2osec.Tpo $(DEPDIR)/txt2osec-txt2osec.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='txt2osec.c' object='txt2osec-txt2osec.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(txt2osec_CFLAGS) $(CFLAGS) -c -o txt2osec-txt2osec.obj `if test -f 'txt2osec.c'; then $(CYGPATH_W) 'txt2osec.c'; else $(CYGPATH_W) '$(srcdir)/txt2osec.c'; fi`
+
+txt2osec-txt2osec.analize.o: txt2osec.analize.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(txt2osec_CFLAGS) $(CFLAGS) -MT txt2osec-txt2osec.analize.o -MD -MP -MF $(DEPDIR)/txt2osec-txt2osec.analize.Tpo -c -o txt2osec-txt2osec.analize.o `test -f 'txt2osec.analize.c' || echo '$(srcdir)/'`txt2osec.analize.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/txt2osec-txt2osec.analize.Tpo $(DEPDIR)/txt2osec-txt2osec.analize.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='txt2osec.analize.c' object='txt2osec-txt2osec.analize.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(txt2osec_CFLAGS) $(CFLAGS) -c -o txt2osec-txt2osec.analize.o `test -f 'txt2osec.analize.c' || echo '$(srcdir)/'`txt2osec.analize.c
+
+txt2osec-txt2osec.analize.obj: txt2osec.analize.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(txt2osec_CFLAGS) $(CFLAGS) -MT txt2osec-txt2osec.analize.obj -MD -MP -MF $(DEPDIR)/txt2osec-txt2osec.analize.Tpo -c -o txt2osec-txt2osec.analize.obj `if test -f 'txt2osec.analize.c'; then $(CYGPATH_W) 'txt2osec.analize.c'; else $(CYGPATH_W) '$(srcdir)/txt2osec.analize.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/txt2osec-txt2osec.analize.Tpo $(DEPDIR)/txt2osec-txt2osec.analize.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='txt2osec.analize.c' object='txt2osec-txt2osec.analize.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(txt2osec_CFLAGS) $(CFLAGS) -c -o txt2osec-txt2osec.analize.obj `if test -f 'txt2osec.analize.c'; then $(CYGPATH_W) 'txt2osec.analize.c'; else $(CYGPATH_W) '$(srcdir)/txt2osec.analize.c'; fi`
+
+.l.c:
+	$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)
+
+.y.c:
+	$(am__skipyacc) $(SHELL) $(YLWRAP) $< y.tab.c $@ y.tab.h $*.h y.output $*.output -- $(YACCCOMPILE)
 install-man1: $(dist_man_MANS)
 	@$(NORMAL_INSTALL)
 	test -z "$(man1dir)" || $(MKDIR_P) "$(DESTDIR)$(man1dir)"
@@ -469,13 +524,15 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
-check: check-am
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile $(PROGRAMS) $(MANS)
 installdirs:
 	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: install-am
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-am
 install-exec: install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
@@ -500,6 +557,10 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-rm -f txt2osec.analize.c
+	-rm -f txt2osec.c
+	-rm -f txt2osec.h
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
@@ -571,7 +632,7 @@ uninstall-am: uninstall-binPROGRAMS uninstall-man
 
 uninstall-man: uninstall-man1
 
-.MAKE: install-am install-strip
+.MAKE: all check install install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
 	clean-generic ctags distclean distclean-compile \

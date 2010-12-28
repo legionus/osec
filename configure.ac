@@ -8,7 +8,9 @@ AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([dist-bzip2])
 
 # Checks for programs.
-AC_PROG_CC
+AM_PROG_CC_C_O
+AC_PROG_YACC
+AM_PROG_LEX
 
 # Checks for libraries.
 AC_CHECK_LIB([cap], [cap_from_text])

@@ -21,19 +21,12 @@
 #include "config.h"
 #include "osec.h"
 
-void  *read_buf;
-size_t read_bufsize;
-int show_varname = 0;
-int outfd;
-
 static void __attribute__ ((noreturn))
 print_help(int ret)  {
-	printf("Usage: osec2txt [options] <DBFILE> [<OUTFILE>]\n"
-	       "\n"
-	       "By default, OUTFILE is <DBFILE>.txt\n"
+	printf("Usage: osec2txt [options] <DBFILE> <OUTFILE>\n"
 	       "\n"
 	       "Options:\n"
-	       "  -n, --varname   add field prefix to each value;\n"
+	       "  -V, --version   print program version and exit;\n"
 	       "  -h, --help      output a brief help message.\n"
 	       "\n");
 	exit(ret);
@@ -44,61 +37,77 @@ print_version(void) {
 	printf("osec2txt version "PACKAGE_VERSION"\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "\n"
-	       "Copyright (C) 2009  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
+	       "Copyright (C) 2009-2010  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "This is free software; see the source for copying conditions.  There is NO\n"
 	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
 	exit(EXIT_SUCCESS);
 }
 
 static void
-show_digest(const char *dst) {
+show_digest(int fd, const char *dst) {
 	int i = 0;
 	while (i < digest_len)
-		dprintf(outfd, "%02x", (unsigned char) dst[i++]);
+		dprintf(fd, "%02x", (unsigned char) dst[i++]);
 }
 
 static void
 dump_record(int fd, char *key, void *rec, size_t rlen) {
 	osec_stat_t *st;
+	int i;
 	char *field;
 
 	if ((st = osec_field(OVALUE_STAT, rec, rlen)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'stat' from dbvalue\n", key);
 
-#define show_field(V,F,A) \
-	((show_varname) ? dprintf(fd,"%s=" F "\t",V,(A)) : dprintf(fd,F "\t",(A)))
-
-	show_field("file", "%s", key);
-	show_field("dev", "%lld", (long long) st->dev);
-	show_field("ino", "%ld", st->ino);
-	show_field("mode","%lo", (unsigned long) st->mode);
-	show_field("uid", "%ld", (long) st->uid);
-	show_field("gid", "%ld", (long) st->gid);
-	show_field("mtime", "%lld", (dbversion > 1) ? st->mtime : 0);
-
-	if (show_varname)
-		dprintf(fd, "checksum=");
+	i = 0;
+	dprintf(fd,"file=\"");
+	while (key[i]) {
+		if (key[i] == '"' || key[i] == '\\')
+			dprintf(fd,"\\");
+		dprintf(fd,"%c", key[i]);
+		i++;
+	}
+	dprintf(fd,"\" \\\n");
 
 	if (S_ISREG(st->mode)) {
 		if ((field = (char *) osec_field(OVALUE_CSUM, rec, rlen)) == NULL)
 			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'checksum' from dbvalue\n", key);
-		show_digest(field);
-	}
-	dprintf(fd, "\t");
 
-	if (show_varname)
-		dprintf(fd, "symlink=");
+		if (field) {
+			dprintf(fd, "\tchecksum=\"");
+			show_digest(fd, field);
+			dprintf(fd, "\" \\\n");
+		}
+	}
+
 	if (S_ISLNK(st->mode)) {
 		if ((field = (char *) osec_field(OVALUE_LINK, rec, rlen)) == NULL)
 			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'symlink' from database value\n", key);
-		dprintf(fd, "%s", field);
+
+		if (field) {
+			i = 0;
+			dprintf(fd, "\tsymlink=\"");
+			while (field[i]) {
+				if (field[i] == '"' || field[i] == '\\')
+					dprintf(fd,"\\");
+				dprintf(fd,"%c", field[i]);
+				i++;
+			}
+			dprintf(fd, "\" \\\n");
+		}
 	}
-	dprintf(fd, "\n");
+
+	dprintf(fd,"\tino=%ld \\\n", st->ino);
+	dprintf(fd,"\tdev=%lld \\\n", (long long) st->dev);
+	dprintf(fd,"\tmode=\\%06lo \\\n", (unsigned long) st->mode);
+	dprintf(fd,"\tuid=%ld \\\n", (long) st->uid);
+	dprintf(fd,"\tgid=%ld \\\n", (long) st->gid);
+	dprintf(fd,"\tmtime=%lld\n", (dbversion > 1) ? st->mtime : 0);
 }
 
 int
 main(int argc, char **argv) {
-	int c, fd, rc;
+	int c, fd, outfd, rc;
 	size_t klen;
 	char *dbfile, *outfile = NULL, *key;
 	unsigned cpos, dlen;
@@ -106,21 +115,14 @@ main(int argc, char **argv) {
 	void *data;
 
 	struct option long_options[] = {
-		{ "varname",		no_argument,		0, 'n' },
 		{ "help",		no_argument,		0, 'h' },
-		{ "version",		no_argument,		0, 'v' },
+		{ "version",		no_argument,		0, 'V' },
 		{ 0, 0, 0, 0 }
 	};
 
-	if (argc == 1)
-		print_help(EXIT_SUCCESS);
-
-	while ((c = getopt_long (argc, argv, "nhv", long_options, NULL)) != -1) {
+	while ((c = getopt_long (argc, argv, "hV", long_options, NULL)) != -1) {
 		switch (c) {
-			case 'n':
-				show_varname = 1;
-				break;
-			case 'v':
+			case 'V':
 				print_version();
 				break;
 			default:
@@ -130,10 +132,11 @@ main(int argc, char **argv) {
 		}
 	}
 
-	if (optind == argc)
+	if ((argc - optind) != 2)
 		print_help(EXIT_FAILURE);
 
-	dbfile = argv[optind++];
+	dbfile  = argv[optind++];
+	outfile = argv[optind];
 
 	// Open database
 	if ((fd = open(dbfile, O_RDONLY | O_NOFOLLOW | O_NOCTTY)) == -1)
@@ -144,13 +147,6 @@ main(int argc, char **argv) {
 
 	if (cdb_init(&cdbm, fd) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_init(cdbm)");
-
-	if (optind == argc) {
-		outfile = (char *) xmalloc(strlen(dbfile) + 5);
-		sprintf(outfile, "%s.txt", dbfile);
-	}
-	else
-		outfile = strdup(argv[optind]);
 
 	if ((outfd = open(outfile, O_WRONLY | O_CREAT | O_NOCTTY, S_IRUSR | S_IWUSR)) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: open", outfile);
@@ -185,8 +181,6 @@ main(int argc, char **argv) {
 
 	if (close(outfd) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: close", outfile);
-
-	xfree(outfile);
 
 	if (close(fd) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: close", dbfile);
