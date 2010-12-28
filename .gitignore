@@ -1,4 +1,5 @@
 aclocal.m4
+compile
 autom4te.cache
 config.guess
 config.h
@@ -7,12 +8,15 @@ config.log
 config.status
 config.sub
 depcomp
+ylwrap
 .deps
 install-sh
 Makefile
 missing
 *.o
-osec.1
+*.1
 src/osec
+src/osec2txt
+src/txt2osec
 stamp-h1
 update/osec-migrade-db
