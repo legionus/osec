@@ -37,10 +37,10 @@ parse_line() {
 
 	for a in "$@"; do
 		case "$a" in
-			file=*)  fn="${a#file=}"   ;;
-			uid=*)   uid="${a#uid=}"   ;;
-			gid=*)   gid="${a#gid=}"   ;;
-			mode=*)  mode="${a#mode=}" ;;
+			file=*)  fn="${a#file=}"; fn="${fn#\"}"; fn="${fn%\"}" ;;
+			mode=*)  mode="${a#mode=}"; mode="${mode#\\}" ;;
+			uid=*)   uid="${a#uid=}" ;;
+			gid=*)   gid="${a#gid=}" ;;
 			mtime=*) mtime="${a#mtime=}" ;;
 		esac
 	done
@@ -63,8 +63,8 @@ perms() {
 		100*) # regular file
 			mode="${mode#100}"
 			;;
-		40*) # directory
-			mode="${mode#40}"
+		040*) # directory
+			mode="${mode#040}"
 			;;
 		*)
 			continue
