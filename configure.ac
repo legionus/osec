@@ -38,5 +38,10 @@ AC_FUNC_REALLOC
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([strerror])
 
+AC_ARG_ENABLE(werror,
+	AS_HELP_STRING(--enable-werror, [Build with -Werror option]),
+	[USE_WERROR=$enableval],[USE_WERROR=no])
+AM_CONDITIONAL(USE_WERROR, test "$USE_WERROR" = "yes")
+
 AC_CONFIG_FILES([Makefile src/Makefile update/Makefile data/Makefile])
 AC_OUTPUT

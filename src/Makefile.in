@@ -32,6 +32,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+@USE_WERROR_TRUE@am__append_1 = -Werror
 bin_PROGRAMS = osec$(EXEEXT) osec2txt$(EXEEXT) txt2osec$(EXEEXT)
 subdir = src
 DIST_COMMON = $(dist_man_MANS) $(srcdir)/Makefile.am \
@@ -195,13 +196,11 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 HELP2MAN = help2man -N -s1 -S '$(PACKAGE_STRING)'
-WARNINGS = -Wall -Wextra -Werror -W -Wshadow -Wcast-align \
-	-Wwrite-strings -Wconversion -Waggregate-return -Wstrict-prototypes \
+WARNINGS = -Wall -Wextra -W -Wshadow -Wcast-align -Wwrite-strings \
+	-Wconversion -Waggregate-return -Wstrict-prototypes \
 	-Wmissing-prototypes -Wmissing-declarations -Wmissing-noreturn \
-	-Wmissing-format-attribute -Wredundant-decls -Wdisabled-optimization \
-	\
-	-Wno-pointer-arith
-
+	-Wmissing-format-attribute -Wredundant-decls \
+	-Wdisabled-optimization -Wno-pointer-arith $(am__append_1)
 AM_CPPFLAGS = -g -std=c99 -D_BSD_SOURCE -D_GNU_SOURCE $(WARNINGS) \
 	-I./block-sha1
 AM_YFLAGS = -d

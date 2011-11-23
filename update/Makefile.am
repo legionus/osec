@@ -1,9 +1,13 @@
-WARNINGS = -Wall -Wextra -Werror -W -Wshadow -Wcast-align \
+WARNINGS = -Wall -Wextra -W -Wshadow -Wcast-align \
 	-Wwrite-strings -Wconversion -Waggregate-return -Wstrict-prototypes \
 	-Wmissing-prototypes -Wmissing-declarations -Wmissing-noreturn \
 	-Wmissing-format-attribute -Wredundant-decls -Wdisabled-optimization \
 	\
 	-Wno-pointer-arith
+
+if USE_WERROR
+WARNINGS += -Werror
+endif
 
 AM_CPPFLAGS = -g -std=c99 -D_BSD_SOURCE -D_GNU_SOURCE -I../src -I../src/block-sha1 \
 	$(WARNINGS)

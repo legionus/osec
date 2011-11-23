@@ -597,6 +597,8 @@ ac_includes_default="\
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+USE_WERROR_FALSE
+USE_WERROR_TRUE
 LIBOBJS
 EGREP
 GREP
@@ -688,6 +690,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_dependency_tracking
+enable_werror
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1317,6 +1320,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
+  --enable-werror         Build with -Werror option
 
 Some influential environment variables:
   CC          C compiler command
@@ -5247,6 +5251,22 @@ fi
 done
 
 
+# Check whether --enable-werror was given.
+if test "${enable_werror+set}" = set; then :
+  enableval=$enable_werror; USE_WERROR=$enableval
+else
+  USE_WERROR=no
+fi
+
+ if test "$USE_WERROR" = "yes"; then
+  USE_WERROR_TRUE=
+  USE_WERROR_FALSE='#'
+else
+  USE_WERROR_TRUE='#'
+  USE_WERROR_FALSE=
+fi
+
+
 ac_config_files="$ac_config_files Makefile src/Makefile update/Makefile data/Makefile"
 
 cat >confcache <<\_ACEOF
@@ -5360,6 +5380,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error "conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USE_WERROR_TRUE}" && test -z "${USE_WERROR_FALSE}"; then
+  as_fn_error "conditional \"USE_WERROR\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
