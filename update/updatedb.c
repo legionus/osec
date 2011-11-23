@@ -19,6 +19,8 @@
 
 #include "osec.h"
 
+char *progname;
+
 void  *read_buf;
 size_t read_bufsize;
 
@@ -125,6 +127,8 @@ main(int argc, char **argv) {
 	unsigned cpos;
 	struct cdb cdbm;
 	struct cdb_make cdbn;
+
+	progname = basename(argv[0]);
 
 	struct option long_options[] = {
 		{ "help",		no_argument,		0, 'h' },
