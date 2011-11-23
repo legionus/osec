@@ -18,7 +18,7 @@ osec_SOURCES = osec.c common.c memory.c privs.c status.c digest.c dbvalue.c \
 		dbversion.c exclude.c ignore.c path.c \
 		./block-sha1/sha1.c
 osec_LIBS = -lcap -lcdb
-dist_man_MANS = osec.1 osec2txt.1 txt2osec.1
+dist_man_MANS = $(bin_PROGRAMS:=.1)
 
 osec2txt_SOURCES = osec2txt.c
 osec2txt_LDADD = common.o memory.o dbvalue.o dbversion.o digest.o sha1.o
@@ -29,6 +29,8 @@ txt2osec_SOURCES = txt2osec.y txt2osec.analize.l
 txt2osec_CFLAGS = -Wno-conversion
 txt2osec_LDADD = common.o memory.o dbvalue.o digest.o sha1.o dbversion.o
 txt2osec_LIBS = -lcdb
+
+CLEANFILES = $(bin_PROGRAMS) $(bin_PROGRAMS:=.1)
 
 %.1: % %.1.inc
 	$(HELP2MAN) -i $@.inc ./$< >$@
