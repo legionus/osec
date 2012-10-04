@@ -382,6 +382,9 @@ allocate_globals(void) {
 	// (status.c)
 	pw_bufsize = (size_t) sysconf(_SC_GETPW_R_SIZE_MAX);
 	gr_bufsize = (size_t) sysconf(_SC_GETGR_R_SIZE_MAX);
+
+	if (pw_bufsize == -1) pw_bufsize = 1024;
+	if (pw_bufsize == -1) gr_bufsize = 1024;
 }
 
 int
