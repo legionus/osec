@@ -25,7 +25,6 @@
 
 // Global variables
 char *progname;
-char *pathname;
 
 extern void  *read_buf;
 extern size_t read_bufsize;
@@ -372,9 +371,6 @@ process(char *dirname) {
 
 static void
 allocate_globals(void) {
-	// This variable is to display the full path.
-	pathname = xmalloc(MAXPATHLEN);
-
 	// Allocate buffer to read the files (digest.c).
 	read_bufsize = (size_t) (sysconf(_SC_PAGE_SIZE) - 1);
 	read_buf = xmalloc(read_bufsize);
@@ -522,7 +518,6 @@ main(int argc, char **argv) {
 		xfree(path);
 	}
 
-	xfree(pathname);
 	xfree(read_buf);
 	xfree(exclude_matches);
 
