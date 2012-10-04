@@ -32,32 +32,33 @@ printf_pwname(const char *var, uid_t uid) {
 	char *buf = NULL;
 	int rc;
 
-	if (!numeric_user_group) {
-		while (1) {
-			buf = (char *) xmalloc(pw_bufsize);
+	if (numeric_user_group) {
+		printf(" %s=%ld", var, (long) uid);
+		return;
+	}
 
-			rc = getpwuid_r(uid, &pwbuf, buf, pw_bufsize, &pw);
+	while (1) {
+		buf = (char *) xmalloc(pw_bufsize);
 
-			if (rc == 0)
-				break;
+		rc = getpwuid_r(uid, &pwbuf, buf, pw_bufsize, &pw);
 
-			if (rc == ERANGE) {
-				pw_bufsize += 1024;
-				xfree(buf);
-				continue;
-			}
+		if (rc == 0)
+			break;
 
-			osec_fatal(EXIT_FAILURE, rc, "getpwuid_r");
+		if (rc == ERANGE) {
+			pw_bufsize += 1024;
+			xfree(buf);
+			continue;
 		}
 
-		(pw != NULL)
-			? printf(" %s=%s", var, pw->pw_name)
-			: printf(" %s=#%ld", var, (long) uid);
-
-		xfree(buf);
+		osec_fatal(EXIT_FAILURE, rc, "getpwuid_r");
 	}
-	else
-		printf(" %s=%ld", var, (long) uid);
+
+	(pw != NULL)
+		? printf(" %s=%s", var, pw->pw_name)
+		: printf(" %s=#%ld", var, (long) uid);
+
+	xfree(buf);
 }
 
 static void
@@ -66,32 +67,33 @@ printf_grname(const char *var, gid_t gid) {
 	char *buf = NULL;
 	int rc;
 
-	if (!numeric_user_group) {
-		while (1) {
-			buf = (char *) xmalloc(gr_bufsize);
+	if (numeric_user_group) {
+		printf(" %s=%ld", var, (long) gid);
+		return;
+	}
 
-			rc = getgrgid_r(gid, &grbuf, buf, gr_bufsize, &gr);
+	while (1) {
+		buf = (char *) xmalloc(gr_bufsize);
 
-			if (rc == 0)
-				break;
+		rc = getgrgid_r(gid, &grbuf, buf, gr_bufsize, &gr);
 
-			if (rc == ERANGE) {
-				gr_bufsize += 1024;
-				xfree(buf);
-				continue;
-			}
+		if (rc == 0)
+			break;
 
-			osec_fatal(EXIT_FAILURE, rc, "getgrgid_r");
+		if (rc == ERANGE) {
+			gr_bufsize += 1024;
+			xfree(buf);
+			continue;
 		}
 
-		(gr != NULL)
-			? printf(" %s=%s", var, gr->gr_name)
-			: printf(" %s=#%ld", var, (long) gid);
-
-		xfree(buf);
+		osec_fatal(EXIT_FAILURE, rc, "getgrgid_r");
 	}
-	else
-		printf(" %s=%ld", var, (long) gid);
+
+	(gr != NULL)
+		? printf(" %s=%s", var, gr->gr_name)
+		: printf(" %s=#%ld", var, (long) gid);
+
+	xfree(buf);
 }
 
 static int
