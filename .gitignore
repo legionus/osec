@@ -18,5 +18,8 @@ missing
 src/osec
 src/osec2txt
 src/txt2osec
+src/txt2osec.analize.c
+src/txt2osec.c
+src/txt2osec.h
 stamp-h1
 update/osec-migrade-db
