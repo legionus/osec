@@ -204,29 +204,39 @@ skip:	write_db_version(&cdbm);
 static void
 show_changes(struct cdb *new_cdb, struct cdb *old_cdb) {
 	int rc;
-	char *key;
-	void *old_data, *new_data;
+	char *key = NULL;
+	void *old_data = NULL, *new_data = NULL;
 	unsigned cpos;
 	size_t klen, old_dlen, new_dlen;
+
+	size_t key_len = 0;
+	size_t old_data_len = 0;
+	size_t new_data_len = 0;
 
 	cdb_seqinit(&cpos, new_cdb);
 
 	while((rc = cdb_seqnext(&cpos, new_cdb)) > 0) {
 		klen = (size_t) cdb_keylen(new_cdb);
-		key = (char *) xmalloc(klen + 1);
+
+		if (klen > key_len) {
+			key_len += klen - key_len;
+			key = (char *) xrealloc(key, key_len + 1);
+		}
 
 		if (cdb_read(new_cdb, key, (unsigned) klen, cdb_keypos(new_cdb)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
-		if (key[0] != '/') {
-			xfree(key);
+		if (key[0] != '/')
 			continue;
-		}
 
 		key[klen] = '\0';
 
 		new_dlen = (size_t) cdb_datalen(new_cdb);
-		new_data = xmalloc(new_dlen);
+
+		if (new_dlen > new_data_len) {
+			new_data_len += new_dlen - new_data_len;
+			new_data = xrealloc(new_data, new_data_len);
+		}
 
 		if (cdb_read(new_cdb, new_data, (unsigned) new_dlen, cdb_datapos(new_cdb)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
@@ -234,22 +244,25 @@ show_changes(struct cdb *new_cdb, struct cdb *old_cdb) {
 		// Search
 		if (old_cdb != NULL && cdb_find(old_cdb, key, (unsigned) klen) > 0) {
 			old_dlen = (size_t) cdb_datalen(old_cdb);
-			old_data = xmalloc(old_dlen);
+
+			if (old_dlen > old_data_len) {
+				old_data_len += old_dlen - old_data_len;
+				old_data = xrealloc(old_data, old_data_len);
+			}
 
 			if (cdb_read(old_cdb, old_data, (unsigned) old_dlen, cdb_datapos(old_cdb)) < 0)
 				osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
 			if (!check_difference(key, new_data, new_dlen, old_data, old_dlen))
 				check_bad_files(key, new_data, new_dlen);
-
-			xfree(old_data);
 		}
 		else
 			check_new(key, new_data, new_dlen);
-
-		xfree(new_data);
-		xfree(key);
 	}
+
+	xfree(new_data);
+	xfree(old_data);
+	xfree(key);
 
 	if (rc < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_seqnext(new_cdb)");
@@ -258,38 +271,48 @@ show_changes(struct cdb *new_cdb, struct cdb *old_cdb) {
 static void
 show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb) {
 	int rc;
-	char *key;
+	char *key = NULL;
+	void *data = NULL;
 	unsigned cpos, klen;
+
+	size_t key_len = 0;
+	size_t data_len = 0;
 
 	cdb_seqinit(&cpos, old_cdb);
 
 	while((rc = cdb_seqnext(&cpos, old_cdb)) > 0) {
 		klen = cdb_keylen(old_cdb);
-		key = (char *) xmalloc((size_t) (klen + 1));
+
+		if (klen > key_len) {
+			key_len += klen - key_len;
+			key = (char *) xrealloc(key, key_len + 1);
+		}
 
 		if (cdb_read(old_cdb, key, klen, cdb_keypos(old_cdb)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
-		if (key[0] != '/') {
-			xfree(key);
+		if (key[0] != '/')
 			continue;
-		}
 
 		key[klen] = '\0';
 
 		if (cdb_find(new_cdb, key, klen) == 0) {
 			unsigned dlen = cdb_datalen(old_cdb);
-			void *data = xmalloc((size_t) dlen);
+
+			if (dlen > data_len) {
+				data_len += dlen - data_len;
+				data = xrealloc(data, data_len);
+			}
 
 			if (cdb_read(old_cdb, data, dlen, cdb_datapos(old_cdb)) < 0)
 				osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
 			check_removed(key, data, (size_t) dlen);
-			xfree(data);
 		}
-
-		xfree(key);
 	}
+
+	xfree(key);
+	xfree(data);
 
 	if (rc < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_seqnext(old_cdb)");
