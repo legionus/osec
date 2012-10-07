@@ -64,7 +64,7 @@ print_help(int ret)  {
 	       "  -x, --exclude=PATTERN     exclude files matching PATTERN;\n"
 	       "  -X, --exclude-from=FILE   read exclude patterns from FILE;\n"
 	       "  -i, --ignore=LIST         dont show changes: user, group,\n"
-	       "                            mode or inode;\n"
+	       "                            mode, mtime or inode;\n"
 	       "  -v, --version             print program version and exit;\n"
 	       "  -h, --help                output a brief help message.\n"
 	       "\n", progname);
