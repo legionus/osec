@@ -19,7 +19,6 @@
 #define OSEC_DB_VERSION 2
 int dbversion;
 
-#define OSEC_ISSET(state,mask) (((state) & mask) == mask)
 #define OSEC_FMT 0037
 #define OSEC_MTS 0020
 #define OSEC_UID 0010
