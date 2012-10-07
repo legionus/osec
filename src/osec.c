@@ -29,8 +29,8 @@ char *progname;
 extern void  *read_buf;
 extern size_t read_bufsize;
 
-size_t pw_bufsize;
-size_t gr_bufsize;
+size_t pw_bufsize = 0;
+size_t gr_bufsize = 0;
 
 // FIXME: use config file for this variables.
 char def_db_path[] = "/tmp/osec";
@@ -399,11 +399,13 @@ allocate_globals(void) {
 	read_buf = xmalloc(read_bufsize);
 
 	// (status.c)
-	pw_bufsize = (size_t) sysconf(_SC_GETPW_R_SIZE_MAX);
-	gr_bufsize = (size_t) sysconf(_SC_GETGR_R_SIZE_MAX);
+	long val;
 
-	if (pw_bufsize == -1) pw_bufsize = 1024;
-	if (pw_bufsize == -1) gr_bufsize = 1024;
+	val = sysconf(_SC_GETPW_R_SIZE_MAX);
+	pw_bufsize = (val > 0) ? (size_t) val : 1024;
+
+	val = sysconf(_SC_GETGR_R_SIZE_MAX);
+	gr_bufsize = (val > 0) ? (size_t) val : 1024;
 }
 
 int
