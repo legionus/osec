@@ -86,7 +86,7 @@ void exclude_match_append(char *pattern);
 void exclude_matches_file(char *file);
 
 /* ignore.c */
-void process_ignore(char *param);
+void process_ignore(const char *param);
 
 /* path.c */
 void recreate_tempdir(void);
