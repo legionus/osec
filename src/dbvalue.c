@@ -78,7 +78,7 @@ osec_digest(void **val, size_t *vlen, const char *fname) {
 size_t
 osec_symlink(void **val, size_t *vlen, const char *fname) {
 	ssize_t lnklen;
-	char *buf = (char *) alloca((size_t) MAXPATHLEN);
+	char buf[MAXPATHLEN];
 
 	if ((lnklen = readlink(fname, buf, (size_t) MAXPATHLEN)) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: readlink", fname);
