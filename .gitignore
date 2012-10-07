@@ -7,11 +7,13 @@ config.h.in~
 config.log
 config.status
 config.sub
+configure
 depcomp
 ylwrap
 .deps
 install-sh
 Makefile
+Makefile.in
 missing
 *.o
 *.1
