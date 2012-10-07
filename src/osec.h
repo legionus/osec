@@ -19,12 +19,13 @@
 #define OSEC_DB_VERSION 2
 int dbversion;
 
-#define OSEC_FMT 0037
-#define OSEC_MTS 0020
-#define OSEC_UID 0010
-#define OSEC_GID 0004
-#define OSEC_MOD 0002
-#define OSEC_INO 0001
+#define OSEC_CSM (1 << 1)
+#define OSEC_LNK (1 << 2)
+#define OSEC_MTS (1 << 3)
+#define OSEC_UID (1 << 4)
+#define OSEC_GID (1 << 5)
+#define OSEC_MOD (1 << 6)
+#define OSEC_INO (1 << 7)
 
 #define OVALUE_LINK 4
 #define OVALUE_CSUM 2

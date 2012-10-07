@@ -63,8 +63,8 @@ print_help(int ret)  {
 	       "  -f, --file=FILE           obtain directories from file FILE;\n"
 	       "  -x, --exclude=PATTERN     exclude files matching PATTERN;\n"
 	       "  -X, --exclude-from=FILE   read exclude patterns from FILE;\n"
-	       "  -i, --ignore=LIST         dont show changes: user, group,\n"
-	       "                            mode, mtime or inode;\n"
+	       "  -i, --ignore=LIST         dont show changes: checksum, symlink,\n"
+	       "                            user, group, mode, mtime or inode;\n"
 	       "  -v, --version             print program version and exit;\n"
 	       "  -h, --help                output a brief help message.\n"
 	       "\n", progname);

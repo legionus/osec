@@ -177,6 +177,9 @@ static void
 check_checksum(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen) {
 	char *old, *new;
 
+	if (ignore & OSEC_CSM)
+		return;
+
 	if ((old = osec_field(OVALUE_CSUM, odata, olen)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0,
 			"%s: osec_field(odata): Unable to get 'checksum' from database value\n",
@@ -201,6 +204,9 @@ check_checksum(const char *fname, void *ndata, size_t nlen, void *odata, size_t 
 static void
 check_symlink(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen) {
 	char *old, *new;
+
+	if (ignore & OSEC_LNK)
+		return;
 
 	if ((old = (char *) osec_field(OVALUE_LINK, odata, olen)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0,
@@ -245,7 +251,7 @@ check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_
 	if (dbversion > 1 &&
 	   (!(ignore & OSEC_MTS) && old_st->mtime != new_st->mtime)) state |= OSEC_MTS;
 
-	if (!(state & OSEC_FMT))
+	if (!(state & (OSEC_UID | OSEC_GID | OSEC_MOD | OSEC_INO | OSEC_MTS)))
 		return 0;
 
 	printf("%s\tstat\tchanged\told", fname);
