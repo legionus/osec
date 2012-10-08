@@ -35,25 +35,28 @@ osec_field(const unsigned type, const void *data, const size_t dlen) {
 	return NULL;
 }
 
-size_t
-append_value(const unsigned type, void **dst, size_t *dlen, const void *src, const size_t slen) {
+void
+append_value(const unsigned type, const void *src, const size_t slen, struct record *rec) {
 
-	*dst = xrealloc(*dst, (*dlen + sizeof(unsigned) + sizeof(size_t) + slen));
+	size_t sz = sizeof(unsigned) + sizeof(size_t) + slen;
 
-	memcpy(*dst + *dlen, &type, sizeof(unsigned));
-	*dlen += sizeof(unsigned);
+	if (sz > (rec->len - rec->offset)) {
+		rec->len += sz - (rec->len - rec->offset);
+		rec->data = xrealloc(rec->data, rec->len);
+	}
 
-	memcpy(*dst + *dlen, &slen, sizeof(size_t));
-	*dlen += sizeof(size_t);
+	memcpy(rec->data + rec->offset, &type, sizeof(unsigned));
+	rec->offset += sizeof(unsigned);
 
-	memcpy(*dst + *dlen, src, slen);
-	*dlen += slen;
+	memcpy(rec->data + rec->offset, &slen, sizeof(size_t));
+	rec->offset += sizeof(size_t);
 
-	return *dlen;
+	memcpy(rec->data + rec->offset, src, slen);
+	rec->offset += slen;
 }
 
-size_t
-osec_state(void **val, size_t *vlen, const struct stat *st) {
+void
+osec_state(struct record *rec, const struct stat *st) {
 	osec_stat_t ost;
 
 	ost.dev   = st->st_dev;
@@ -63,20 +66,20 @@ osec_state(void **val, size_t *vlen, const struct stat *st) {
 	ost.mode  = st->st_mode;
 	ost.mtime = st->st_mtime;
 
-	return append_value(OVALUE_STAT, val, vlen, &ost, sizeof(ost));
+	append_value(OVALUE_STAT, &ost, sizeof(ost), rec);
 }
 
-size_t
-osec_digest(void **val, size_t *vlen, const char *fname) {
+void
+osec_digest(struct record *rec, const char *fname) {
 	char fdigest[digest_len];
 
 	digest(fname, fdigest);
 
-	return append_value(OVALUE_CSUM, val, vlen, &fdigest, (size_t) digest_len);
+	append_value(OVALUE_CSUM, &fdigest, (size_t) digest_len, rec);
 }
 
-size_t
-osec_symlink(void **val, size_t *vlen, const char *fname) {
+void
+osec_symlink(struct record *rec, const char *fname) {
 	ssize_t lnklen;
 	char buf[MAXPATHLEN];
 
@@ -85,6 +88,5 @@ osec_symlink(void **val, size_t *vlen, const char *fname) {
 
 	buf[lnklen] = '\0';
 
-	append_value(OVALUE_LINK, val, vlen, buf, (size_t) lnklen+1);
-	return 0;
+	append_value(OVALUE_LINK, buf, (size_t) lnklen + 1, rec);
 }

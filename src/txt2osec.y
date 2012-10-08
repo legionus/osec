@@ -54,8 +54,7 @@ char *chsum = NULL;
 osec_stat_t ost;
 unsigned char csum[digest_len];
 
-void *val = NULL;
-size_t vlen = 0;
+struct record rec;
 
 struct cdb_make cdbm;
 long flags = 0;
@@ -150,11 +149,13 @@ modeline	: MODE EQUALS OCTAL
 		;
 endline		: EOL
 		{
+			rec.offset = 0;
+
 			if (!F_ISSET(flags, FLAG_FILE | FLAG_DEV | FLAG_INO | FLAG_UID | FLAG_GID | FLAG_MODE))
 				osec_fatal(EXIT_FAILURE, 0, "%s:%d: Wrong file format\n",
 				           pathname, line_nr);
 
-			append_value(OVALUE_STAT, &val, &vlen, &ost, sizeof(ost));
+			append_value(OVALUE_STAT, &ost, sizeof(ost), &rec);
 
 			if (F_ISSET(flags, FLAG_CSUM)) {
 				char *s = chsum;
@@ -169,7 +170,7 @@ endline		: EOL
 					csum[i] = (unsigned char) h;
 					s += 2;
 				}
-				append_value(OVALUE_CSUM, &val, &vlen, &csum, (size_t) digest_len);
+				append_value(OVALUE_CSUM, &csum, (size_t) digest_len, &rec);
 				xfree(chsum);
 			}
 
@@ -178,19 +179,15 @@ endline		: EOL
 					osec_fatal(EXIT_FAILURE, 0, "%s:%d: Wrong file format: symlink field for not symbolic link\n",
 					           pathname, line_nr);
 
-				append_value(OVALUE_LINK, &val, &vlen, slink, (size_t) strlen(slink)+1);
+				append_value(OVALUE_LINK, slink, (size_t) strlen(slink)+1, &rec);
 				xfree(slink);
 			}
 
-			if (cdb_make_add(&cdbm, fname, (unsigned) strlen(fname)+1, val, (unsigned) vlen) != 0)
+			if (cdb_make_add(&cdbm, fname, (unsigned) strlen(fname)+1, rec.data, (unsigned) rec.offset) != 0)
 				osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", fname);
 
 			xfree(fname);
-			xfree(val);
-
 			flags = 0;
-			vlen = 0;
-			val = NULL;
 		}
 		;
 
@@ -273,9 +270,13 @@ main(int argc, char **argv)
 	if (cdb_make_start(&cdbm, fd) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_start");
 
+	rec.data = NULL;
+	rec.len  = 0;
+
 	yyin = fp;
 	yyparse();
 
+	xfree(rec.data);
 	fclose(fp);
 
 	write_db_version(&cdbm);

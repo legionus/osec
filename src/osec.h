@@ -42,6 +42,12 @@ typedef struct osec_stat {
 	osec_time_t	mtime;	/* time of last modification */
 } osec_stat_t;
 
+struct record {
+	void *data;
+	size_t len;
+	size_t offset;
+};
+
 #define digest_len 20 // SHA1
 
 /* common.c */
@@ -71,10 +77,10 @@ void digest(const char *fname, char *digest);
 
 /* dbvalue.c */
 void  *osec_field(const unsigned type, const void *data, const size_t dlen);
-size_t append_value(const unsigned type, void **dst, size_t *dlen, const void *src, const size_t slen);
-size_t osec_state(void **val, size_t *vlen, const struct stat *st);
-size_t osec_digest(void **val, size_t *vlen, const char *fname);
-size_t osec_symlink(void **val, size_t *vlen, const char *fname);
+void append_value(const unsigned type, const void *src, const size_t slen, struct record *rec);
+void osec_state(struct record *rec, const struct stat *st);
+void osec_digest(struct record *rec, const char *fname);
+void osec_symlink(struct record *rec, const char *fname);
 
 /* dbvalue.c */
 int  compat_db_version(int fd);

@@ -133,12 +133,11 @@ create_cdb(int fd, char *dir) {
 	FTSENT *p;
 	char *argv[2];
 
-	void *val = NULL;
-	size_t vlen = 0;
-
 	struct stat st;
 	struct cdb_make cdbm;
 	int retval = 1;
+
+	struct record rec;
 
 	if (cdb_make_start(&cdbm, fd) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_start");
@@ -152,9 +151,15 @@ create_cdb(int fd, char *dir) {
 	if ((t = fts_open(argv, FTS_PHYSICAL, dsort)) == NULL)
 		osec_fatal(EXIT_FAILURE, errno, "%s: fts_open", dir);
 
+	/*
+	 * Set default data buffer. This value will increase in the process of
+	 * creating a database.
+	 */
+	rec.len  = 1024;
+	rec.data = xmalloc(rec.len);
+
 	while ((p = fts_read(t))) {
-		val = NULL;
-		vlen = 0;
+		rec.offset = 0;
 
 		switch(p->fts_info) {
 			case FTS_DNR:
@@ -171,24 +176,24 @@ create_cdb(int fd, char *dir) {
 				continue;
 		}
 
-		osec_state(&val, &vlen, p->fts_statp);
+		osec_state(&rec, p->fts_statp);
 
 		switch(p->fts_info) {
 			case FTS_F:
-				osec_digest(&val, &vlen, p->fts_path);
+				osec_digest(&rec, p->fts_path);
 				break;
 			case FTS_SL:
 			case FTS_SLNONE:
-				osec_symlink(&val, &vlen, p->fts_path);
+				osec_symlink(&rec, p->fts_path);
 				break;
 		}
 
 		if (cdb_make_add(&cdbm, p->fts_path, (unsigned) p->fts_pathlen+1,
-		                 val, (unsigned) vlen) != 0)
+		                 rec.data, (unsigned) rec.offset) != 0)
 			osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", p->fts_path);
-
-		xfree(val);
 	}
+
+	xfree(rec.data);
 
 	if (fts_close(t) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: fts_close", dir);
