@@ -59,7 +59,7 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 	int i;
 	char *field;
 
-	if ((st = osec_field(OVALUE_STAT, rec, rlen)) == NULL)
+	if ((st = osec_field(OVALUE_STAT, rec, rlen, NULL)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'stat' from dbvalue\n", key);
 
 	i = 0;
@@ -73,7 +73,7 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 	dprintf(fd,"\" \\\n");
 
 	if (S_ISREG(st->mode)) {
-		if ((field = (char *) osec_field(OVALUE_CSUM, rec, rlen)) == NULL)
+		if ((field = (char *) osec_field(OVALUE_CSUM, rec, rlen, NULL)) == NULL)
 			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'checksum' from dbvalue\n", key);
 
 		if (field) {
@@ -84,7 +84,7 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 	}
 
 	if (S_ISLNK(st->mode)) {
-		if ((field = (char *) osec_field(OVALUE_LINK, rec, rlen)) == NULL)
+		if ((field = (char *) osec_field(OVALUE_LINK, rec, rlen, NULL)) == NULL)
 			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'symlink' from database value\n", key);
 
 		if (field) {

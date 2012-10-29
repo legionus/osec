@@ -27,9 +27,10 @@ int dbversion;
 #define OSEC_MOD (1 << 6)
 #define OSEC_INO (1 << 7)
 
-#define OVALUE_LINK 4
-#define OVALUE_CSUM 2
-#define OVALUE_STAT 1
+#define OVALUE_XATTR 8
+#define OVALUE_LINK  4
+#define OVALUE_CSUM  2
+#define OVALUE_STAT  1
 
 typedef long long int osec_time_t;
 
@@ -46,6 +47,12 @@ struct record {
 	void *data;
 	size_t len;
 	size_t offset;
+};
+
+struct field {
+	unsigned type;
+	size_t len;
+	void *data;
 };
 
 #define digest_len 20 // SHA1
@@ -73,14 +80,16 @@ int check_bad_files(const char *fname, void *data, size_t len);
 int check_removed(const char *fname, void *data, size_t len);
 
 /* digest.c */
-void digest(const char *fname, char *digest);
+void digest_file(const char *fname, char *digest);
+void digest(const char *data, size_t len, char *out);
 
 /* dbvalue.c */
-void  *osec_field(const unsigned type, const void *data, const size_t dlen);
+void *osec_field(const unsigned type, const void *data, const size_t dlen, struct field *ret);
 void append_value(const unsigned type, const void *src, const size_t slen, struct record *rec);
 void osec_state(struct record *rec, const struct stat *st);
 void osec_digest(struct record *rec, const char *fname);
 void osec_symlink(struct record *rec, const char *fname);
+void osec_xattr(struct record *rec, const char *fname);
 
 /* dbvalue.c */
 int  compat_db_version(int fd);

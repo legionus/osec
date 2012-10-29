@@ -21,7 +21,7 @@ void  *read_buf;
 size_t read_bufsize;
 
 void
-digest(const char *fname, char *out) {
+digest_file(const char *fname, char *out) {
 	int fd;
 	long num;
 	SHA_CTX ctx;
@@ -43,5 +43,13 @@ digest(const char *fname, char *out) {
 	if (close(fd) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: close", fname);
 
+	SHA1_Final((unsigned char *) out, &ctx);
+}
+
+void
+digest(const char *data, size_t len, char *out) {
+	SHA_CTX ctx;
+	SHA1_Init(&ctx);
+	SHA1_Update(&ctx, data, len);
 	SHA1_Final((unsigned char *) out, &ctx);
 }

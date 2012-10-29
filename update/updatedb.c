@@ -72,17 +72,17 @@ decode_dirname(char *dir) {
 	return ndir;
 }
 
-static size_t
-osec_empty_digest(void **val, size_t *vlen) {
+static void
+osec_empty_digest(struct record *rec) {
 	char fdigest[digest_len];
 	bzero(&fdigest, (size_t) digest_len);
-	return append_value(OVALUE_CSUM, val, vlen, &fdigest, (size_t) digest_len);
+	append_value(OVALUE_CSUM, &fdigest, (size_t) digest_len, rec);
 }
 
-static size_t
-osec_empty_symlink(void **val, size_t *vlen) {
+static void
+osec_empty_symlink(struct record *rec) {
 	char t = '\0';
-	return append_value(OVALUE_LINK, val, vlen, &t, (size_t) 1);
+	append_value(OVALUE_LINK, &t, (size_t) 1, rec);
 }
 
 static void
@@ -127,6 +127,8 @@ main(int argc, char **argv) {
 	unsigned cpos;
 	struct cdb cdbm;
 	struct cdb_make cdbn;
+
+	struct record rec;
 
 	progname = basename(argv[0]);
 
@@ -187,6 +189,13 @@ main(int argc, char **argv) {
 	read_bufsize = (size_t) (sysconf(_SC_PAGE_SIZE) - 1);
 	read_buf = xmalloc(read_bufsize);
 
+	/*
+	 * Set default data buffer. This value will increase in the process of
+	 * creating a database.
+	 */
+	rec.len  = 1024;
+	rec.data = xmalloc(rec.len);
+
 	cdb_seqinit(&cpos, &cdbm);
 	while(cdb_seqnext(&cpos, &cdbm) > 0) {
 		char *type;
@@ -206,27 +215,27 @@ main(int argc, char **argv) {
 
 		type += 1;
 		if (strcmp(type, "stat") == 0) {
-			void *val = NULL;
-			size_t vlen = 0;
 			struct stat st;
+
+			rec.offset = 0;
 
 			if (cdb_read(&cdbm, &st, (unsigned) sizeof(st), cdb_datapos(&cdbm)) < 0)
 				osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
-			osec_empty_digest(&val, &vlen);
-			osec_empty_symlink(&val, &vlen);
-			osec_state(&val, &vlen, &st);
+			osec_empty_digest(&rec);
+			osec_empty_symlink(&rec);
+			osec_state(&rec, &st);
 
-			if (cdb_make_add(&cdbn, key, (unsigned) klen+1, val, (unsigned) vlen) != 0)
+			if (cdb_make_add(&cdbn, key, (unsigned) klen+1, rec.data, (unsigned) rec.offset) != 0)
 				osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", key);
-
-			xfree(val);
 		}
 
 		xfree(key);
 	}
 
 	write_db_version(&cdbn);
+
+	xfree(rec.data);
 
 	if (cdb_make_finish(&cdbn) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_finish");

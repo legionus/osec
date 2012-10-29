@@ -177,6 +177,7 @@ create_cdb(int fd, char *dir) {
 		}
 
 		osec_state(&rec, p->fts_statp);
+		osec_xattr(&rec, p->fts_path);
 
 		switch(p->fts_info) {
 			case FTS_F:

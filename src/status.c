@@ -10,7 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 #include <time.h>
+#include <linux/limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -153,25 +155,6 @@ show_digest(const char *dst) {
 		printf("%02x", (unsigned char) dst[i++]);
 }
 
-void
-check_new(const char *fname, void *data, size_t dlen) {
-	osec_stat_t *st;
-
-	if ((st = osec_field(OVALUE_STAT, data, dlen)) == NULL)
-		osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field\n");
-
-	if (S_ISREG(st->mode)) {
-		char *csum;
-
-		if ((csum = osec_field(OVALUE_CSUM, data, dlen)) == NULL)
-			osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field\n");
-
-		printf("%s\tchecksum\tnew\t checksum=", fname);
-		show_digest(csum);
-		printf("\n");
-	}
-	show_state((char *) "new", fname, st);
-}
 
 static void
 check_checksum(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen) {
@@ -180,12 +163,12 @@ check_checksum(const char *fname, void *ndata, size_t nlen, void *odata, size_t 
 	if (ignore & OSEC_CSM)
 		return;
 
-	if ((old = osec_field(OVALUE_CSUM, odata, olen)) == NULL)
+	if ((old = osec_field(OVALUE_CSUM, odata, olen, NULL)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0,
 			"%s: osec_field(odata): Unable to get 'checksum' from database value\n",
 			fname);
 
-	if ((new = osec_field(OVALUE_CSUM, ndata, nlen)) == NULL)
+	if ((new = osec_field(OVALUE_CSUM, ndata, nlen, NULL)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0,
 			"%s: osec_field(ndata): Unable to get 'checksum' from database value\n",
 			fname);
@@ -208,12 +191,12 @@ check_symlink(const char *fname, void *ndata, size_t nlen, void *odata, size_t o
 	if (ignore & OSEC_LNK)
 		return;
 
-	if ((old = (char *) osec_field(OVALUE_LINK, odata, olen)) == NULL)
+	if ((old = (char *) osec_field(OVALUE_LINK, odata, olen, NULL)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0,
 			"%s: osec_field(odata): Unable to get 'symlink' from database value\n",
 			fname);
 
-	if ((new = (char *) osec_field(OVALUE_LINK, ndata, nlen)) == NULL)
+	if ((new = (char *) osec_field(OVALUE_LINK, ndata, nlen, NULL)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0,
 			"%s: osec_field(ndata): Unable to get 'symlink' from database value\n",
 			fname);
@@ -223,17 +206,140 @@ check_symlink(const char *fname, void *ndata, size_t nlen, void *odata, size_t o
 			fname, old, new);
 }
 
+static int
+printable(char *data, size_t len)
+{
+	unsigned int i;
+
+	for (i = 0; i < len; i++)
+		if (!isprint(data[i]))
+			return 0;
+	return 1;
+}
+
+static void
+xattr_nonexistent(const char *msg, const char *fn, char *list1, size_t len1, char *list2, size_t len2)
+{
+	char *nkey, *value;
+	size_t klen, vlen;
+
+	nkey = list1;
+
+	while (nkey != (list1 + len1)) {
+		unsigned found = 0;
+
+		klen = strlen(nkey) + 1;
+		if (klen == 1)
+			return;
+
+		if (list2 && len2 > 0) {
+			char *okey = list2;
+			size_t olen;
+
+			while (okey != (list2 + len2)) {
+				olen = strlen(okey) + 1;
+				if (olen == 1)
+					break;
+
+				if (!strcmp(nkey, okey)) {
+					found = 1;
+					break;
+				}
+
+				okey += olen;
+				memcpy(&vlen, okey, sizeof(size_t));
+				okey += sizeof(size_t) + vlen + 1;
+			}
+		}
+
+		memcpy(&vlen, nkey + klen,  sizeof(size_t));
+		value = nkey + klen + sizeof(size_t);
+
+		if (!found) {
+			printf("%s\txattr\t%s\t%s\t%s\n",
+				fn, msg, nkey,
+				printable(value, vlen) ? value : "(binary)");
+		}
+
+		nkey += klen + sizeof(size_t) + vlen + 1;
+	}
+}
+
+static void
+xattr_difference(const char *msg, const char *fn, char *list1, size_t len1, char *list2, size_t len2)
+{
+	char *nkey, *okey, *nvalue, *ovalue;
+	size_t nvalue_len, ovalue_len;
+	size_t nkey_len, okey_len;
+
+	nkey = list1;
+
+	while (nkey != (list1 + len1)) {
+		nkey_len = strlen(nkey) + 1;
+		if (nkey_len == 1)
+			break;
+
+		memcpy(&nvalue_len, nkey + nkey_len, sizeof(size_t));
+		nvalue = nkey + nkey_len + sizeof(size_t);
+
+		okey = list2;
+
+		while (okey != (list2 + len2)) {
+			okey_len = strlen(okey) + 1;
+			if (okey_len == 1)
+				break;
+
+			memcpy(&ovalue_len, okey + okey_len, sizeof(size_t));
+			ovalue = okey + okey_len + sizeof(size_t);
+
+			if ((nkey_len == okey_len && !strcmp(nkey, okey)) &&
+			    (nvalue_len != ovalue_len || memcmp(nvalue, ovalue, nvalue_len))) {
+				printf("%s\txattr\t%s\t%s\t%s -> %s\n",
+					fn, msg, nkey,
+					printable(ovalue, ovalue_len) ? ovalue : "(binary)",
+					printable(nvalue, nvalue_len) ? nvalue : "(binary)");
+				break;
+			}
+			okey += okey_len + sizeof(size_t) + ovalue_len + 1;
+		}
+		nkey += nkey_len + sizeof(size_t) + nvalue_len + 1;
+	}
+}
+
+static void
+check_xattr(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen)
+{
+	struct field oattrs, nattrs;
+
+	if (osec_field(OVALUE_XATTR, odata, olen, &oattrs) == NULL)
+		osec_fatal(EXIT_FAILURE, 0,
+			"%s: osec_field(odata): Unable to get 'xattr' from database value\n",
+			fname);
+
+	if (osec_field(OVALUE_XATTR, ndata, nlen, &nattrs) == NULL)
+		osec_fatal(EXIT_FAILURE, 0,
+			"%s: osec_field(ndata): Unable to get 'xattr' from database value\n",
+			fname);
+
+	if (nattrs.len == oattrs.len && !memcmp(nattrs.data, oattrs.data, nattrs.len))
+		return;
+
+	xattr_nonexistent("new",    fname, (char *) nattrs.data, nattrs.len, (char *) oattrs.data, oattrs.len);
+	xattr_nonexistent("old",    fname, (char *) oattrs.data, oattrs.len, (char *) nattrs.data, nattrs.len);
+	xattr_difference("changed", fname, (char *) nattrs.data, nattrs.len, (char *) oattrs.data, oattrs.len);
+}
+
 int
 check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen) {
 	osec_stat_t *new_st, *old_st;
 	unsigned state = 0;
 
-	if ((old_st = osec_field(OVALUE_STAT, odata, olen)) == NULL)
+	if ((old_st = osec_field(OVALUE_STAT, odata, olen, NULL)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0,
 			"%s: osec_field(odata): Unable to get 'stat' from database value\n",
 			fname);
 
-	if ((new_st = osec_field(OVALUE_STAT, ndata, nlen)) == NULL)
+	if ((new_st = osec_field(OVALUE_STAT, ndata, nlen, NULL)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0,
 			"%s: osec_field(ndata): Unable to get 'stat' from database value\n",
 			fname);
@@ -243,6 +349,8 @@ check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_
 
 	else if (S_ISLNK(new_st->mode) && S_ISLNK(old_st->mode))
 		check_symlink(fname, ndata, nlen, odata, olen);
+
+	check_xattr(fname, ndata, nlen, odata, olen);
 
 	if (!(ignore & OSEC_UID) && old_st->uid   != new_st->uid)    state |= OSEC_UID;
 	if (!(ignore & OSEC_GID) && old_st->gid   != new_st->gid)    state |= OSEC_GID;
@@ -302,7 +410,7 @@ int
 check_bad_files(const char *fname, void *data, size_t len) {
 	osec_stat_t *st;
 
-	if ((st = osec_field(OVALUE_STAT, data, len)) == NULL)
+	if ((st = osec_field(OVALUE_STAT, data, len, NULL)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0,
 			"%s: osec_field: Unable to get 'stat' from database value\n",
 			fname);
@@ -314,11 +422,38 @@ check_bad_files(const char *fname, void *data, size_t len) {
 	return 1;
 }
 
-int
-check_removed(const char *fname, void *data, size_t len) {
+void
+check_new(const char *fname, void *data, size_t dlen) {
+	struct field attrs;
 	osec_stat_t *st;
 
-	if ((st = osec_field(OVALUE_STAT, data, len)) == NULL)
+	if ((st = osec_field(OVALUE_STAT, data, dlen, NULL)) == NULL)
+		osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field\n");
+
+	if (S_ISREG(st->mode)) {
+		char *csum;
+
+		if ((csum = osec_field(OVALUE_CSUM, data, dlen, NULL)) == NULL)
+			osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field\n");
+
+		printf("%s\tchecksum\tnew\t checksum=", fname);
+		show_digest(csum);
+		printf("\n");
+	}
+	show_state((char *) "new", fname, st);
+
+	if ((osec_field(OVALUE_XATTR, data, dlen, &attrs)) == NULL)
+		osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field\n");
+
+	xattr_nonexistent("new", fname, (char *) attrs.data, attrs.len, NULL, 0);
+}
+
+int
+check_removed(const char *fname, void *data, size_t len) {
+	struct field attrs;
+	osec_stat_t *st;
+
+	if ((st = osec_field(OVALUE_STAT, data, len, NULL)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0,
 			"%s: osec_field: Unable to get 'stat' from database value\n",
 			fname);
@@ -326,7 +461,7 @@ check_removed(const char *fname, void *data, size_t len) {
 	if (S_ISREG(st->mode)) {
 		char *csum;
 
-		if ((csum = osec_field(OVALUE_CSUM, data, len)) == NULL)
+		if ((csum = osec_field(OVALUE_CSUM, data, len, NULL)) == NULL)
 			osec_fatal(EXIT_FAILURE, 0,
 				"%s: osec_field: Unable to get 'checksum' from database value\n",
 				fname);
@@ -336,5 +471,10 @@ check_removed(const char *fname, void *data, size_t len) {
 		printf("\n");
 	}
 	show_state((char *) "removed", fname, st);
+
+	if ((osec_field(OVALUE_XATTR, data, len, &attrs)) == NULL)
+		osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field\n");
+
+	xattr_nonexistent("old", fname, (char *) data, len, NULL, 0);
 	return 1;
 }
