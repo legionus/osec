@@ -100,7 +100,7 @@ osec_symlink(struct record *rec, const char *fname) {
 
 #ifndef HAVE_LIBATTR
 void
-osec_xattr(struct record *rec, const char *fname) {
+osec_xattr(struct record *rec, const char *fname __attribute__ ((unused))) {
 	const char empty = '\0';
 	append_value(OVALUE_XATTR, &empty, (size_t) 1, rec);
 }
