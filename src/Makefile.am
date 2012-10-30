@@ -11,7 +11,7 @@ if USE_WERROR
 WARNINGS += -Werror
 endif
 
-AM_CPPFLAGS = -g -std=c99 -D_BSD_SOURCE -D_GNU_SOURCE -DHAVE_XATTR \
+AM_CPPFLAGS = -g -std=c99 -D_BSD_SOURCE -D_GNU_SOURCE \
 	$(WARNINGS)
 
 AM_CPPFLAGS += -I./block-sha1
@@ -21,18 +21,15 @@ bin_PROGRAMS = osec osec2txt txt2osec
 osec_SOURCES = osec.c common.c memory.c privs.c status.c digest.c dbvalue.c \
 		dbversion.c exclude.c ignore.c path.c \
 		./block-sha1/sha1.c
-osec_LIBS = -lcap -lcdb -lattr
 dist_man_MANS = $(bin_PROGRAMS:=.1)
 
 osec2txt_SOURCES = osec2txt.c
 osec2txt_LDADD = common.o memory.o dbvalue.o dbversion.o digest.o sha1.o
-osec2txt_LIBS = -lcdb
 
 BUILT_SOURCES = txt2osec.h txt2osec.c
 txt2osec_SOURCES = txt2osec.y txt2osec.analize.l
 txt2osec_CFLAGS = -Wno-conversion
 txt2osec_LDADD = common.o memory.o dbvalue.o digest.o sha1.o dbversion.o
-txt2osec_LIBS = -lcdb
 
 CLEANFILES = $(bin_PROGRAMS) $(bin_PROGRAMS:=.1)
 

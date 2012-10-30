@@ -15,6 +15,7 @@ AM_PROG_LEX
 # Checks for libraries.
 AC_CHECK_LIB([cap], [cap_from_text])
 AC_CHECK_LIB([cdb], [cdb_init])
+AC_CHECK_LIB([attr], [listxattr])
 
 # Checks for header files.
 AC_HEADER_DIRENT

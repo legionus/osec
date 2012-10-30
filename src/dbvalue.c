@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/param.h>
+#include "config.h"
 #include "osec.h"
 
 void *
@@ -97,7 +98,7 @@ osec_symlink(struct record *rec, const char *fname) {
 	append_value(OVALUE_LINK, buf, (size_t) lnklen + 1, rec);
 }
 
-#ifndef HAVE_XATTR
+#ifndef HAVE_LIBATTR
 void
 osec_xattr(struct record *rec, const char *fname) {
 	const char empty = '\0';
