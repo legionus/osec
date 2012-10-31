@@ -20,6 +20,8 @@ my %del_bad_files=();
 my %info_bad_files=();
 my %change_bad_files=();
 
+my %change_xattrs = ();
+
 my %changed_symlinks = ();
 my %symlinks=();
 
@@ -67,6 +69,12 @@ while(<STDIN>)
     {
 	$fields[3] =~ /^old\s+target=(.*)/ and $changed_symlinks{$fields[0]}{"old"}=$1;
 	$fields[4] =~ /^new\s+target=(.*)/ and $changed_symlinks{$fields[0]}{"new"}=$1;
+    }
+    elsif ($fields[1] eq "xattr")
+    {
+	chomp $fields[4];
+	$change_xattrs{$fields[0]}{$fields[2]} = () if not $change_xattrs{$fields[0]}{$fields[2]};
+	$change_xattrs{$fields[0]}{$fields[2]}{$fields[3]} = $fields[4];
     }
     elsif ($fields[1] eq "stat" and $fields[2] and ($fields[2] eq "new"))
     {
@@ -229,9 +237,27 @@ if (%change_normal_files)
     }
 }
 
+if (%change_xattrs)
+{
+	print "Changed extended attributes:\n";
+	foreach my $file (sort keys %change_xattrs)
+	{
+		print "\t- $file\n";
+		foreach (sort keys %{$change_xattrs{$file}})
+		{
+			my %item = %{$change_xattrs{$file}{$_}};
+			print "\t\t$_:\n";
+			print "\t\t\t$_: $item{$_}\n" foreach (sort keys %item);
+		}
+	}
+	print "\n";
+
+}
+
 if (not(%new_normal_files or %del_normal_files or %change_normal_files or
         %new_bad_files or %del_bad_files or %change_bad_files or
-        %symlinks or %changed_symlinks))
+        %symlinks or %changed_symlinks or
+        %change_xattrs))
 {
     print "No changes\n";
 }
