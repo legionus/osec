@@ -3,6 +3,7 @@
 #
 # This file is part of Osec (lightweight integrity checker)
 # Copyright (c) 2002-2007 by Stanislav Ievlev
+# Copyright (c) 2012 by Alexey Gladkov
 #
 # This file is covered by the GNU General Public License,
 # which should be included with osec as the file COPYING.
@@ -14,16 +15,13 @@ use RPM::Database;
 
 my $rpm = new RPM::Database;
 
-while(<STDIN>)
-{
-    if ( /^\s+-\s+(.*)/ )
-    {
-	my  $name= join(',', map {$_->{name}} $rpm->find_by_file($1));
-	$name eq "" and $name="unknown";
-	print "\t- [$name] $1\n";
+while (<STDIN>) {
+    if (/^\s+-\s+(.*)/) {
+        my $name = join(',', map {$_->{name}} $rpm->find_by_file ($1));
+        $name eq "" and $name = "unknown";
+        print "\t- [$name] $1\n";
     }
-    else
-    {
-	print;
+    else {
+        print;
     }
 }
