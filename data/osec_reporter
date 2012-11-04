@@ -22,7 +22,8 @@ my %del_bad_files    = ();
 my %info_bad_files   = ();
 my %change_bad_files = ();
 
-my %change_xattrs = ();
+my %changed_xattrs  = ();
+my %changed_selinux = ();
 
 my %changed_symlinks = ();
 my %symlinks         = ();
@@ -80,9 +81,15 @@ while (<STDIN>) {
     }
     elsif ($fields[1] eq "xattr") {
         chomp $fields[4];
-        $change_xattrs{$fields[0]}{$fields[2]} = ()
-          if not $change_xattrs{$fields[0]}{$fields[2]};
-        $change_xattrs{$fields[0]}{$fields[2]}{$fields[3]} = $fields[4];
+
+        #
+        # Split the list in two parts: selinux and xattrs.
+        #
+        if ($fields[3] eq "security.selinux") {
+            $changed_selinux{$fields[0]}{$fields[2]} = $fields[4];
+            next;
+        }
+        $changed_xattrs{$fields[0]}{$fields[2]}{$fields[3]} = $fields[4];
     }
     elsif ($fields[1] eq "stat" and $fields[2] and ($fields[2] eq "new")) {
         #
@@ -200,6 +207,21 @@ if (%new_bad_files or %del_bad_files or %change_bad_files) {
     print "\n";
 }
 
+if (%changed_selinux) {
+    print "Changes in SELINUX policy:\n";
+
+    %act = ("changed" => "changed policy",
+            "new"     => "got policy",
+            "old"     => "lost policy"
+           );
+
+    foreach my $file (sort keys %changed_selinux) {
+        my $item = \%{$changed_selinux{$file}};
+        print "\t- $file $act{$_} $item->{$_}\n" foreach (sort keys %{$item});
+    }
+    print "\n";
+}
+
 if (%symlinks) {
     print "These regular files turned into symlinks:\n";
     print "\t- $_ --> $symlinks{$_}\n" foreach (sort keys %symlinks);
@@ -245,14 +267,14 @@ if (%change_normal_files) {
     }
 }
 
-if (%change_xattrs) {
+if (%changed_xattrs) {
     print "Changed extended attributes:\n";
-    foreach my $file (sort keys %change_xattrs) {
+    foreach my $file (sort keys %changed_xattrs) {
         print "\t- $file\n";
-        foreach (sort keys %{$change_xattrs{$file}}) {
-            my %item = %{$change_xattrs{$file}{$_}};
+        foreach (sort keys %{$changed_xattrs{$file}}) {
+            my $item = \%{$changed_xattrs{$file}{$_}};
             print "\t\t$_:\n";
-            print "\t\t\t$_: $item{$_}\n" foreach (sort keys %item);
+            print "\t\t\t$_: $item->{$_}\n" foreach (sort keys %{$item});
         }
     }
     print "\n";
@@ -260,14 +282,15 @@ if (%change_xattrs) {
 }
 
 print "No changes\n"
-  if not(   %new_normal_files
-         or %del_normal_files
-         or %change_normal_files
-         or %new_bad_files
-         or %del_bad_files
-         or %change_bad_files
-         or %symlinks
-         or %changed_symlinks
-         or %change_xattrs);
+  unless (   %new_normal_files
+          or %del_normal_files
+          or %change_normal_files
+          or %new_bad_files
+          or %del_bad_files
+          or %change_bad_files
+          or %symlinks
+          or %changed_symlinks
+          or %changed_xattrs
+          or %changed_selinux);
 
 print "\n";
