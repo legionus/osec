@@ -210,10 +210,10 @@ if (%new_bad_files or %del_bad_files or %change_bad_files) {
 if (%changed_selinux) {
     print "Changes in SELINUX policy:\n";
 
-    %act = ("changed" => "changed policy",
-            "new"     => "got policy",
-            "old"     => "lost policy"
-           );
+    my %act = ("changed" => "changed policy",
+               "new"     => "got policy",
+               "old"     => "lost policy"
+              );
 
     foreach my $file (sort keys %changed_selinux) {
         my $item = \%{$changed_selinux{$file}};
