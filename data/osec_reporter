@@ -79,7 +79,7 @@ while (<STDIN>) {
         $fields[4] =~ /^new\s+target=(.*)/
           and $changed_symlinks{$fields[0]}{"new"} = $1;
     }
-    elsif ($fields[1] eq "xattr") {
+    elsif ($process and $fields[1] eq "xattr") {
         chomp $fields[4];
 
         #
