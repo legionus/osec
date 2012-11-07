@@ -212,7 +212,7 @@ printable(char *data, size_t len)
 	unsigned int i;
 
 	for (i = 0; i < len; i++)
-		if (!isprint(data[i]))
+		if (!isprint(data[i]) && data[i] != '\0')
 			return 0;
 	return 1;
 }
