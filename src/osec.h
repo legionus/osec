@@ -1,7 +1,7 @@
 /* osec.h
  *
  * This file is part of Osec (lightweight integrity checker)
- * Copyright (C) 2008-2009  Alexey Gladkov <gladkov.alexey@gmail.com>
+ * Copyright (C) 2008-2012  Alexey Gladkov <gladkov.alexey@gmail.com>
  *
  * This file is covered by the GNU General Public License,
  * which should be included with osec as the file COPYING.
