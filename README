@@ -31,6 +31,10 @@ You need following tools to build library:
     o libcap library (1.10 or higher)
     o GNU autoconf (2.61 or higher)
     o GNU automake (1.11 or higher)
+    o GNU help2man (1.40.12 or higher)
+
+optionally:
+    o libattr library (2.4.46 or higher)
 
 Notes
 -----

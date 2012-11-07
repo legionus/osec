@@ -8,14 +8,26 @@ AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([dist-bzip2])
 
 # Checks for programs.
+AC_PROG_CC
 AM_PROG_CC_C_O
+AC_PROG_MAKE_SET
 AC_PROG_YACC
 AM_PROG_LEX
 
+AC_CHECK_PROG([HELP2MAN], [help2man], [yes])
+if test "${HELP2MAN-}" != "yes"; then
+	AC_MSG_ERROR([help2man was not found: http://www.gnu.org/software/help2man/])
+fi
+
 # Checks for libraries.
-AC_CHECK_LIB([cap], [cap_from_text])
-AC_CHECK_LIB([cdb], [cdb_init])
-AC_CHECK_LIB([attr], [listxattr])
+AC_CHECK_LIB([cap], [cap_from_text],,
+	[AC_MSG_ERROR([libcap was not found: http://sites.google.com/site/fullycapable/])])
+
+AC_CHECK_LIB([cdb], [cdb_init],,
+	[AC_MSG_ERROR([tinycdb was not found: http://www.corpit.ru/mjt/tinycdb.html])])
+
+AC_CHECK_LIB([attr], [listxattr],,
+	[AC_MSG_WARN(libattr was not found: http://savannah.nongnu.org/projects/attr)])
 
 # Checks for header files.
 AC_HEADER_DIRENT
@@ -37,7 +49,7 @@ AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([strerror])
+AC_CHECK_FUNCS([bzero ftruncate memset mkdir strchr strdup strerror strstr])
 
 AC_ARG_ENABLE(werror,
 	AS_HELP_STRING(--enable-werror, [Build with -Werror option]),
