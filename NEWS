@@ -1,5 +1,12 @@
 list of user-visible changes between releases of osec:
 
+[1.2.5]
+Add ability to ignore check of checksum and symlink;
+Add extended attributes support;
+report: Split xattrs in two parts: selinux and other attributies;
+osec.cron: Add number of added, deleted and changed files;
+Reduced the number of memory allocations.
+
 [1.2.4]
 * Use fts(3) to traverse a file hierarchy;
 * Add osec2txt and txt2osec utilities;
