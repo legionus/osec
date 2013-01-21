@@ -350,7 +350,8 @@ check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_
 	else if (S_ISLNK(new_st->mode) && S_ISLNK(old_st->mode))
 		check_symlink(fname, ndata, nlen, odata, olen);
 
-	check_xattr(fname, ndata, nlen, odata, olen);
+	if (dbversion > 2)
+		check_xattr(fname, ndata, nlen, odata, olen);
 
 	if (!(ignore & OSEC_UID) && old_st->uid   != new_st->uid)    state |= OSEC_UID;
 	if (!(ignore & OSEC_GID) && old_st->gid   != new_st->gid)    state |= OSEC_GID;

@@ -16,7 +16,10 @@
 
 #define OSEC_O_FLAGS (O_RDONLY | O_NOCTTY | O_NONBLOCK | O_NOFOLLOW)
 
-#define OSEC_DB_VERSION 2
+// OSEC_DB_VERSION 1 - start versioning
+// OSEC_DB_VERSION 2 - mtime added
+// OSEC_DB_VERSION 3 - xattr added
+#define OSEC_DB_VERSION 3
 int dbversion;
 
 #define OSEC_CSM (1 << 1)
