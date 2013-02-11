@@ -102,7 +102,7 @@ osec_symlink(struct record *rec, const char *fname) {
 void
 osec_xattr(struct record *rec, const char *fname __attribute__ ((unused))) {
 	const char empty = '\0';
-	append_value(OVALUE_XATTR, &empty, (size_t) 1, rec);
+	append_value(OVALUE_XATTR, &empty, sizeof(empty), rec);
 }
 #else
 #include <sys/types.h>
@@ -239,7 +239,7 @@ next:		xkey += xkey_len;
 	xfree(xvalue);
 	return;
 
-empty:	append_value(OVALUE_XATTR, &empty, (size_t) 1, rec);
+empty:	append_value(OVALUE_XATTR, &empty, sizeof(empty), rec);
 	xfree(xlist);
 	xfree(xvalue);
 }
