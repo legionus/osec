@@ -443,10 +443,12 @@ check_new(const char *fname, void *data, size_t dlen) {
 	}
 	show_state((char *) "new", fname, st);
 
-	if ((osec_field(OVALUE_XATTR, data, dlen, &attrs)) == NULL)
-		osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field\n");
+	if (dbversion > 2) {
+		if ((osec_field(OVALUE_XATTR, data, dlen, &attrs)) == NULL)
+			osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field\n");
 
-	xattr_nonexistent("new", fname, (char *) attrs.data, attrs.len, NULL, 0);
+			xattr_nonexistent("new", fname, (char *) attrs.data, attrs.len, NULL, 0);
+	}
 }
 
 int
@@ -473,9 +475,12 @@ check_removed(const char *fname, void *data, size_t len) {
 	}
 	show_state((char *) "removed", fname, st);
 
-	if ((osec_field(OVALUE_XATTR, data, len, &attrs)) == NULL)
-		osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field\n");
+	if (dbversion > 2) {
+		if ((osec_field(OVALUE_XATTR, data, len, &attrs)) == NULL)
+			osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field\n");
 
-	xattr_nonexistent("old", fname, (char *) data, len, NULL, 0);
+			xattr_nonexistent("old", fname, (char *) data, len, NULL, 0);
+	}
+
 	return 1;
 }
