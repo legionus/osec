@@ -18,6 +18,7 @@ missing
 *.o
 *.1
 src/osec
+src/osec-dbversion
 src/osec2txt
 src/txt2osec
 src/txt2osec.analize.c
