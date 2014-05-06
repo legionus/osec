@@ -19,7 +19,11 @@ extern size_t exclude_matches_len;
 
 void
 exclude_match_append(char *pattern) {
-	size_t len = strlen(pattern) + 1;
+	size_t len = strlen(pattern);
+
+	if (!len)
+		return;
+	len++;
 
 	exclude_matches = (char *) xrealloc(exclude_matches,
 			(sizeof(char) * (exclude_matches_len + sizeof(size_t) + len)));
@@ -35,13 +39,18 @@ void
 exclude_matches_file(char *file) {
 	FILE *fd;
 	char *line = NULL;
-	size_t len = 0;
+	ssize_t len;
+	size_t bufsiz = 0;
 
 	if ((fd = fopen(file, "r")) == NULL)
 		osec_fatal(EXIT_FAILURE, errno, "%s: fopen", file);
 
-	while (getline(&line, &len, fd) != -1)
+	while ((len = getline(&line, &bufsiz, fd)) != -1) {
+		if (line[len - 1] == '\n')
+			line[len - 1] = '\0';
+
 		exclude_match_append(line);
+	}
 	xfree(line);
 
 	if (fclose(fd) != 0)

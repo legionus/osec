@@ -176,6 +176,9 @@ create_cdb(int fd, char *dir) {
 				continue;
 		}
 
+		if (is_exclude(p->fts_path))
+			continue;
+
 		osec_state(&rec, p->fts_statp);
 		osec_xattr(&rec, p->fts_path);
 
