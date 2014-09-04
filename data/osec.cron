@@ -36,17 +36,6 @@ exit_handler()
 }
 
 cmd=
-run_osec()
-{
-	local rc=0
-	$cmd /usr/bin/osec -D /var/lib/osec -f /etc/osec/dirs.conf ||
-		rc=$?
-	if [ $rc -ne 0 ]; then
-		echo "Program exited abnormally, exit code = $rc" >&2
-		syslog "/usr/bin/osec exited abnormally, exit code = $rc"
-	fi
-}
-
 if [ -n "${NICE_PRIORITY-}" ] && nice_cmd="$(which nice 2>/dev/null)"; then
 	$nice_cmd -n "$NICE_PRIORITY" true 2>/dev/null &&
 		cmd="$nice_cmd $NICE_ARGS -n $NICE_PRIORITY --"
@@ -73,7 +62,15 @@ if [ ! -d /var/lib/osec/.dbver1 ]; then
 	syslog "Migration finished"
 fi
 
-run_osec |eval "$REPORT_PIPE" >"$TEMPFILE"
+(
+	rc=0
+	$cmd /usr/bin/osec -D /var/lib/osec -f /etc/osec/dirs.conf ||
+		rc=$?
+	if [ $rc -ne 0 ]; then
+		echo "Program exited abnormally, exit code = $rc" >&2
+		syslog "/usr/bin/osec exited abnormally, exit code = $rc"
+	fi
+) | eval "$REPORT_PIPE" >"$TEMPFILE"
 
 ADDED=0 REMOVED=0 CHANGED=0
 while read l; do
