@@ -10,10 +10,11 @@
 #
 
 PROG="${0##*/}"
+CONFDIR='/etc/osec'
 NICE_ARGS=
 IONICE_ARGS='-t'
 
-. /etc/osec/pipe.conf
+. "$CONFDIR/pipe.conf"
 
 syslog()
 {
@@ -64,7 +65,7 @@ fi
 
 (
 	rc=0
-	$cmd /usr/bin/osec -D /var/lib/osec -f /etc/osec/dirs.conf ||
+	$cmd /usr/bin/osec -D /var/lib/osec -f "$CONFDIR/dirs.conf" ||
 		rc=$?
 	if [ $rc -ne 0 ]; then
 		echo "Program exited abnormally, exit code = $rc" >&2
