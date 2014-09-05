@@ -12,6 +12,7 @@
 PROG="${0##*/}"
 CONFDIR='/etc/osec'
 EXCLUDE_FILE=
+IGNORE_FIELDS=
 NICE_ARGS=
 IONICE_ARGS='-t'
 
@@ -81,6 +82,7 @@ fi
 	rc=0
 	$cmd /usr/bin/osec \
 		${EXCLUDE_FILE:+-X "$EXCLUDE_FILE"} \
+		${IGNORE_FIELDS:+-i "$IGNORE_FIELDS"} \
 		-D "$DATABASE_DIR" \
 		-f "$CONFDIR/dirs.conf" ||
 		rc=$?
