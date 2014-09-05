@@ -11,14 +11,13 @@
 
 PROG="${0##*/}"
 CONFDIR='/etc/osec'
+DATABASE_DIR='/var/lib/osec'
 EXCLUDE_FILE=
 IGNORE_FIELDS=
 NICE_ARGS=
 IONICE_ARGS='-t'
 
 . "$CONFDIR/pipe.conf"
-
-DATABASE_DIR='/var/lib/osec'
 
 syslog()
 {
