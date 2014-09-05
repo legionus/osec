@@ -10,6 +10,7 @@
 #
 
 PROG="${0##*/}"
+PROFILE=
 CONFDIR='/etc/osec'
 DATABASE_DIR='/var/lib/osec'
 EXCLUDE_FILE=
@@ -19,11 +20,31 @@ IONICE_ARGS='-t'
 
 . "$CONFDIR/pipe.conf"
 
+if [ "$#" -gt 0 ]; then
+	fatal() {
+		printf >&2 'Error: %s\n' "$*"
+		exit 1
+	}
+
+	subconfdir="$CONFDIR/$1"
+	subconf="$subconfdir/pipe.conf"
+
+	[   -d "$subconfdir" ] || fatal "Not directory: $subconfdir"
+	[ ! -L "$subconfdir" ] || fatal "Directory is symlink: $subconfdir"
+	[   -f "$subconf"    ] || fatal "File not found: $subconf"
+	[ ! -L "$subconf"    ] || fatal "File is a symlink: $subconf"
+	[   -r "$subconf"    ] || fatal "File not readable: $subconf"
+
+	. "$subconf"
+
+	PROFILE="$1"
+fi
+
 syslog()
 {
 	local log
 	if log="$(which logger 2>/dev/null)"; then
-		SHREQ=0 "$log" -p user.info -t "osec[$$]" "$*" ||:
+		SHREQ=0 "$log" -p user.info -t "osec${PROFILE:+:$PROFILE}[$$]" "$*" ||:
 	fi
 }
 
@@ -49,7 +70,6 @@ if [ -n "${IONICE_PRIORITY-}" ] && ionice_cmd="$(which ionice 2>/dev/null)"; the
 	$ionice_cmd -t -c $IONICE_PRIORITY true 2>/dev/null &&
 		cmd="$cmd $ionice_cmd $IONICE_ARGS -c $IONICE_PRIORITY --"
 fi
-
 
 trap exit_handler HUP PIPE INT QUIT TERM EXIT
 TEMPFILE="$(mktemp -t "$PROG.XXXXXX")"
