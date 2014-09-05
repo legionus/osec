@@ -11,10 +11,13 @@
 
 PROG="${0##*/}"
 CONFDIR='/etc/osec'
+EXCLUDE_FILE=
 NICE_ARGS=
 IONICE_ARGS='-t'
 
 . "$CONFDIR/pipe.conf"
+
+DATABASE_DIR='/var/lib/osec'
 
 syslog()
 {
@@ -47,25 +50,39 @@ if [ -n "${IONICE_PRIORITY-}" ] && ionice_cmd="$(which ionice 2>/dev/null)"; the
 		cmd="$cmd $ionice_cmd $IONICE_ARGS -c $IONICE_PRIORITY --"
 fi
 
+
 trap exit_handler HUP PIPE INT QUIT TERM EXIT
 TEMPFILE="$(mktemp -t "$PROG.XXXXXX")"
 
 syslog "Started"
 
-if [ ! -d /var/lib/osec/.dbver1 ]; then
+if [ ! -d "$DATABASE_DIR/.dbver1" ]; then
 	syslog "Migration to new database format started"
-	for db in /var/lib/osec/osec.cdb.*; do
-		[ "$db" != '/var/lib/osec/osec.cdb.*' ] ||
+	for db in "$DATABASE_DIR/osec.cdb".*; do
+		[ "$db" != "$DATABASE_DIR/osec.cdb.*" ] ||
 			break
-		$cmd /usr/bin/osec-migrade-db -D /var/lib/osec "$db"
+		$cmd /usr/bin/osec-migrade-db -D "$DATABASE_DIR" "$db"
 	done
-	mkdir /var/lib/osec/.dbver1
+	mkdir "$DATABASE_DIR/.dbver1"
 	syslog "Migration finished"
+fi
+
+# Prepare osec arguments
+if [ -n "${EXCLUDE_FILE-}" ]; then
+	if [ ! -f "$EXCLUDE_FILE" ]; then
+		printf '%s\n' "$EXCLUDE_FILE: Not found, parameter EXCLUDE will be ignored" >&2
+		syslog "$EXCLUDE_FILE: Not found, parameter EXCLUDE will be ignored"
+	else
+		EXCLUDE_FILE=
+	fi
 fi
 
 (
 	rc=0
-	$cmd /usr/bin/osec -D /var/lib/osec -f "$CONFDIR/dirs.conf" ||
+	$cmd /usr/bin/osec \
+		${EXCLUDE_FILE:+-X "$EXCLUDE_FILE"} \
+		-D "$DATABASE_DIR" \
+		-f "$CONFDIR/dirs.conf" ||
 		rc=$?
 	if [ $rc -ne 0 ]; then
 		echo "Program exited abnormally, exit code = $rc" >&2
