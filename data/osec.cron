@@ -49,6 +49,12 @@ syslog()
 	fi
 }
 
+errlog()
+{
+	printf >&2 '%s\n' "$*"
+	syslog "$*"
+}
+
 TEMPFILE=
 exit_handler()
 {
@@ -91,8 +97,7 @@ fi
 # Prepare osec arguments
 if [ -n "${EXCLUDE_FILE-}" ]; then
 	if [ ! -f "$EXCLUDE_FILE" ]; then
-		printf '%s\n' "$EXCLUDE_FILE: Not found, parameter EXCLUDE will be ignored" >&2
-		syslog "$EXCLUDE_FILE: Not found, parameter EXCLUDE will be ignored"
+		errlog "$EXCLUDE_FILE: Not found, parameter EXCLUDE will be ignored"
 	else
 		EXCLUDE_FILE=
 	fi
@@ -107,8 +112,7 @@ fi
 		-f "$DIRS_FILE" ||
 		rc=$?
 	if [ $rc -ne 0 ]; then
-		echo "Program exited abnormally, exit code = $rc" >&2
-		syslog "/usr/bin/osec exited abnormally, exit code = $rc"
+		errlog "Program (/usr/bin/osec) exited abnormally, exit code = $rc"
 	fi
 ) | eval "$REPORT_PIPE" >"$TEMPFILE"
 
