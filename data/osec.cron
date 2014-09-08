@@ -123,10 +123,10 @@ while read l; do
 			[ -z "${IGNORE_NO_CHANGES-}" ] ||
 				exit 0
 			;;
-		'New files added to control:')	t='ADDED'	;;
-		'Changed controlled files:')	t='CHANGED'	;;
-		'Removed from control:')	t='REMOVED'	;;
-		'- /'*) [ -z "${t-}" ] || eval "$t=\$((\$t+1))"	;;
+		'New files added to control:') t='ADDED'        ;;
+		'Changed controlled files:')   t='CHANGED'      ;;
+		'Removed from control:')       t='REMOVED'      ;;
+		'- /'*) [ -z "${t-}" ] || eval "$t=\$((\$t+1))" ;;
 	esac
 done < "$TEMPFILE"
 
