@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 #include <fnmatch.h>
 #include "osec.h"
 
@@ -46,10 +47,18 @@ exclude_matches_file(char *file) {
 		osec_fatal(EXIT_FAILURE, errno, "%s: fopen", file);
 
 	while ((len = getline(&line, &bufsiz, fd)) != -1) {
+		unsigned int i = 0;
+
+		while (isspace(line[i]))
+			i++;
+
+		if (strlen((line + i)) == 0 || line[i] == '#')
+			continue;
+
 		if (line[len - 1] == '\n')
 			line[len - 1] = '\0';
 
-		exclude_match_append(line);
+		exclude_match_append(line + i);
 	}
 	xfree(line);
 
