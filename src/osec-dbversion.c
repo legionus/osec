@@ -12,7 +12,7 @@
 
 char *progname = NULL;
 
-void __attribute__ ((noreturn))
+static void __attribute__ ((noreturn))
 print_help(int ret)
 {
 	printf("Usage: %s [options] <DBFILE>\n"
@@ -24,7 +24,7 @@ print_help(int ret)
 	exit(ret);
 }
 
-void __attribute__ ((noreturn))
+static void __attribute__ ((noreturn))
 print_version(void)
 {
 	printf("%s version "PACKAGE_VERSION"\n"
