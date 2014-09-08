@@ -13,6 +13,7 @@ PROG="${0##*/}"
 PROFILE=
 CONFDIR='/etc/osec'
 DATABASE_DIR='/var/lib/osec'
+DIRS_FILE='/etc/osec/dirs.conf'
 EXCLUDE_FILE=
 IGNORE_FIELDS=
 NICE_ARGS=
@@ -103,7 +104,7 @@ fi
 		${EXCLUDE_FILE:+-X "$EXCLUDE_FILE"} \
 		${IGNORE_FIELDS:+-i "$IGNORE_FIELDS"} \
 		-D "$DATABASE_DIR" \
-		-f "$CONFDIR/dirs.conf" ||
+		-f "$DIRS_FILE" ||
 		rc=$?
 	if [ $rc -ne 0 ]; then
 		echo "Program exited abnormally, exit code = $rc" >&2
