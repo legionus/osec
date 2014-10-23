@@ -1,6 +1,6 @@
 Name: osec
-Version: 1.2.5
-Release: alt3
+Version: 1.2.6
+Release: alt1
 
 Summary: Lightweight file permission checker
 License: GPL3
@@ -90,12 +90,14 @@ rm -f %osec_statedir/osec.db.*
 %_bindir/osec
 %_bindir/osec2txt
 %_bindir/txt2osec
+%_bindir/osec-dbversion
 %_bindir/osec-migrade-db
 %_man1dir/*
 
 %files cronjob
 %config(noreplace) /etc/cron.d/osec
 %attr(700,root,root) %_datadir/osec/osec.cron
+%attr(770,root,%osec_group) %osec_statedir
 %defattr(600,root,root,700)
 %config(noreplace) /etc/osec
 
@@ -103,9 +105,13 @@ rm -f %osec_statedir/osec.db.*
 %_bindir/osec_mailer
 %_bindir/osec_reporter
 %_bindir/osec_rpm_reporter
-%attr(770,root,%osec_group) %osec_statedir
 
 %changelog
+* Thu Oct 23 2014 Alexey Gladkov <legion@altlinux.ru> 1.2.6-alt1
+- New version (1.2.6);
+- Add file exclusion option;
+- osec.cron: Add multiconfiguration support.
+
 * Tue Feb 12 2013 Alexey Gladkov <legion@altlinux.ru> 1.2.5-alt3
 - Fix incorrect use of xattr_nonexistent().
 
