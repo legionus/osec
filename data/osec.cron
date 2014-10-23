@@ -97,7 +97,6 @@ fi
 if [ -n "${EXCLUDE_FILE-}" ]; then
 	if [ ! -f "$EXCLUDE_FILE" ]; then
 		errlog "$EXCLUDE_FILE: Not found, parameter EXCLUDE will be ignored"
-	else
 		EXCLUDE_FILE=
 	fi
 fi
