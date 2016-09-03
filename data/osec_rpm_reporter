@@ -11,9 +11,9 @@
 
 use strict;
 
-use RPM::Database;
+use RPM2;
 
-my $rpm = new RPM::Database;
+my $rpm = RPM2->open_rpm_db();
 
 while (<STDIN>) {
     if (/^\s+-\s+(.*)/) {
