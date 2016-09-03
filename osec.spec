@@ -1,5 +1,5 @@
 Name: osec
-Version: 1.2.6
+Version: 1.2.7
 Release: alt1
 
 Summary: Lightweight file permission checker
@@ -20,7 +20,7 @@ Obsoletes: mtree-sec
 %define osec_user osec
 
 # Automatically added by buildreq on Sat Apr 21 2007 (-bi)
-BuildRequires: flex bison help2man libcdb-devel libcap-devel libattr-devel perl-RPM
+BuildRequires: flex bison help2man libcdb-devel libcap-devel libattr-devel perl-RPM2
 
 %package cronjob
 Summary: General cron framework for osec
@@ -107,6 +107,13 @@ rm -f %osec_statedir/osec.db.*
 %_bindir/osec_rpm_reporter
 
 %changelog
+* Sat Sep 03 2016 Alexey Gladkov <legion@altlinux.ru> 1.2.7-alt1
+- New version (1.2.7);
+- Fix EXCLUDE_FILE handling (ALT#30413);
+- Add default exclude.conf (ALT#30413);
+- dirs.conf: Add /usr/share (ALT#31706);
+- Use perl-RPM2;
+
 * Thu Oct 23 2014 Alexey Gladkov <legion@altlinux.ru> 1.2.6-alt1
 - New version (1.2.6);
 - Add file exclusion option;
