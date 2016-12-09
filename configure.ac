@@ -19,6 +19,8 @@ if test "${HELP2MAN-}" != "yes"; then
 	AC_MSG_ERROR([help2man was not found: http://www.gnu.org/software/help2man/])
 fi
 
+AC_SYS_LARGEFILE
+
 # Checks for libraries.
 AC_CHECK_LIB([cap], [cap_from_text],,
 	[AC_MSG_ERROR([libcap was not found: http://sites.google.com/site/fullycapable/])])
@@ -44,6 +46,7 @@ AC_TYPE_SSIZE_T
 # Checks for library functions.
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_ERROR_AT_LINE
+AC_FUNC_FSEEKO
 AC_FUNC_LSTAT
 AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MALLOC
