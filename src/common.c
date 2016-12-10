@@ -6,13 +6,14 @@
  * This file is covered by the GNU General Public License,
  * which should be included with osec as the file COPYING.
  */
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "config.h"
 #include "osec.h"
 
 extern char *progname;

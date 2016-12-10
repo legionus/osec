@@ -6,6 +6,7 @@
  * This file is covered by the GNU General Public License,
  * which should be included with osec as the file COPYING.
  */
+#include "config.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -18,7 +19,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "config.h"
 #include "osec.h"
 
 char *progname = NULL;

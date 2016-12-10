@@ -6,6 +6,8 @@
  * This file is covered by the GNU General Public License,
  * which should be included with osec as the file COPYING.
  */
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,7 +22,6 @@
 #include <sys/param.h>
 #include <fts.h>
 
-#include "config.h"
 #include "osec.h"
 
 // Global variables

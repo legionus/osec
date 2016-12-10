@@ -9,6 +9,8 @@
 %{
 #define YYSTYPE long long
 
+#include "config.h"
+
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
@@ -24,7 +26,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "config.h"
 #include "osec.h"
 
 extern FILE *yyin;

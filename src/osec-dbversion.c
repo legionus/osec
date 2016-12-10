@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <libgen.h>
@@ -7,7 +9,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "config.h"
 #include "osec.h"
 
 char *progname = NULL;
