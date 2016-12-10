@@ -261,6 +261,10 @@ if (%change_normal_files) {
                 $item{$_}{old} = localtime($item{$_}{old});
                 $item{$_}{new} = localtime($item{$_}{new});
             }
+
+            $item{$_}{old} = 'report-parse-error' if !defined $item{$_}{old};
+            $item{$_}{new} = 'report-parse-error' if !defined $item{$_}{new};
+
             print "\t\t$_: $item{$_}{old} -> $item{$_}{new}\n"
               unless ($_ eq "checksum");
         }
