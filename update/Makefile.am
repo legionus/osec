@@ -9,7 +9,7 @@ if USE_WERROR
 WARNINGS += -Werror
 endif
 
-AM_CPPFLAGS = -g -std=c99 -D_BSD_SOURCE -D_GNU_SOURCE \
+AM_CPPFLAGS = -g -std=c99 -D_GNU_SOURCE \
 	-I$(srcdir)/../src -I$(srcdir)/../src/block-sha1 \
 	$(WARNINGS)
 
