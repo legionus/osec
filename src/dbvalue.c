@@ -108,7 +108,8 @@ osec_xattr(struct record *rec, const char *fname __attribute__ ((unused))) {
 }
 #else
 #include <sys/types.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
+#include <attr/attributes.h>
 
 void
 osec_xattr(struct record *rec, const char *fname) {
