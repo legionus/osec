@@ -10,6 +10,8 @@
 %{
 #define YY_NO_INPUT 1
 #define YYSTYPE long long
+#include "config.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
