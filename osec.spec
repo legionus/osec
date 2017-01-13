@@ -30,6 +30,7 @@ Provides: %name-cron
 Requires: %name = %EVR
 Requires: %name-reporter
 Group: System/Base
+BuildArch: noarch
 
 %package mailreport
 Summary: Collection of reporters for osec
@@ -40,6 +41,7 @@ Requires: %name-cron
 Requires: /bin/mail
 Requires: perl-base
 Requires(pre): coreutils
+BuildArch: noarch
 
 %description
 This package contains osec program which performs files integrity check
@@ -99,6 +101,7 @@ rm -f %osec_statedir/osec.db.*
 
 %files cronjob
 %config(noreplace) /etc/cron.d/osec
+%dir %_datadir/osec
 %attr(700,root,root) %_datadir/osec/osec.cron
 %attr(770,root,%osec_group) %osec_statedir
 %defattr(600,root,root,700)
