@@ -46,13 +46,15 @@ enum {
 	FLAG_DEV   = (01 << 5),
 	FLAG_INO   = (01 << 6),
 	FLAG_UID   = (01 << 7),
-	FLAG_GID   = (01 << 8)
+	FLAG_GID   = (01 << 8),
+	FLAG_XATTR = (01 << 9),
 };
 
 char *fname = NULL;
 char *slink = NULL;
 char **chsum = NULL;
 size_t chsum_count = 0;
+char *xattr = NULL;
 char *hashnames = NULL;
 
 osec_stat_t ost;
@@ -74,6 +76,7 @@ int yylex (void);
 %token EQUALS EOL ERROR
 %token NUMBER OCTAL STRLITERAL
 %token HASHNAMES
+%token XATTR
 
 /* Grammar follows */
 %%
@@ -95,6 +98,7 @@ range0		: devline
 		| csumline
 		| linkline
 		| modeline
+		| xattrline
 		;
 hashline	: HASHNAMES EQUALS STRLITERAL
 		{
@@ -123,6 +127,15 @@ csumline	: CHECKSUM EQUALS STRLITERAL
 		  chsum = xrealloc(chsum, sizeof(char*) * chsum_count);
 		  chsum[chsum_count - 1] = strdup(str);
 		  flags |= FLAG_CSUM; }
+		;
+xattrline	: XATTR EQUALS STRLITERAL
+		{
+		  size_t n = strlen(str);
+		  if (n % 2 != 0)
+			osec_fatal(1, 0, "%s:%d: Xattr value has invalid size: %s\n",
+			           pathname, line_nr, str);
+		  xattr = strdup(str);
+		  flags |= FLAG_XATTR; }
 		;
 linkline	: SYMLINK EQUALS STRLITERAL
 		{ if (strlen(str) > 0) {
@@ -177,6 +190,33 @@ endline		: EOL
 				           pathname, line_nr);
 
 			append_value(OVALUE_STAT, &ost, sizeof(ost), &rec);
+
+			if (F_ISSET(flags, FLAG_XATTR)) {
+				char *s = xattr;
+				unsigned int h;
+				size_t i;
+				size_t xattr_len;
+				unsigned char *xattr_str = NULL;
+
+				xattr_len = strlen(xattr) / 2;
+
+				xattr_str = xmalloc(xattr_len);
+
+				for (i = 0; i < xattr_len; i++) {
+					sscanf(s, "%02x", &h);
+					xattr_str[i] = (unsigned char) h;
+					s += 2;
+				}
+				append_value(OVALUE_XATTR, xattr_str, xattr_len, &rec);
+				xfree(xattr);
+				xfree(xattr_str);
+			}
+			else
+			{
+				/* if not xattr is found, it's probably data from database before version 3, just add empty xattr value for compatibility */
+				const char empty = '\0';
+				append_value(OVALUE_XATTR, &empty, sizeof(empty), &rec);
+			}
 
 			if (F_ISSET(flags, FLAG_CSUM)) {
 				unsigned int h, i;

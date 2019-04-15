@@ -58,6 +58,7 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 	osec_stat_t *st;
 	int i;
 	char *field;
+	struct field field_data;
 
 	if ((st = osec_field(OVALUE_STAT, rec, rlen, NULL)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'stat' from dbvalue\n", key);
@@ -72,9 +73,16 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 	}
 	dprintf(fd,"\" \\\n");
 
-	if (S_ISREG(st->mode)) {
-		struct field field_data;
+	if (dbversion > 2) {
+		if ((field = (char *) osec_field(OVALUE_XATTR, rec, rlen, &field_data)) == NULL)
+			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'xattr' from dbvalue\n", key);
 
+		dprintf(fd, "\txattr=\"");
+		show_digest(fd, field, field_data.len);
+		dprintf(fd, "\" \\\n");
+	}
+
+	if (S_ISREG(st->mode)) {
 		if ((field = (char *) osec_field(OVALUE_CSUM, rec, rlen, &field_data)) == NULL)
 			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'checksum' from dbvalue\n", key);
 

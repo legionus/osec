@@ -51,6 +51,7 @@ Mtime		mtime|Mtime
 Checksum	checksum|Checksum
 Symlink		symlink|Symlink
 Hashnames		hashnames|Hashnames
+Xattr		xattr|Xattr
 
 %%
 
@@ -61,6 +62,7 @@ Hashnames		hashnames|Hashnames
 {Octa}			{ yylval = strtoll(yytext+1,NULL,8); return(OCTAL); }
 {Hashnames}		{ return(HASHNAMES); }
 {Filename}		{ return(FILENAME); }
+{Xattr}		{ return(XATTR); }
 {Checksum}		{ return(CHECKSUM); }
 {Symlink}		{ return(SYMLINK); }
 {Device}		{ return(DEVICE); }
