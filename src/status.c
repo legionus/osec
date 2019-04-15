@@ -481,7 +481,7 @@ check_new(const char *fname, void *data, size_t dlen, const hash_type_data_t *ha
 		if ((osec_field(OVALUE_XATTR, data, dlen, &attrs)) == NULL)
 			osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field\n");
 
-			xattr_nonexistent("new", fname, (char *) attrs.data, attrs.len, NULL, 0);
+		xattr_nonexistent("new", fname, (char *) attrs.data, attrs.len, NULL, 0);
 	}
 }
 
@@ -529,7 +529,7 @@ check_removed(const char *fname, void *data, size_t len, const hash_type_data_t 
 		if ((osec_field(OVALUE_XATTR, data, len, &attrs)) == NULL)
 			osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field\n");
 
-			xattr_nonexistent("old", fname, (char *) attrs.data, attrs.len, NULL, 0);
+		xattr_nonexistent("old", fname, (char *) attrs.data, attrs.len, NULL, 0);
 	}
 
 	return 1;
