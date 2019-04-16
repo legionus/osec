@@ -2,6 +2,7 @@
  *
  * This file is part of Osec (lightweight integrity checker)
  *  Copyright (C) 2010-2012  Alexey Gladkov <gladkov.alexey@gmail.com>
+ *  Copyright (C) 2019  Aleksei Nikiforov <darktemplar@basealt.ru>
  *
  * This file is covered by the GNU General Public License,
  * which should be included with osec as the file COPYING.
@@ -321,8 +322,10 @@ print_version(void)
 {
 	printf("%s version "PACKAGE_VERSION"\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
+	       "Modified by Aleksei Nikiforov <darktemplar@basealt.ru>\n"
 	       "\n"
 	       "Copyright (C) 2010-2012  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
+	       "Copyright (C) 2019  Aleksei Nikiforov <darktemplar@basealt.ru>\n"
 	       "This is free software; see the source for copying conditions.  There is NO\n"
 	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
 		progname);

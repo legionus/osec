@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(osec, 1.2.7, gladkov.alexey@gmail.com)
+AC_INIT(osec, 1.2.8, gladkov.alexey@gmail.com)
 AC_CONFIG_SRCDIR([src/osec.c])
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([dist-bzip2])

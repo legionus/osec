@@ -22,6 +22,7 @@ Authors
 -------
 Written in C++ by Stanislav Ievlev <inger@altlinux.org>.
 Almost completely rewritten from scratch in C by Alexey Gladkov <gladkov.alexey@gmail.com>.
+Support for hash type switching and stribog512 hash is implemented by Aleksei Nikiforov <darktemplar@basealt.ru>
 
 Requires
 --------
@@ -32,6 +33,7 @@ You need following tools to build library:
     o GNU autoconf (2.61 or higher)
     o GNU automake (1.11 or higher)
     o GNU help2man (1.40.12 or higher)
+    o libgcrypt
 
 optionally:
     o libattr library (2.4.46 or higher)

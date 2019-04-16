@@ -1,5 +1,11 @@
 list of user-visible changes between releases of osec:
 
+[1.2.8]
+Added support for STRIBOG512 hash algorithm;
+Allowed switching between different hash types;
+Fixed osec2txt and txt2osec utilities to properly work
+with xattr data;
+
 [1.2.5]
 Add ability to ignore check of checksum and symlink;
 Add extended attributes support;
