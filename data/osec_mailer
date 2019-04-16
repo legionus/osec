@@ -11,7 +11,8 @@
 
 PROG="${0##*/}"
 
-. /etc/osec/pipe.conf
+PIPECONF_FILE="/etc/osec/pipe.conf"
+. "${PIPECONF_FILE}"
 
 TEMPFILE=
 exit_handler()

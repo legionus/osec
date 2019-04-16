@@ -18,7 +18,8 @@ IGNORE_FIELDS=
 NICE_ARGS=
 IONICE_ARGS='-t'
 
-. /etc/osec/pipe.conf
+PIPECONF_FILE="/etc/osec/pipe.conf"
+. "${PIPECONF_FILE}"
 
 if [ "$#" -gt 0 ]; then
 	fatal() {
