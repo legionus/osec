@@ -80,11 +80,16 @@ osec_state(struct record *rec, const struct stat *st) {
 
 void
 osec_digest(struct record *rec, const char *fname) {
-	char fdigest[digest_len];
+	char fdigest[sizeof(size_t) * 2 + digest_len + sizeof("sha1") - 1];
+	size_t name_size = sizeof("sha1") - 1;
+	size_t digest_size = digest_len;
 
-	digest_file(fname, fdigest);
+	memcpy(fdigest, &name_size, sizeof(size_t));
+	memcpy(fdigest + sizeof(size_t), &digest_size, sizeof(size_t));
+	memcpy(fdigest + sizeof(size_t) * 2, "sha1", name_size);
+	digest_file(fname, fdigest + sizeof(size_t) * 2 + name_size);
 
-	append_value(OVALUE_CSUM, &fdigest, (size_t) digest_len, rec);
+	append_value(OVALUE_CSUM, &fdigest, sizeof(size_t) * 2 + name_size + digest_len, rec);
 }
 
 void

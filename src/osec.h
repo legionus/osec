@@ -19,7 +19,8 @@
 // OSEC_DB_VERSION 1 - start versioning
 // OSEC_DB_VERSION 2 - mtime added
 // OSEC_DB_VERSION 3 - xattr added
-#define OSEC_DB_VERSION 3
+// OSEC_DB_VERSION 4 - csum now contains pairs of "hash name" and "hash value"
+#define OSEC_DB_VERSION 4
 int dbversion;
 
 #define OSEC_CSM (1 << 1)

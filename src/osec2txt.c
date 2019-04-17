@@ -73,14 +73,26 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 	dprintf(fd,"\" \\\n");
 
 	if (S_ISREG(st->mode)) {
-		if ((field = (char *) osec_field(OVALUE_CSUM, rec, rlen, NULL)) == NULL)
+		struct field field_data;
+
+		if ((field = (char *) osec_field(OVALUE_CSUM, rec, rlen, &field_data)) == NULL)
 			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'checksum' from dbvalue\n", key);
 
-		if (field) {
-			dprintf(fd, "\tchecksum=\"");
-			show_digest(fd, field);
-			dprintf(fd, "\" \\\n");
+		if (dbversion >= 4) {
+			if ((field_data.len != sizeof(size_t) * 2 + digest_len + sizeof("sha1") - 1)
+				|| (memcmp(field + sizeof(size_t) * 2, "sha1", sizeof("sha1") - 1) != 0))
+			{
+				osec_fatal(EXIT_FAILURE, 0,
+					"%s: osec_field: Checksum doesn't contain 'sha1' hash\n",
+					key);
+			}
+
+			field += sizeof(size_t) * 2 + sizeof("sha1") - 1;
 		}
+
+		dprintf(fd, "\tchecksum=\"");
+		show_digest(fd, field);
+		dprintf(fd, "\" \\\n");
 	}
 
 	if (S_ISLNK(st->mode)) {

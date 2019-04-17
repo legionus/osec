@@ -161,21 +161,44 @@ show_digest(const char *dst) {
 static void
 check_checksum(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen) {
 	char *old, *new;
+	struct field old_data, new_data;
 
 	if (ignore & OSEC_CSM)
 		return;
 
-	if ((old = osec_field(OVALUE_CSUM, odata, olen, NULL)) == NULL)
+	if ((old = osec_field(OVALUE_CSUM, odata, olen, &old_data)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0,
 			"%s: osec_field(odata): Unable to get 'checksum' from database value\n",
 			fname);
 
-	if ((new = osec_field(OVALUE_CSUM, ndata, nlen, NULL)) == NULL)
+	if ((new = osec_field(OVALUE_CSUM, ndata, nlen, &new_data)) == NULL)
 		osec_fatal(EXIT_FAILURE, 0,
 			"%s: osec_field(ndata): Unable to get 'checksum' from database value\n",
 			fname);
 
-	if (strncmp(old, new, (size_t) digest_len) != 0) {
+	if (dbversion >= 4) {
+		if ((old_data.len != sizeof(size_t) * 2 + digest_len + sizeof("sha1") - 1)
+			|| (memcmp(old + sizeof(size_t) * 2, "sha1", sizeof("sha1") - 1) != 0))
+		{
+			osec_fatal(EXIT_FAILURE, 0,
+				"%s: osec_field(odata): Checksum doesn't contain 'sha1' hash\n",
+				fname);
+		}
+
+		old += sizeof(size_t) * 2 + sizeof("sha1") - 1;
+	}
+
+	if ((new_data.len != sizeof(size_t) * 2 + digest_len + sizeof("sha1") - 1)
+		|| (memcmp(new + sizeof(size_t) * 2, "sha1", sizeof("sha1") - 1) != 0))
+	{
+		osec_fatal(EXIT_FAILURE, 0,
+			"%s: osec_field(ndata): Checksum doesn't contain 'sha1' hash\n",
+			fname);
+	}
+
+	new += sizeof(size_t) * 2 + sizeof("sha1") - 1;
+
+	if (memcmp(old, new, (size_t) digest_len) != 0) {
 		printf("%s\tchecksum\tchanged\told checksum=", fname);
 		show_digest(old);
 
@@ -435,9 +458,20 @@ check_new(const char *fname, void *data, size_t dlen) {
 
 	if (S_ISREG(st->mode)) {
 		char *csum;
+		struct field csum_data;
 
-		if ((csum = osec_field(OVALUE_CSUM, data, dlen, NULL)) == NULL)
+		if ((csum = osec_field(OVALUE_CSUM, data, dlen, &csum_data)) == NULL)
 			osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field\n");
+
+		if ((csum_data.len != sizeof(size_t) * 2 + digest_len + sizeof("sha1") - 1)
+			|| (memcmp(csum + sizeof(size_t) * 2, "sha1", sizeof("sha1") - 1) != 0))
+		{
+			osec_fatal(EXIT_FAILURE, 0,
+				"%s: osec_field: Checksum doesn't contain 'sha1' hash\n",
+				fname);
+		}
+
+		csum += sizeof(size_t) * 2 + sizeof("sha1") - 1;
 
 		printf("%s\tchecksum\tnew\t checksum=", fname);
 		show_digest(csum);
@@ -465,11 +499,24 @@ check_removed(const char *fname, void *data, size_t len) {
 
 	if (S_ISREG(st->mode)) {
 		char *csum;
+		struct field csum_data;
 
-		if ((csum = osec_field(OVALUE_CSUM, data, len, NULL)) == NULL)
+		if ((csum = osec_field(OVALUE_CSUM, data, len, &csum_data)) == NULL)
 			osec_fatal(EXIT_FAILURE, 0,
 				"%s: osec_field: Unable to get 'checksum' from database value\n",
 				fname);
+
+		if (dbversion >= 4) {
+			if ((csum_data.len != sizeof(size_t) * 2 + digest_len + sizeof("sha1") - 1)
+				|| (memcmp(csum + sizeof(size_t) * 2, "sha1", sizeof("sha1") - 1) != 0))
+			{
+				osec_fatal(EXIT_FAILURE, 0,
+					"%s: osec_field: Checksum doesn't contain 'sha1' hash\n",
+					fname);
+			}
+
+			csum += sizeof(size_t) * 2 + sizeof("sha1") - 1;
+		}
 
 		printf("%s\tchecksum\tremoved\t checksum=", fname);
 		show_digest(csum);
