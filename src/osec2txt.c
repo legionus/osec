@@ -47,9 +47,9 @@ print_version(void) {
 }
 
 static void
-show_digest(int fd, const char *dst) {
-	int i = 0;
-	while (i < digest_len)
+show_digest(int fd, const char *dst, size_t len) {
+	size_t i = 0;
+	while (i < len)
 		dprintf(fd, "%02x", (unsigned char) dst[i++]);
 }
 
@@ -79,20 +79,25 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'checksum' from dbvalue\n", key);
 
 		if (dbversion >= 4) {
-			if ((field_data.len != sizeof(size_t) * 2 + digest_len + sizeof("sha1") - 1)
-				|| (memcmp(field + sizeof(size_t) * 2, "sha1", sizeof("sha1") - 1) != 0))
+			struct csum_field csum_field_data;
+
+			while (field_data.len > 0)
 			{
-				osec_fatal(EXIT_FAILURE, 0,
-					"%s: osec_field: Checksum doesn't contain 'sha1' hash\n",
-					key);
+				field = osec_csum_field_next(field, field_data.len, &csum_field_data, &(field_data.len));
+				if (field == NULL)
+					osec_fatal(EXIT_FAILURE, 0,
+						"%s: osec_field: too short",
+						key);
+
+				dprintf(fd, "\tchecksum=\"%.*s:", (int) csum_field_data.name_len, csum_field_data.name);
+				show_digest(fd, csum_field_data.data, csum_field_data.data_len);
+				dprintf(fd, "\" \\\n");
 			}
-
-			field += sizeof(size_t) * 2 + sizeof("sha1") - 1;
+		} else {
+			dprintf(fd, "\tchecksum=\"sha1:");
+			show_digest(fd, field, digest_len_sha1);
+			dprintf(fd, "\" \\\n");
 		}
-
-		dprintf(fd, "\tchecksum=\"");
-		show_digest(fd, field);
-		dprintf(fd, "\" \\\n");
 	}
 
 	if (S_ISLNK(st->mode)) {
@@ -167,6 +172,23 @@ main(int argc, char **argv) {
 
 	if ((outfd = open(outfile, O_WRONLY | O_CREAT | O_NOCTTY, S_IRUSR | S_IWUSR)) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: open", outfile);
+
+	if (cdb_find(&cdbm, "hashnames", strlen("hashnames")) > 0) {
+
+		char *chardata = NULL;
+		dlen = cdb_datalen(&cdbm);
+
+		chardata = xmalloc((size_t) dlen + 1);
+
+		if (cdb_read(&cdbm, chardata, (unsigned)dlen, cdb_datapos(&cdbm)) < 0)
+			osec_fatal(EXIT_FAILURE, errno, "cdb_read(data)");
+
+		chardata[dlen] = 0;
+
+		dprintf(outfd, "hashnames=\"%s\"\n", chardata);
+
+		xfree(chardata);
+	}
 
 	cdb_seqinit(&cpos, &cdbm);
 

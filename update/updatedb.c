@@ -75,9 +75,20 @@ decode_dirname(char *dir) {
 
 static void
 osec_empty_digest(struct record *rec) {
-	char fdigest[digest_len];
-	bzero(&fdigest, (size_t) digest_len);
-	append_value(OVALUE_CSUM, &fdigest, (size_t) digest_len, rec);
+	struct record local_rec;
+
+	char fdigest[digest_len_sha1];
+	bzero(&fdigest, (size_t) digest_len_sha1);
+
+	local_rec.data = NULL;
+	local_rec.len = 0;
+	local_rec.offset = 0;
+
+	osec_csum_append_value("sha1", sizeof("sha1") - 1, fdigest, digest_len_sha1, &local_rec);
+
+	append_value(OVALUE_CSUM, local_rec.data, local_rec.offset, rec);
+
+	xfree(local_rec.data);
 }
 
 static void
@@ -130,6 +141,8 @@ main(int argc, char **argv) {
 	struct cdb_make cdbn;
 
 	struct record rec;
+
+	const hash_type_data_t *tmp_ptr;
 
 	progname = basename(argv[0]);
 
@@ -234,7 +247,11 @@ main(int argc, char **argv) {
 		xfree(key);
 	}
 
-	write_db_version(&cdbn);
+	tmp_ptr = get_hash_type_data_by_name("sha1", strlen("sha1"));
+	if (tmp_ptr == NULL)
+		osec_fatal(EXIT_FAILURE, 0, "failed to find hash type 'sha1'\n");
+
+	write_db_version(&cdbn, tmp_ptr, NULL);
 
 	xfree(rec.data);
 

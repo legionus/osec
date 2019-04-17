@@ -51,9 +51,11 @@ enum {
 
 char *fname = NULL;
 char *slink = NULL;
-char *chsum = NULL;
+char **chsum = NULL;
+size_t chsum_count = 0;
+char *hashnames = NULL;
+
 osec_stat_t ost;
-unsigned char csum[digest_len];
 
 struct record rec;
 
@@ -71,6 +73,7 @@ int yylex (void);
 %token FILENAME DEVICE INODE UID GID MTIME CHECKSUM SYMLINK MODE
 %token EQUALS EOL ERROR
 %token NUMBER OCTAL STRLITERAL
+%token HASHNAMES
 
 /* Grammar follows */
 %%
@@ -79,6 +82,7 @@ input		: /* empty string */
  		;
 line		: endline
 		| fileline range endline
+		| hashline hashlineend
 		;
 range		: range range0
 		| range0
@@ -92,20 +96,32 @@ range0		: devline
 		| linkline
 		| modeline
 		;
+hashline	: HASHNAMES EQUALS STRLITERAL
+		{
+			hashnames = strdup(str);
+		}
+		;
 fileline	: FILENAME EQUALS STRLITERAL
 		{ fname = strdup(str);
 		  flags |= FLAG_FILE; }
 		;
 csumline	: CHECKSUM EQUALS STRLITERAL
 		{
+		  char *delim;
 		  size_t n = strlen(str);
-		  if (n < (digest_len * 2))
-			osec_fatal(1, 0, "%s:%d: Checksum value too short: %s\n",
+
+		  delim = strchr(str, ':');
+		  if (delim != NULL) {
+			n = strlen(delim + 1);
+		  }
+
+		  if ((n % 2) != 0)
+			osec_fatal(1, 0, "%s:%d: Checksum value invalid size: %s\n",
 			           pathname, line_nr, str);
-		  if (n > (digest_len * 2))
-			osec_fatal(1, 0, "%s:%d: Checksum value too long: %s\n",
-			           pathname, line_nr, str);
-		  chsum = strdup(str);
+
+		  ++chsum_count;
+		  chsum = xrealloc(chsum, sizeof(char*) * chsum_count);
+		  chsum[chsum_count - 1] = strdup(str);
 		  flags |= FLAG_CSUM; }
 		;
 linkline	: SYMLINK EQUALS STRLITERAL
@@ -148,6 +164,10 @@ modeline	: MODE EQUALS OCTAL
 		{ ost.mode = (mode_t) $3;
 		  flags |= FLAG_MODE; }
 		;
+hashlineend		: EOL
+		{
+		}
+		;
 endline		: EOL
 		{
 			rec.offset = 0;
@@ -159,20 +179,63 @@ endline		: EOL
 			append_value(OVALUE_STAT, &ost, sizeof(ost), &rec);
 
 			if (F_ISSET(flags, FLAG_CSUM)) {
-				char *s = chsum;
 				unsigned int h, i;
+				size_t z;
+
+				char *buffer = NULL;
+				size_t buffer_size = 0;
+
+				struct record local_rec;
+
+				local_rec.offset = 0;
+				local_rec.len    = 1024;
+				local_rec.data   = xmalloc(local_rec.len);
 
 				if (!S_ISREG(ost.mode))
 					osec_fatal(EXIT_FAILURE, 0, "%s:%d: Wrong file format: checksum field for not regular file\n",
 					           pathname, line_nr);
 
-				for (i = 0; i < digest_len; i++) {
-					sscanf(s, "%02x", &h);
-					csum[i] = (unsigned char) h;
-					s += 2;
+				for (z = 0; z < chsum_count; ++z) {
+					size_t namelen;
+					const char *name;
+					size_t digestlen;
+					const char *digest;
+					char *delim;
+
+					delim = strchr(chsum[z], ':');
+					if (delim != NULL) {
+						namelen = delim - chsum[z];
+						name = chsum[z];
+						digestlen = strlen(delim + 1) / 2;
+						digest = delim + 1;
+					} else {
+						namelen = sizeof("sha1") - 1;
+						name = "sha1";
+						digestlen = strlen(chsum[z]) / 2;
+						digest = chsum[z];
+					}
+
+					if (buffer_size < digestlen)
+						buffer = xrealloc(buffer, digestlen);
+
+					for (i = 0; i < digestlen; ++i) {
+						sscanf(digest + i * 2, "%02x", &h);
+						buffer[i] = (unsigned char) h;
+					}
+
+					osec_csum_append_value(name, namelen, buffer, digestlen, &local_rec);
 				}
-				append_value(OVALUE_CSUM, &csum, (size_t) digest_len, &rec);
+
+				append_value(OVALUE_CSUM, local_rec.data, local_rec.offset, &rec);
+
+				for (z = 0; z < chsum_count; ++z)
+					xfree(chsum[z]);
 				xfree(chsum);
+				chsum = NULL;
+				chsum_count = 0;
+
+				xfree(local_rec.data);
+				xfree(buffer);
 			}
 
 			if (F_ISSET(flags, FLAG_LINK)) {
@@ -233,6 +296,8 @@ main(int argc, char **argv)
 	int c, fd;
 	char *dbname;
 
+	const hash_type_data_t *old_hash = NULL, *new_hash = NULL;
+
 	struct option long_options[] = {
 		{ "help",		no_argument,		0, 'h' },
 		{ "version",		no_argument,		0, 'V' },
@@ -280,7 +345,15 @@ main(int argc, char **argv)
 	xfree(rec.data);
 	fclose(fp);
 
-	write_db_version(&cdbm);
+	if (hashnames != NULL) {
+		get_hashes_from_string(hashnames, strlen(hashnames), &new_hash, &old_hash);
+		xfree(hashnames);
+	} else {
+		new_hash = get_hash_type_data_by_name("sha1", strlen("sha1"));
+		old_hash = NULL;
+	}
+
+	write_db_version(&cdbm, new_hash, old_hash);
 
 	if (cdb_make_finish(&cdbm) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_finish");

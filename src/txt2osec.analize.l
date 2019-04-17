@@ -50,6 +50,7 @@ Gid		gid|Gid
 Mtime		mtime|Mtime
 Checksum	checksum|Checksum
 Symlink		symlink|Symlink
+Hashnames		hashnames|Hashnames
 
 %%
 
@@ -58,6 +59,7 @@ Symlink		symlink|Symlink
 {Continuation}		{ line_nr++; }
 {Number}		{ yylval = strtoll(yytext,NULL,0);   return(NUMBER); }
 {Octa}			{ yylval = strtoll(yytext+1,NULL,8); return(OCTAL); }
+{Hashnames}		{ return(HASHNAMES); }
 {Filename}		{ return(FILENAME); }
 {Checksum}		{ return(CHECKSUM); }
 {Symlink}		{ return(SYMLINK); }

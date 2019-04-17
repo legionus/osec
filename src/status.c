@@ -151,17 +151,17 @@ show_state(const char *mode, const char *fname, osec_stat_t *st) {
 }
 
 static void
-show_digest(const char *dst) {
-	int i = 0;
-	while (i < digest_len)
+show_digest(const char *dst, size_t len) {
+	size_t i = 0;
+	while (i < len)
 		printf("%02x", (unsigned char) dst[i++]);
 }
 
-
 static void
-check_checksum(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen) {
+check_checksum(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen, const hash_type_data_t *hashtype_data) {
 	char *old, *new;
 	struct field old_data, new_data;
+	struct csum_field old_csum_data, new_csum_data;
 
 	if (ignore & OSEC_CSM)
 		return;
@@ -177,33 +177,33 @@ check_checksum(const char *fname, void *ndata, size_t nlen, void *odata, size_t 
 			fname);
 
 	if (dbversion >= 4) {
-		if ((old_data.len != sizeof(size_t) * 2 + digest_len + sizeof("sha1") - 1)
-			|| (memcmp(old + sizeof(size_t) * 2, "sha1", sizeof("sha1") - 1) != 0))
-		{
+		old = osec_csum_field(hashtype_data->hashname, strlen(hashtype_data->hashname), old, old_data.len, &old_csum_data);
+		if (old == NULL)
 			osec_fatal(EXIT_FAILURE, 0,
-				"%s: osec_field(odata): Checksum doesn't contain 'sha1' hash\n",
-				fname);
-		}
+				"%s: osec_field(odata): Checksum doesn't contain '%s' hash\n",
+				fname, hashtype_data->hashname);
+	} else {
+		if (strcmp(hashtype_data->hashname, "sha1") != 0)
+			osec_fatal(EXIT_FAILURE, 0,
+				"%s: osec_field(odata): Checksum doesn't contain '%s' hash\n",
+				fname, hashtype_data->hashname);
 
-		old += sizeof(size_t) * 2 + sizeof("sha1") - 1;
+		old_csum_data.data_len = old_data.len;
+		old_csum_data.data = old;
 	}
 
-	if ((new_data.len != sizeof(size_t) * 2 + digest_len + sizeof("sha1") - 1)
-		|| (memcmp(new + sizeof(size_t) * 2, "sha1", sizeof("sha1") - 1) != 0))
-	{
+	new = osec_csum_field(hashtype_data->hashname, strlen(hashtype_data->hashname), new, new_data.len, &new_csum_data);
+	if (new == NULL)
 		osec_fatal(EXIT_FAILURE, 0,
-			"%s: osec_field(ndata): Checksum doesn't contain 'sha1' hash\n",
-			fname);
-	}
+			"%s: osec_field(ndata): Checksum doesn't contain '%s' hash\n",
+			fname, hashtype_data->hashname);
 
-	new += sizeof(size_t) * 2 + sizeof("sha1") - 1;
+	if ((old_csum_data.data_len != new_csum_data.data_len) || (memcmp(old_csum_data.data, new_csum_data.data, old_csum_data.data_len) != 0)) {
+		printf("%s\tchecksum\tchanged\told checksum=%s:", fname, hashtype_data->hashname);
+		show_digest(old_csum_data.data, old_csum_data.data_len);
 
-	if (memcmp(old, new, (size_t) digest_len) != 0) {
-		printf("%s\tchecksum\tchanged\told checksum=", fname);
-		show_digest(old);
-
-		printf("\tnew checksum=");
-		show_digest(new);
+		printf("\tnew checksum=%s:", hashtype_data->hashname);
+		show_digest(new_csum_data.data, new_csum_data.data_len);
 
 		printf("\n");
 	}
@@ -355,7 +355,7 @@ check_xattr(const char *fname, void *ndata, size_t nlen, void *odata, size_t ole
 }
 
 int
-check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen) {
+check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen, const hash_type_data_t *hashtype_data) {
 	osec_stat_t *new_st, *old_st;
 	unsigned state = 0;
 
@@ -370,7 +370,7 @@ check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_
 			fname);
 
 	if (S_ISREG(new_st->mode) && S_ISREG(old_st->mode))
-		check_checksum(fname, ndata, nlen, odata, olen);
+		check_checksum(fname, ndata, nlen, odata, olen, hashtype_data);
 
 	else if (S_ISLNK(new_st->mode) && S_ISLNK(old_st->mode))
 		check_symlink(fname, ndata, nlen, odata, olen);
@@ -449,7 +449,7 @@ check_bad_files(const char *fname, void *data, size_t len) {
 }
 
 void
-check_new(const char *fname, void *data, size_t dlen) {
+check_new(const char *fname, void *data, size_t dlen, const hash_type_data_t *hashtype_data) {
 	struct field attrs;
 	osec_stat_t *st;
 
@@ -459,24 +459,22 @@ check_new(const char *fname, void *data, size_t dlen) {
 	if (S_ISREG(st->mode)) {
 		char *csum;
 		struct field csum_data;
+		struct csum_field csum_field_data;
 
 		if ((csum = osec_field(OVALUE_CSUM, data, dlen, &csum_data)) == NULL)
 			osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field\n");
 
-		if ((csum_data.len != sizeof(size_t) * 2 + digest_len + sizeof("sha1") - 1)
-			|| (memcmp(csum + sizeof(size_t) * 2, "sha1", sizeof("sha1") - 1) != 0))
-		{
+		csum = osec_csum_field(hashtype_data->hashname, strlen(hashtype_data->hashname), csum, csum_data.len, &csum_field_data);
+		if (csum == NULL)
 			osec_fatal(EXIT_FAILURE, 0,
-				"%s: osec_field: Checksum doesn't contain 'sha1' hash\n",
-				fname);
-		}
+				"%s: osec_field(ndata): Checksum doesn't contain '%s' hash\n",
+				fname, hashtype_data->hashname);
 
-		csum += sizeof(size_t) * 2 + sizeof("sha1") - 1;
-
-		printf("%s\tchecksum\tnew\t checksum=", fname);
-		show_digest(csum);
+		printf("%s\tchecksum\tnew\t checksum=%s:", fname, hashtype_data->hashname);
+		show_digest(csum_field_data.data, csum_field_data.data_len);
 		printf("\n");
 	}
+
 	show_state((char *) "new", fname, st);
 
 	if (dbversion > 2) {
@@ -488,7 +486,7 @@ check_new(const char *fname, void *data, size_t dlen) {
 }
 
 int
-check_removed(const char *fname, void *data, size_t len) {
+check_removed(const char *fname, void *data, size_t len, const hash_type_data_t *hashtype_data) {
 	struct field attrs;
 	osec_stat_t *st;
 
@@ -507,20 +505,23 @@ check_removed(const char *fname, void *data, size_t len) {
 				fname);
 
 		if (dbversion >= 4) {
-			if ((csum_data.len != sizeof(size_t) * 2 + digest_len + sizeof("sha1") - 1)
-				|| (memcmp(csum + sizeof(size_t) * 2, "sha1", sizeof("sha1") - 1) != 0))
-			{
+
+			struct csum_field csum_field_data;
+
+			csum = osec_csum_field(hashtype_data->hashname, strlen(hashtype_data->hashname), csum, csum_data.len, &csum_field_data);
+			if (csum == NULL)
 				osec_fatal(EXIT_FAILURE, 0,
-					"%s: osec_field: Checksum doesn't contain 'sha1' hash\n",
-					fname);
-			}
+					"%s: osec_field: Checksum doesn't contain '%s' hash\n",
+					fname, hashtype_data->hashname);
 
-			csum += sizeof(size_t) * 2 + sizeof("sha1") - 1;
+			printf("%s\tchecksum\tremoved\t checksum=%s:", fname, hashtype_data->hashname);
+			show_digest(csum_field_data.data, csum_field_data.data_len);
+			printf("\n");
+		} else {
+			printf("%s\tchecksum\tremoved\t checksum=sha1:", fname);
+			show_digest(csum, csum_data.len);
+			printf("\n");
 		}
-
-		printf("%s\tchecksum\tremoved\t checksum=", fname);
-		show_digest(csum);
-		printf("\n");
 	}
 	show_state((char *) "removed", fname, st);
 

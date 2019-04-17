@@ -59,7 +59,19 @@ struct field {
 	void *data;
 };
 
-#define digest_len 20 // SHA1
+struct csum_field {
+	size_t name_len;
+	size_t data_len;
+	const char *name;
+	void *data;
+};
+
+typedef struct hash_type_data {
+	int gcrypt_hashtype;
+	const char *hashname;
+} hash_type_data_t;
+
+#define digest_len_sha1 20 /* SHA1 */
 
 /* common.c */
 void osec_fatal(const int exitnum, const int errnum, const char *fmt, ...);
@@ -75,29 +87,31 @@ void  xfree(void *ptr);
 void drop_privs(char *user, char *group);
 
 /* status.c */
-void check_new(const char *fname, void *data, size_t len);
+void check_new(const char *fname, void *data, size_t len, const hash_type_data_t *hashtype_data);
 
 /* Return 1 if check is true. Otherwise, 0 is returned. */
 int check_insecure(osec_stat_t *st);
-int check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen);
+int check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen, const hash_type_data_t *hashtype_data);
 int check_bad_files(const char *fname, void *data, size_t len);
-int check_removed(const char *fname, void *data, size_t len);
-
-/* digest.c */
-void digest_file(const char *fname, char *digest);
-void digest(const char *data, size_t len, char *out);
+int check_removed(const char *fname, void *data, size_t len, const hash_type_data_t *hashtype_data);
 
 /* dbvalue.c */
 void *osec_field(const unsigned type, const void *data, const size_t dlen, struct field *ret);
 void append_value(const unsigned type, const void *src, const size_t slen, struct record *rec);
 void osec_state(struct record *rec, const struct stat *st);
-void osec_digest(struct record *rec, const char *fname);
+void osec_digest(struct record *rec, const char *fname, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data);
 void osec_symlink(struct record *rec, const char *fname);
 void osec_xattr(struct record *rec, const char *fname);
 
+void *osec_csum_field(const char *name, size_t namelen, const void *data, size_t dlen, struct csum_field *ret);
+void *osec_csum_field_next(const void *data, const size_t dlen, struct csum_field *ret, size_t *ret_len);
+void osec_csum_append_value(const char *name, size_t namelen, const void *src, const size_t slen, struct record *rec);
+
 /* dbvalue.c */
 int  compat_db_version(int fd);
-void write_db_version(struct cdb_make *cdbm);
+void write_db_version(struct cdb_make *cdbm, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data);
+
+void get_hashes_from_string(const char *buffer, const size_t buffer_len, const hash_type_data_t **new_hash, const hash_type_data_t **old_hash);
 
 /* exclude.c */
 int is_exclude(char *file);
@@ -110,5 +124,8 @@ void process_ignore(const char *param);
 /* path.c */
 void recreate_tempdir(void);
 char *validate_path(const char *path);
+
+/* hashtype.c */
+const hash_type_data_t* get_hash_type_data_by_name(const char *hashname, const size_t hashname_len);
 
 #endif /* OSEC_H */

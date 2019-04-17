@@ -45,6 +45,7 @@ char *db_path = NULL;
 int read_only = 0;
 int numeric_user_group = 0;
 unsigned ignore = 0;
+const hash_type_data_t *hash_type = NULL;
 
 static void __attribute__ ((noreturn))
 print_help(int ret)  {
@@ -66,6 +67,10 @@ print_help(int ret)  {
 	       "  -X, --exclude-from=FILE   read exclude patterns from FILE;\n"
 	       "  -i, --ignore=LIST         dont show changes: checksum, symlink,\n"
 	       "                            user, group, mode, mtime or inode;\n"
+	       "  -t, --hash-type=NAME      use specified hash type,\n"
+	       "                            currently supported hash types:\n"
+	       "                            sha1, sha256, sha512, stribog512,\n"
+	       "                            default is sha1;\n"
 	       "  -v, --version             print program version and exit;\n"
 	       "  -h, --help                output a brief help message.\n"
 	       "\n", progname);
@@ -129,7 +134,7 @@ dsort(const FTSENT **a, const FTSENT **b) {
 }
 
 static int
-create_cdb(int fd, char *dir) {
+create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data) {
 	FTS *t;
 	FTSENT *p;
 	char *argv[2];
@@ -185,7 +190,7 @@ create_cdb(int fd, char *dir) {
 
 		switch(p->fts_info) {
 			case FTS_F:
-				osec_digest(&rec, p->fts_path);
+				osec_digest(&rec, p->fts_path, primary_type_data, secondary_type_data);
 				break;
 			case FTS_SL:
 			case FTS_SLNONE:
@@ -203,7 +208,7 @@ create_cdb(int fd, char *dir) {
 	if (fts_close(t) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: fts_close", dir);
 
-skip:	write_db_version(&cdbm);
+skip:	write_db_version(&cdbm, primary_type_data, secondary_type_data);
 
 	if (cdb_make_finish(&cdbm) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_finish");
@@ -212,7 +217,7 @@ skip:	write_db_version(&cdbm);
 }
 
 static void
-show_changes(struct cdb *new_cdb, struct cdb *old_cdb) {
+show_changes(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *hashtype_data) {
 	int rc;
 	char *key = NULL;
 	void *old_data = NULL, *new_data = NULL;
@@ -263,11 +268,11 @@ show_changes(struct cdb *new_cdb, struct cdb *old_cdb) {
 			if (cdb_read(old_cdb, old_data, (unsigned) old_dlen, cdb_datapos(old_cdb)) < 0)
 				osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
-			if (!check_difference(key, new_data, new_dlen, old_data, old_dlen))
+			if (!check_difference(key, new_data, new_dlen, old_data, old_dlen, hashtype_data))
 				check_bad_files(key, new_data, new_dlen);
 		}
 		else
-			check_new(key, new_data, new_dlen);
+			check_new(key, new_data, new_dlen, hashtype_data);
 	}
 
 	xfree(new_data);
@@ -279,7 +284,7 @@ show_changes(struct cdb *new_cdb, struct cdb *old_cdb) {
 }
 
 static void
-show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb) {
+show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *hashtype_data) {
 	int rc;
 	char *key = NULL;
 	void *data = NULL;
@@ -317,7 +322,7 @@ show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb) {
 			if (cdb_read(old_cdb, data, dlen, cdb_datapos(old_cdb)) < 0)
 				osec_fatal(EXIT_FAILURE, errno, "cdb_read");
 
-			check_removed(key, data, (size_t) dlen);
+			check_removed(key, data, (size_t) dlen, hashtype_data);
 		}
 	}
 
@@ -328,6 +333,26 @@ show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb) {
 		osec_fatal(EXIT_FAILURE, errno, "cdb_seqnext(old_cdb)");
 }
 
+static void
+database_get_hashes(struct cdb *cdbm, const hash_type_data_t **new_hash, const hash_type_data_t **old_hash)
+{
+	size_t buffersize = 0;
+	char *buffer = NULL;
+
+	if (cdb_find(cdbm, "hashnames", strlen("hashnames")) == 0)
+		osec_fatal(EXIT_FAILURE, errno, "cdb_read(hashnames)");
+
+	buffersize = (size_t) cdb_datalen(cdbm);
+	buffer = xmalloc(buffersize);
+
+	if (cdb_read(cdbm, buffer, (unsigned) buffersize, cdb_datapos(cdbm)) < 0)
+		osec_fatal(EXIT_FAILURE, errno, "cdb_read(hashnames)");
+
+	get_hashes_from_string(buffer, buffersize, new_hash, old_hash);
+
+	xfree(buffer);
+}
+
 static int
 process(char *dirname) {
 	size_t len;
@@ -335,6 +360,9 @@ process(char *dirname) {
 	int new_fd, old_fd;
 	char *new_dbname, *old_dbname;
 	struct cdb old_cdb, new_cdb;
+
+	const hash_type_data_t *primary_type_data = NULL;
+	const hash_type_data_t *secondary_type_data = NULL;
 
 	if (is_exclude(dirname))
 		return 1;
@@ -370,20 +398,45 @@ process(char *dirname) {
 	if (read_only)
 		remove(new_dbname);
 
+	primary_type_data = hash_type;
+	secondary_type_data = hash_type;
+
+	if (old_fd != -1) {
+		const hash_type_data_t *old_hash = NULL;
+		const hash_type_data_t *new_hash = NULL;
+
+		if (cdb_init(&old_cdb, old_fd) < 0)
+			osec_fatal(EXIT_FAILURE, errno, "cdb_init(old_cdb)");
+
+		if (dbversion >= 4) {
+			database_get_hashes(&old_cdb, &new_hash, &old_hash);
+		} else {
+			old_hash = new_hash = get_hash_type_data_by_name("sha1", strlen("sha1"));
+			if (new_hash == NULL)
+				osec_fatal(EXIT_FAILURE, 0, "failed to find hash type 'sha1'\n");
+		}
+
+		/*
+		 * if old hash and new hash from database doesn't match with requested type, use last requested hash type
+		 */
+		if (((old_hash == NULL) || (strcmp(old_hash->hashname, hash_type->hashname) != 0))
+			&& (strcmp(new_hash->hashname, hash_type->hashname) != 0))
+		{
+			secondary_type_data = new_hash;
+		}
+	}
+
 	// Create new state
-	if ((retval = create_cdb(new_fd, dirname)) == 1) {
+	if ((retval = create_cdb(new_fd, dirname, primary_type_data, secondary_type_data)) == 1) {
 		if (cdb_init(&new_cdb, new_fd) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_init(new_cdb)");
 
 		if (old_fd != -1) {
-			if (cdb_init(&old_cdb, old_fd) < 0)
-				osec_fatal(EXIT_FAILURE, errno, "cdb_init(old_cdb)");
-
-			show_changes(&new_cdb, &old_cdb);
-			show_oldfiles(&new_cdb, &old_cdb);
+			show_changes(&new_cdb, &old_cdb, secondary_type_data);
+			show_oldfiles(&new_cdb, &old_cdb, secondary_type_data);
 		}
 		else
-			show_changes(&new_cdb, NULL);
+			show_changes(&new_cdb, NULL, primary_type_data);
 	}
 
 	if (old_fd != -1 && close(old_fd) == -1)
@@ -441,15 +494,18 @@ main(int argc, char **argv) {
 		{ "group",		required_argument,	0, 'g' },
 		{ "exclude",		required_argument,	0, 'x' },
 		{ "exclude-from",	required_argument,	0, 'X' },
+		{ "hash-type",	required_argument, 0, 't' },
 		{ 0, 0, 0, 0 }
 	};
 
 	progname = basename(argv[0]);
 
+	hash_type = get_hash_type_data_by_name("sha1", strlen("sha1"));
+
 	if (argc == 1)
 		print_help(EXIT_SUCCESS);
 
-	while ((c = getopt_long (argc, argv, "hvnrRi:u:g:D:f:x:X:", long_options, NULL)) != -1) {
+	while ((c = getopt_long (argc, argv, "hvnrRi:u:g:D:f:x:X:t:", long_options, NULL)) != -1) {
 		switch (c) {
 			case 'v':
 				print_version();
@@ -483,6 +539,13 @@ main(int argc, char **argv) {
 				break;
 			case 'X':
 				exclude_matches_file(optarg);
+				break;
+			case 't':
+				{
+					hash_type = get_hash_type_data_by_name(optarg, strlen(optarg));
+					if (hash_type == NULL)
+						osec_fatal(EXIT_FAILURE, 0, "unknown hash type: %s\n", optarg);
+				}
 				break;
 			default:
 			case 'h':

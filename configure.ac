@@ -31,6 +31,9 @@ AC_CHECK_LIB([cdb], [cdb_init],,
 AC_CHECK_LIB([attr], [listxattr],,
 	[AC_MSG_WARN(libattr was not found: http://savannah.nongnu.org/projects/attr)])
 
+AC_CHECK_LIB([gcrypt],[gcry_check_version],,
+	[AC_MSG_ERROR([libgcrypt was not found: https://www.gnupg.org])])
+
 # Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
