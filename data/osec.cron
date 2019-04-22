@@ -17,6 +17,7 @@ EXCLUDE_FILE=
 IGNORE_FIELDS=
 NICE_ARGS=
 IONICE_ARGS='-t'
+HASH_TYPE=
 
 PIPECONF_FILE="/etc/osec/pipe.conf"
 . "${PIPECONF_FILE}"
@@ -107,6 +108,7 @@ fi
 	$cmd /usr/bin/osec \
 		${EXCLUDE_FILE:+-X "$EXCLUDE_FILE"} \
 		${IGNORE_FIELDS:+-i "$IGNORE_FIELDS"} \
+		${HASH_TYPE:+-t "$HASH_TYPE"} \
 		-D "$DATABASE_DIR" \
 		-f "$DIRS_FILE" ||
 		rc=$?
