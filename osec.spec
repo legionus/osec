@@ -2,12 +2,12 @@
 
 Name: osec
 Version: 1.2.8
-Release: alt1
+Release: alt2
 
 Summary: Lightweight file permission checker
 License: GPL3
 Group: System/Base
-Url: https://sourceforge.net/projects/o-security/
+Url: https://github.com/legionus/osec
 
 Source: %name-%version.tar
 
@@ -110,6 +110,9 @@ rm -f %osec_statedir/osec.db.*
 %_bindir/osec_rpm_reporter
 
 %changelog
+* Mon Apr 22 2019 Alexey Gladkov <legion@altlinux.ru> 1.2.8-alt2
+- Update URL.
+
 * Fri Apr 12 2019 Aleksei Nikiforov <darktemplar@altlinux.org> 1.2.8-alt1
 - Added support for hash type switching.
 - Added support for Stribog-512 hash.
