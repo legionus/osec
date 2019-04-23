@@ -23,6 +23,8 @@
 #include <sys/param.h>
 #include <fts.h>
 
+#include <gcrypt.h>
+
 #include "osec.h"
 
 // Global variables
@@ -484,6 +486,8 @@ main(int argc, char **argv) {
 
 	char *path;
 
+	gcry_error_t gcrypt_error;
+
 	struct option long_options[] = {
 		{ "help",		no_argument,		0, 'h' },
 		{ "version",		no_argument,		0, 'v' },
@@ -568,6 +572,20 @@ main(int argc, char **argv) {
 		if (!geteuid())
 			osec_fatal(EXIT_FAILURE, 0, "cannot run from under privilege user\n");
 	}
+
+	// initialize libgcrypt
+	if (!gcry_check_version(GCRYPT_VERSION))
+	{
+		osec_fatal(EXIT_FAILURE, 0, "libgcrypt version mismatch\n");
+	}
+
+	gcrypt_error = gcry_control(GCRYCTL_DISABLE_SECMEM, 0);
+	if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR)
+		osec_fatal(EXIT_FAILURE, gcry_err_code_to_errno(gcry_err_code(gcrypt_error)), "gcry_control error: %s, source: %s\n", gcry_strerror(gcrypt_error), gcry_strsource(gcrypt_error));
+
+	gcrypt_error = gcry_control(GCRYCTL_INITIALIZATION_FINISHED, 0);
+	if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR)
+		osec_fatal(EXIT_FAILURE, gcry_err_code_to_errno(gcry_err_code(gcrypt_error)), "gcry_control error: %s, source: %s\n", gcry_strerror(gcrypt_error), gcry_strsource(gcrypt_error));
 
 	recreate_tempdir();
 
