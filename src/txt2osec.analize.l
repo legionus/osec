@@ -99,5 +99,5 @@ Xattr		xattr|Xattr
 void
 stringovfl(void)
 {
-	osec_fatal(1, 0, "%s:%d: string too long\n", pathname, line_nr);
+	osec_fatal(1, 0, "%s:%d: string too long", pathname, line_nr);
 }

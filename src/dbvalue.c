@@ -106,12 +106,12 @@ osec_digest(struct record *rec, const char *fname, const hash_type_data_t *prima
 
 	gcrypt_error = gcry_md_open(&handle, primary_type_data->gcrypt_hashtype, 0);
 	if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR)
-		osec_fatal(EXIT_FAILURE, gcry_err_code_to_errno(gcry_err_code(gcrypt_error)), "gcry_md_open error: %s, source: %s\n", gcry_strerror(gcrypt_error), gcry_strsource(gcrypt_error));
+		osec_fatal(EXIT_FAILURE, gcry_err_code_to_errno(gcry_err_code(gcrypt_error)), "gcry_md_open error: %s, source: %s", gcry_strerror(gcrypt_error), gcry_strsource(gcrypt_error));
 
 	if (secondary_type_data->gcrypt_hashtype != primary_type_data->gcrypt_hashtype) {
 		gcrypt_error = gcry_md_enable(handle, secondary_type_data->gcrypt_hashtype);
 		if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR)
-			osec_fatal(EXIT_FAILURE, gcry_err_code_to_errno(gcry_err_code(gcrypt_error)), "gcry_md_enable error: %s, source: %s\n", gcry_strerror(gcrypt_error), gcry_strsource(gcrypt_error));
+			osec_fatal(EXIT_FAILURE, gcry_err_code_to_errno(gcry_err_code(gcrypt_error)), "gcry_md_enable error: %s, source: %s", gcry_strerror(gcrypt_error), gcry_strsource(gcrypt_error));
 	}
 
 	/* Let the kernel know we are going to read everything in sequence. */
@@ -131,7 +131,7 @@ osec_digest(struct record *rec, const char *fname, const hash_type_data_t *prima
 
 	data_ptr = gcry_md_read(handle, primary_type_data->gcrypt_hashtype);
 	if (data_ptr == NULL)
-		osec_fatal(EXIT_FAILURE, 0, "gcry_md_read returned NULL\n");
+		osec_fatal(EXIT_FAILURE, 0, "gcry_md_read returned NULL");
 
 	osec_csum_append_value(
 		primary_type_data->hashname,
@@ -143,7 +143,7 @@ osec_digest(struct record *rec, const char *fname, const hash_type_data_t *prima
 	if (secondary_type_data->gcrypt_hashtype != primary_type_data->gcrypt_hashtype) {
 		data_ptr = gcry_md_read(handle, secondary_type_data->gcrypt_hashtype);
 		if (data_ptr == NULL)
-			osec_fatal(EXIT_FAILURE, 0, "gcry_md_read returned NULL\n");
+			osec_fatal(EXIT_FAILURE, 0, "gcry_md_read returned NULL");
 
 		osec_csum_append_value(
 			secondary_type_data->hashname,

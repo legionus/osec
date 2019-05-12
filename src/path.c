@@ -85,7 +85,7 @@ recreate_tempdir(void) {
 			osec_fatal(EXIT_FAILURE, errno, "%s: lstat", tempdir);
 	}
 	else if(remove_recursive(tempdir) == 0)
-		osec_fatal(EXIT_FAILURE, 0, "%s: remove_recursive: Unable to remove tempdir\n", tempdir);
+		osec_fatal(EXIT_FAILURE, 0, "%s: remove_recursive: Unable to remove tempdir", tempdir);
 
 	if (mkdir(tempdir, 0700) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: mkdir", tempdir);

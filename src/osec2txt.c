@@ -64,7 +64,7 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 	struct field field_data;
 
 	if ((st = osec_field(OVALUE_STAT, rec, rlen, NULL)) == NULL)
-		osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'stat' from dbvalue\n", key);
+		osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'stat' from dbvalue", key);
 
 	i = 0;
 	dprintf(fd,"file=\"");
@@ -78,7 +78,7 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 
 	if (dbversion > 2) {
 		if ((field = (char *) osec_field(OVALUE_XATTR, rec, rlen, &field_data)) == NULL)
-			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'xattr' from dbvalue\n", key);
+			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'xattr' from dbvalue", key);
 
 		dprintf(fd, "\txattr=\"");
 		show_digest(fd, field, field_data.len);
@@ -87,7 +87,7 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 
 	if (S_ISREG(st->mode)) {
 		if ((field = (char *) osec_field(OVALUE_CSUM, rec, rlen, &field_data)) == NULL)
-			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'checksum' from dbvalue\n", key);
+			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'checksum' from dbvalue", key);
 
 		if (dbversion >= 4) {
 			struct csum_field csum_field_data;
@@ -113,7 +113,7 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 
 	if (S_ISLNK(st->mode)) {
 		if ((field = (char *) osec_field(OVALUE_LINK, rec, rlen, NULL)) == NULL)
-			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'symlink' from database value\n", key);
+			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'symlink' from database value", key);
 
 		if (field) {
 			i = 0;
@@ -176,7 +176,7 @@ main(int argc, char **argv) {
 		osec_fatal(EXIT_FAILURE, errno, "%s: open", dbfile);
 
 	if (!compat_db_version(fd))
-		osec_fatal(EXIT_FAILURE, 0, "%s: file not look like osec database\n", dbfile);
+		osec_fatal(EXIT_FAILURE, 0, "%s: file not look like osec database", dbfile);
 
 	if (cdb_init(&cdbm, fd) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_init(cdbm)");

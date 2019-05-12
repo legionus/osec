@@ -379,7 +379,7 @@ process(char *dirname) {
 	errno = 0;
 	if ((old_fd = open(old_dbname, OSEC_O_FLAGS)) != -1) {
 		if (!compat_db_version(old_fd))
-			osec_fatal(EXIT_FAILURE, 0, "%s: file not look like osec database\n", old_dbname);
+			osec_fatal(EXIT_FAILURE, 0, "%s: file not look like osec database", old_dbname);
 
 		printf("Processing %s ...\n", dirname);
 	}
@@ -418,7 +418,7 @@ process(char *dirname) {
 		} else {
 			old_hash = new_hash = get_hash_type_data_by_name("sha1", strlen("sha1"));
 			if (new_hash == NULL)
-				osec_fatal(EXIT_FAILURE, 0, "failed to find hash type 'sha1'\n");
+				osec_fatal(EXIT_FAILURE, 0, "failed to find hash type 'sha1'");
 		}
 
 		/*
@@ -551,7 +551,7 @@ main(int argc, char **argv) {
 				{
 					hash_type = get_hash_type_data_by_name(optarg, strlen(optarg));
 					if (hash_type == NULL)
-						osec_fatal(EXIT_FAILURE, 0, "unknown hash type: %s\n", optarg);
+						osec_fatal(EXIT_FAILURE, 0, "unknown hash type: %s", optarg);
 				}
 				break;
 			default:
@@ -570,22 +570,22 @@ main(int argc, char **argv) {
 			   (group != NULL ? group : def_group));
 
 		if (!geteuid())
-			osec_fatal(EXIT_FAILURE, 0, "cannot run from under privilege user\n");
+			osec_fatal(EXIT_FAILURE, 0, "cannot run from under privilege user");
 	}
 
 	// initialize libgcrypt
 	if (!gcry_check_version(GCRYPT_VERSION))
 	{
-		osec_fatal(EXIT_FAILURE, 0, "libgcrypt version mismatch\n");
+		osec_fatal(EXIT_FAILURE, 0, "libgcrypt version mismatch");
 	}
 
 	gcrypt_error = gcry_control(GCRYCTL_DISABLE_SECMEM, 0);
 	if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR)
-		osec_fatal(EXIT_FAILURE, gcry_err_code_to_errno(gcry_err_code(gcrypt_error)), "gcry_control error: %s, source: %s\n", gcry_strerror(gcrypt_error), gcry_strsource(gcrypt_error));
+		osec_fatal(EXIT_FAILURE, gcry_err_code_to_errno(gcry_err_code(gcrypt_error)), "gcry_control error: %s, source: %s", gcry_strerror(gcrypt_error), gcry_strsource(gcrypt_error));
 
 	gcrypt_error = gcry_control(GCRYCTL_INITIALIZATION_FINISHED, 0);
 	if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR)
-		osec_fatal(EXIT_FAILURE, gcry_err_code_to_errno(gcry_err_code(gcrypt_error)), "gcry_control error: %s, source: %s\n", gcry_strerror(gcrypt_error), gcry_strsource(gcrypt_error));
+		osec_fatal(EXIT_FAILURE, gcry_err_code_to_errno(gcry_err_code(gcrypt_error)), "gcry_control error: %s, source: %s", gcry_strerror(gcrypt_error), gcry_strsource(gcrypt_error));
 
 	recreate_tempdir();
 

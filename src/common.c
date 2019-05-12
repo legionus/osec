@@ -39,6 +39,7 @@ osec_fatal(const int exitnum, const int errnum, const char *fmt, ...) {
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (errnum > 0)
-		fprintf(stderr, ": %s\n", strerror(errnum));
+		fprintf(stderr, ": %s", strerror(errnum));
+	fprintf(stderr, "\n");
 	exit(exitnum);
 }

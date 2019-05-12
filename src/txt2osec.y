@@ -121,7 +121,7 @@ csumline	: CHECKSUM EQUALS STRLITERAL
 		  }
 
 		  if ((n % 2) != 0)
-			osec_fatal(1, 0, "%s:%d: Checksum value invalid size: %s\n",
+			osec_fatal(1, 0, "%s:%d: Checksum value invalid size: %s",
 			           pathname, line_nr, str);
 
 		  ++chsum_count;
@@ -133,7 +133,7 @@ xattrline	: XATTR EQUALS STRLITERAL
 		{
 		  size_t n = strlen(str);
 		  if (n % 2 != 0)
-			osec_fatal(1, 0, "%s:%d: Xattr value has invalid size: %s\n",
+			osec_fatal(1, 0, "%s:%d: Xattr value has invalid size: %s",
 			           pathname, line_nr, str);
 		  xattr = strdup(str);
 		  flags |= FLAG_XATTR; }
@@ -151,21 +151,21 @@ devline		: DEVICE EQUALS NUMBER
 		;
 inoline		: INODE EQUALS NUMBER
 		{ if ($3 > LONG_MAX)
-			osec_fatal(1, 0, "%s:%d: Inode value too long: %lld\n",
+			osec_fatal(1, 0, "%s:%d: Inode value too long: %lld",
 			           pathname, line_nr, $3);
 		  ost.ino = (ino_t) $3;
 		  flags |= FLAG_INO; }
 		;
 uidline		: UID EQUALS NUMBER
 		{ if ($3 > LONG_MAX)
-			osec_fatal(1, 0, "%s:%d: UID value too long: %lld\n",
+			osec_fatal(1, 0, "%s:%d: UID value too long: %lld",
 			           pathname, line_nr, $3);
 		  ost.uid = (uid_t) $3;
 		  flags |= FLAG_UID; }
 		;
 gidline		: GID EQUALS NUMBER
 		{ if ($3 > LONG_MAX)
-			osec_fatal(1, 0, "%s:%d: GID value too long: %lld\n",
+			osec_fatal(1, 0, "%s:%d: GID value too long: %lld",
 			           pathname, line_nr, $3);
 		  ost.gid = (gid_t) $3;
 		  flags |= FLAG_GID; }
@@ -187,7 +187,7 @@ endline		: EOL
 			rec.offset = 0;
 
 			if (!F_ISSET(flags, FLAG_FILE | FLAG_DEV | FLAG_INO | FLAG_UID | FLAG_GID | FLAG_MODE))
-				osec_fatal(EXIT_FAILURE, 0, "%s:%d: Wrong file format\n",
+				osec_fatal(EXIT_FAILURE, 0, "%s:%d: Wrong file format",
 				           pathname, line_nr);
 
 			append_value(OVALUE_STAT, &ost, sizeof(ost), &rec);
@@ -233,7 +233,7 @@ endline		: EOL
 				local_rec.data   = xmalloc(local_rec.len);
 
 				if (!S_ISREG(ost.mode))
-					osec_fatal(EXIT_FAILURE, 0, "%s:%d: Wrong file format: checksum field for not regular file\n",
+					osec_fatal(EXIT_FAILURE, 0, "%s:%d: Wrong file format: checksum field for not regular file",
 					           pathname, line_nr);
 
 				for (z = 0; z < chsum_count; ++z) {
@@ -281,7 +281,7 @@ endline		: EOL
 
 			if (F_ISSET(flags, FLAG_LINK)) {
 				if (!S_ISLNK(ost.mode))
-					osec_fatal(EXIT_FAILURE, 0, "%s:%d: Wrong file format: symlink field for not symbolic link\n",
+					osec_fatal(EXIT_FAILURE, 0, "%s:%d: Wrong file format: symlink field for not symbolic link",
 					           pathname, line_nr);
 
 				append_value(OVALUE_LINK, slink, (size_t) strlen(slink)+1, &rec);

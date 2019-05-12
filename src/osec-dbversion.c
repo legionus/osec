@@ -73,7 +73,7 @@ main(int argc, char **argv)
 	errno = 0;
 	if ((fd = open(dbname, OSEC_O_FLAGS)) != -1) {
 		if (!compat_db_version(fd))
-			osec_fatal(EXIT_FAILURE, 0, "%s: file not look like osec database\n", dbname);
+			osec_fatal(EXIT_FAILURE, 0, "%s: file not look like osec database", dbname);
 	}
 
 	printf("%d\n", dbversion);
