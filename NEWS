@@ -1,5 +1,9 @@
 list of user-visible changes between releases of osec:
 
+[1.2.9]
+Initialize libgcrypt;
+Make sure that all messages end with newline.
+
 [1.2.8]
 Added support for STRIBOG512 hash algorithm;
 Allowed switching between different hash types;
