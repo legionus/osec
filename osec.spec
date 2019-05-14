@@ -1,8 +1,8 @@
 %define _unpackaged_files_terminate_build 1
 
 Name: osec
-Version: 1.2.8
-Release: alt2
+Version: 1.2.9
+Release: alt1
 
 Summary: Lightweight file permission checker
 License: GPL3
@@ -113,6 +113,9 @@ rm -f %osec_statedir/osec.db.*
 %_bindir/osec_rpm_reporter
 
 %changelog
+* Tue May 14 2019 Alexey Gladkov <legion@altlinux.ru> 1.2.9-alt1
+- New version (1.2.9);
+
 * Mon Apr 22 2019 Alexey Gladkov <legion@altlinux.ru> 1.2.8-alt2
 - Update URL.
 
