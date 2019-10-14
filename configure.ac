@@ -28,9 +28,6 @@ AC_CHECK_LIB([cap], [cap_from_text],,
 AC_CHECK_LIB([cdb], [cdb_init],,
 	[AC_MSG_ERROR([tinycdb was not found: http://www.corpit.ru/mjt/tinycdb.html])])
 
-AC_CHECK_LIB([attr], [listxattr],,
-	[AC_MSG_WARN(libattr was not found: http://savannah.nongnu.org/projects/attr)])
-
 AC_CHECK_LIB([gcrypt],[gcry_check_version],,
 	[AC_MSG_ERROR([libgcrypt was not found: https://www.gnupg.org])])
 

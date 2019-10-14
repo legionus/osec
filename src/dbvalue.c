@@ -173,13 +173,6 @@ osec_symlink(struct record *rec, const char *fname) {
 	append_value(OVALUE_LINK, buf, (size_t) lnklen + 1, rec);
 }
 
-#ifndef HAVE_LIBATTR
-void
-osec_xattr(struct record *rec, const char *fname __attribute__ ((unused))) {
-	const char empty = '\0';
-	append_value(OVALUE_XATTR, &empty, sizeof(empty), rec);
-}
-#else
 #include <sys/types.h>
 #include <sys/xattr.h>
 #include <attr/attributes.h>
@@ -319,7 +312,6 @@ empty:	append_value(OVALUE_XATTR, &empty, sizeof(empty), rec);
 	xfree(xlist);
 	xfree(xvalue);
 }
-#endif
 
 void *
 osec_csum_field(const char *name, size_t namelen, const void *data, size_t dlen, struct csum_field *ret) {
