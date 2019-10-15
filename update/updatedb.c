@@ -21,8 +21,6 @@
 
 #include "osec.h"
 
-char *progname;
-
 void *read_buf;
 size_t read_bufsize;
 
@@ -147,8 +145,6 @@ main(int argc, char **argv)
 	struct record rec;
 
 	const hash_type_data_t *tmp_ptr;
-
-	progname = basename(argv[0]);
 
 	struct option long_options[] = {
 		{ "help", no_argument, 0, 'h' },

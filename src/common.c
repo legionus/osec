@@ -13,17 +13,16 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "osec.h"
-
-extern char *progname;
 
 int __attribute__((format(printf, 1, 2)))
 osec_error(const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	fprintf(stderr, "%s: ", progname);
+	fprintf(stderr, "%s: ", program_invocation_short_name);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	return 0;
@@ -34,7 +33,7 @@ osec_fatal(const int exitnum, const int errnum, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	fprintf(stderr, "%s: ", progname);
+	fprintf(stderr, "%s: ", program_invocation_short_name);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (errnum > 0)

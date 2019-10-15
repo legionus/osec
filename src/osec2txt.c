@@ -22,8 +22,6 @@
 
 #include "osec.h"
 
-char *progname = NULL;
-
 static void __attribute__((noreturn))
 print_help(int ret)
 {
@@ -33,7 +31,7 @@ print_help(int ret)
 	       "  -V, --version   print program version and exit;\n"
 	       "  -h, --help      output a brief help message.\n"
 	       "\n",
-	       progname);
+	       program_invocation_short_name);
 	exit(ret);
 }
 
@@ -48,7 +46,7 @@ print_version(void)
 	       "Copyright (C) 2019  Aleksei Nikiforov <darktemplar@basealt.ru>\n"
 	       "This is free software; see the source for copying conditions.  There is NO\n"
 	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
-	       progname);
+	       program_invocation_short_name);
 	exit(EXIT_SUCCESS);
 }
 
@@ -155,8 +153,6 @@ main(int argc, char **argv)
 		{ "version", no_argument, 0, 'V' },
 		{ 0, 0, 0, 0 }
 	};
-
-	progname = basename(argv[0]);
 
 	while ((c = getopt_long(argc, argv, "hV", long_options, NULL)) != -1) {
 		switch (c) {
