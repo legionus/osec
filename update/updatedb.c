@@ -23,21 +23,23 @@
 
 char *progname;
 
-void  *read_buf;
+void *read_buf;
 size_t read_bufsize;
 
 // FIXME: use config file for this variables.
 char def_db_path[] = "/tmp/osec";
 char *db_path = NULL;
 
-static void __attribute__ ((noreturn))
-print_help(int ret)  {
+static void __attribute__((noreturn))
+print_help(int ret)
+{
 	printf("Usage: osec-migrade-db [-h | -D <dbpath>] <DBFILE>\n");
 	exit(ret);
 }
 
 static char *
-decode_dirname(char *dir) {
+decode_dirname(char *dir)
+{
 	char *ndir = NULL;
 	size_t len = strlen(dir);
 	unsigned int i, j = 0;
@@ -52,12 +54,11 @@ decode_dirname(char *dir) {
 			sscanf((dir + i), "%%%d%%", &c);
 			if ((ret = snprintf(NULL, (size_t) 0, "%d", c)) == -1)
 				osec_fatal(EXIT_FAILURE, 0,
-					"%s: snprintf: Unable to get length of char\n", dir);
+				           "%s: snprintf: Unable to get length of char\n", dir);
 			i += (unsigned int) (ret + 1);
 			if (found)
 				ndir[j++] = (char) c;
-		}
-		else {
+		} else {
 			if (found)
 				ndir[j++] = dir[i];
 		}
@@ -69,13 +70,14 @@ decode_dirname(char *dir) {
 	}
 
 	ndir[j++] = '\0';
-	ndir = (char *) xrealloc(ndir,(sizeof(char) * j));
+	ndir = (char *) xrealloc(ndir, (sizeof(char) * j));
 
 	return ndir;
 }
 
 static void
-osec_empty_digest(struct record *rec) {
+osec_empty_digest(struct record *rec)
+{
 	struct record local_rec;
 
 	char fdigest[digest_len_sha1];
@@ -93,13 +95,15 @@ osec_empty_digest(struct record *rec) {
 }
 
 static void
-osec_empty_symlink(struct record *rec) {
+osec_empty_symlink(struct record *rec)
+{
 	char t = '\0';
 	append_value(OVALUE_LINK, &t, (size_t) 1, rec);
 }
 
 static void
-gen_db_name(char *dirname, char **dbname) {
+gen_db_name(char *dirname, char **dbname)
+{
 	int i = 0;
 	size_t j = strlen(db_path) + 10;
 	size_t len = j + strlen(dirname);
@@ -108,7 +112,7 @@ gen_db_name(char *dirname, char **dbname) {
 	sprintf((*dbname), "%s/osec.cdb.", db_path);
 
 	while (dirname[i] != '\0') {
-		if ((j+3) >= len) {
+		if ((j + 3) >= len) {
 			len += 32;
 			(*dbname) = (char *) xrealloc((*dbname), sizeof(char) * len);
 		}
@@ -116,12 +120,10 @@ gen_db_name(char *dirname, char **dbname) {
 		if (!isprint(dirname[i]) || (dirname[i] == '/')) {
 			sprintf(((*dbname) + j), "%%%02X", (unsigned char) dirname[i]);
 			j += 3;
-		}
-		else if (dirname[i] == '%') {
+		} else if (dirname[i] == '%') {
 			(*dbname)[j++] = '%';
 			(*dbname)[j++] = '%';
-		}
-		else
+		} else
 			(*dbname)[j++] = dirname[i];
 		i++;
 	}
@@ -132,7 +134,8 @@ gen_db_name(char *dirname, char **dbname) {
 }
 
 int
-main(int argc, char **argv) {
+main(int argc, char **argv)
+{
 	int c, fd, fdtemp;
 	size_t klen, len = 0;
 	char *dbfile, *dbnewfile, *dbtemp, *dirname = NULL;
@@ -148,15 +151,15 @@ main(int argc, char **argv) {
 	progname = basename(argv[0]);
 
 	struct option long_options[] = {
-		{ "help",		no_argument,		0, 'h' },
-		{ "dbpath",		required_argument,	0, 'D' },
+		{ "help", no_argument, 0, 'h' },
+		{ "dbpath", required_argument, 0, 'D' },
 		{ 0, 0, 0, 0 }
 	};
 
 	if (argc == 1)
 		print_help(EXIT_SUCCESS);
 
-	while ((c = getopt_long (argc, argv, "hD:", long_options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "hD:", long_options, NULL)) != -1) {
 		switch (c) {
 			case 'D':
 				db_path = optarg;
@@ -201,22 +204,22 @@ main(int argc, char **argv) {
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_start");
 
 	// Allocate buffer for reading files.
-	read_bufsize = (size_t) (sysconf(_SC_PAGE_SIZE) - 1);
+	read_bufsize = (size_t)(sysconf(_SC_PAGE_SIZE) - 1);
 	read_buf = xmalloc(read_bufsize);
 
 	/*
 	 * Set default data buffer. This value will increase in the process of
 	 * creating a database.
 	 */
-	rec.len  = 1024;
+	rec.len = 1024;
 	rec.data = xmalloc(rec.len);
 
 	cdb_seqinit(&cpos, &cdbm);
-	while(cdb_seqnext(&cpos, &cdbm) > 0) {
+	while (cdb_seqnext(&cpos, &cdbm) > 0) {
 		char *type;
 
 		klen = cdb_keylen(&cdbm);
-		key = (char *) xmalloc((size_t) (klen + 1));
+		key = (char *) xmalloc((size_t)(klen + 1));
 
 		if (cdb_read(&cdbm, key, (unsigned) klen, cdb_keypos(&cdbm)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
@@ -241,7 +244,7 @@ main(int argc, char **argv) {
 			osec_empty_symlink(&rec);
 			osec_state(&rec, &st);
 
-			if (cdb_make_add(&cdbn, key, (unsigned) klen+1, rec.data, (unsigned) rec.offset) != 0)
+			if (cdb_make_add(&cdbn, key, (unsigned) klen + 1, rec.data, (unsigned) rec.offset) != 0)
 				osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", key);
 		}
 

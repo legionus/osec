@@ -16,9 +16,10 @@
 #include "osec.h"
 
 int
-compat_db_version(int fd) {
+compat_db_version(int fd)
+{
 	struct cdb cdbm;
-	char   key[] = "version";
+	char key[] = "version";
 	size_t klen = 7;
 
 	if (cdb_init(&cdbm, fd) < 0)
@@ -34,7 +35,8 @@ compat_db_version(int fd) {
 }
 
 void
-write_db_version(struct cdb_make *cdbm, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data) {
+write_db_version(struct cdb_make *cdbm, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data)
+{
 	int ver = OSEC_DB_VERSION;
 	char *buffer;
 

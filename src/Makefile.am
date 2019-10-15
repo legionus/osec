@@ -43,3 +43,6 @@ CLEANFILES = $(bin_PROGRAMS) $(bin_PROGRAMS:=.1)
 
 %.1: % %.1.inc
 	$(HELP2MAN) -i $@.inc ./$< >$@
+
+format:
+	clang-format -style=file -i $(osec_SOURCES) $(osec2txt_SOURCES)

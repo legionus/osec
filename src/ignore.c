@@ -19,21 +19,22 @@ static const struct ign_opts {
 	const long len;
 	const unsigned val;
 } ignore_opts[] = {
-	{ E("user"),     OSEC_UID },
-	{ E("group"),    OSEC_GID },
-	{ E("mode"),     OSEC_MOD },
-	{ E("inode"),    OSEC_INO },
-	{ E("mtime"),    OSEC_MTS },
-	{ E("symlink"),  OSEC_LNK },
+	{ E("user"), OSEC_UID },
+	{ E("group"), OSEC_GID },
+	{ E("mode"), OSEC_MOD },
+	{ E("inode"), OSEC_INO },
+	{ E("mtime"), OSEC_MTS },
+	{ E("symlink"), OSEC_LNK },
 	{ E("checksum"), OSEC_CSM },
 	{ 0, 0, 0 }
 };
 #undef E
 
-#define MAX(a,b) (((a) > (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
 static void
-set_ignore(char *param, long len) {
+set_ignore(char *param, long len)
+{
 	unsigned i = 0;
 
 	if (len <= 0)
@@ -48,7 +49,8 @@ set_ignore(char *param, long len) {
 }
 
 void
-process_ignore(const char *params) {
+process_ignore(const char *params)
+{
 	char *ptr = (char *) params;
 	size_t len = strlen(params);
 

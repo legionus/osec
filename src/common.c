@@ -18,9 +18,9 @@
 
 extern char *progname;
 
-int
-__attribute__ ((format (printf, 1, 2)))
-osec_error(const char *fmt, ...) {
+int __attribute__((format(printf, 1, 2)))
+osec_error(const char *fmt, ...)
+{
 	va_list ap;
 	va_start(ap, fmt);
 	fprintf(stderr, "%s: ", progname);
@@ -29,10 +29,9 @@ osec_error(const char *fmt, ...) {
 	return 0;
 }
 
-void
-__attribute__ ((noreturn))
-__attribute__ ((format (printf, 3, 4)))
-osec_fatal(const int exitnum, const int errnum, const char *fmt, ...) {
+void __attribute__((noreturn)) __attribute__((format(printf, 3, 4)))
+osec_fatal(const int exitnum, const int errnum, const char *fmt, ...)
+{
 	va_list ap;
 	va_start(ap, fmt);
 	fprintf(stderr, "%s: ", progname);

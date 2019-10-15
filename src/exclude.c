@@ -20,7 +20,8 @@ extern char *exclude_matches;
 extern size_t exclude_matches_len;
 
 void
-exclude_match_append(char *pattern) {
+exclude_match_append(char *pattern)
+{
 	size_t len = strlen(pattern);
 
 	if (!len)
@@ -28,7 +29,7 @@ exclude_match_append(char *pattern) {
 	len++;
 
 	exclude_matches = (char *) xrealloc(exclude_matches,
-			(sizeof(char) * (exclude_matches_len + sizeof(size_t) + len)));
+	                                    (sizeof(char) * (exclude_matches_len + sizeof(size_t) + len)));
 
 	memcpy((exclude_matches + exclude_matches_len), &len, sizeof(size_t));
 	exclude_matches_len += sizeof(size_t);
@@ -38,7 +39,8 @@ exclude_match_append(char *pattern) {
 }
 
 void
-exclude_matches_file(char *file) {
+exclude_matches_file(char *file)
+{
 	FILE *fd;
 	char *line = NULL;
 	ssize_t len;
@@ -68,13 +70,14 @@ exclude_matches_file(char *file) {
 }
 
 int
-is_exclude(char *str) {
+is_exclude(char *str)
+{
 	size_t siz, len = 0;
 
 	if (!exclude_matches_len)
 		return 0;
 
-	while(len < exclude_matches_len) {
+	while (len < exclude_matches_len) {
 		memcpy(&siz, (exclude_matches + len), sizeof(size_t));
 		len += sizeof(size_t);
 

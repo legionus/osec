@@ -30,7 +30,7 @@
 // Global variables
 char *progname;
 
-extern void  *read_buf;
+extern void *read_buf;
 extern size_t read_bufsize;
 
 size_t pw_bufsize = 0;
@@ -38,8 +38,8 @@ size_t gr_bufsize = 0;
 
 // FIXME: use config file for this variables.
 char def_db_path[] = "/tmp/osec";
-char def_user[]    = "osec";
-char def_group[]   = "osec";
+char def_user[] = "osec";
+char def_group[] = "osec";
 
 char *exclude_matches = NULL;
 size_t exclude_matches_len = 0;
@@ -50,8 +50,9 @@ int numeric_user_group = 0;
 unsigned ignore = 0;
 const hash_type_data_t *hash_type = NULL;
 
-static void __attribute__ ((noreturn))
-print_help(int ret)  {
+static void __attribute__((noreturn))
+print_help(int ret)
+{
 	printf("Usage: %1$s [OPTIONS] [DIRECTORY...]\n"
 	       "   or: %1$s [OPTIONS] --file=FILE [DIRECTORY...]\n"
 	       "\n"
@@ -76,13 +77,15 @@ print_help(int ret)  {
 	       "                            default is sha1;\n"
 	       "  -v, --version             print program version and exit;\n"
 	       "  -h, --help                output a brief help message.\n"
-	       "\n", progname);
+	       "\n",
+	       progname);
 	exit(ret);
 }
 
-static void __attribute__ ((noreturn))
-print_version(void) {
-	printf("%s version "PACKAGE_VERSION"\n"
+static void __attribute__((noreturn))
+print_version(void)
+{
+	printf("%s version " PACKAGE_VERSION "\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "Modified by Aleksei Nikiforov <darktemplar@basealt.ru>\n"
 	       "\n"
@@ -95,7 +98,8 @@ print_version(void) {
 }
 
 static void
-gen_db_name(char *dirname, char **dbname) {
+gen_db_name(char *dirname, char **dbname)
+{
 	int i = 0;
 	size_t j = strlen(db_path) + 10;
 	size_t len = j + strlen(dirname);
@@ -104,7 +108,7 @@ gen_db_name(char *dirname, char **dbname) {
 	sprintf((*dbname), "%s/osec.cdb.", db_path);
 
 	while (dirname[i] != '\0') {
-		if ((j+3) >= len) {
+		if ((j + 3) >= len) {
 			len += 32;
 			(*dbname) = (char *) xrealloc((*dbname), sizeof(char) * len);
 		}
@@ -112,12 +116,10 @@ gen_db_name(char *dirname, char **dbname) {
 		if (!isprint(dirname[i]) || (dirname[i] == '/')) {
 			sprintf(((*dbname) + j), "%%%02X", (unsigned char) dirname[i]);
 			j += 3;
-		}
-		else if (dirname[i] == '%') {
+		} else if (dirname[i] == '%') {
 			(*dbname)[j++] = '%';
 			(*dbname)[j++] = '%';
-		}
-		else
+		} else
 			(*dbname)[j++] = dirname[i];
 		i++;
 	}
@@ -128,18 +130,19 @@ gen_db_name(char *dirname, char **dbname) {
 }
 
 static int
-dsort(const FTSENT **a, const FTSENT **b) {
+dsort(const FTSENT **a, const FTSENT **b)
+{
 	if (S_ISDIR((*a)->fts_statp->st_mode)) {
 		if (!S_ISDIR((*b)->fts_statp->st_mode))
 			return 1;
-	}
-	else if (S_ISDIR((*b)->fts_statp->st_mode))
+	} else if (S_ISDIR((*b)->fts_statp->st_mode))
 		return -1;
 	return (strcmp((*a)->fts_name, (*b)->fts_name));
 }
 
 static int
-create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data) {
+create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data)
+{
 	FTS *t;
 	FTSENT *p;
 	char *argv[2];
@@ -166,13 +169,13 @@ create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data, const h
 	 * Set default data buffer. This value will increase in the process of
 	 * creating a database.
 	 */
-	rec.len  = 1024;
+	rec.len = 1024;
 	rec.data = xmalloc(rec.len);
 
 	while ((p = fts_read(t))) {
 		rec.offset = 0;
 
-		switch(p->fts_info) {
+		switch (p->fts_info) {
 			case FTS_DNR:
 			case FTS_ERR:
 			case FTS_NS:
@@ -193,7 +196,7 @@ create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data, const h
 		osec_state(&rec, p->fts_statp);
 		osec_xattr(&rec, p->fts_path);
 
-		switch(p->fts_info) {
+		switch (p->fts_info) {
 			case FTS_F:
 				osec_digest(&rec, p->fts_path, primary_type_data, secondary_type_data);
 				break;
@@ -203,7 +206,7 @@ create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data, const h
 				break;
 		}
 
-		if (cdb_make_add(&cdbm, p->fts_path, (unsigned) p->fts_pathlen+1,
+		if (cdb_make_add(&cdbm, p->fts_path, (unsigned) p->fts_pathlen + 1,
 		                 rec.data, (unsigned) rec.offset) != 0)
 			osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", p->fts_path);
 	}
@@ -213,7 +216,8 @@ create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data, const h
 	if (fts_close(t) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: fts_close", dir);
 
-skip:	write_db_version(&cdbm, primary_type_data, secondary_type_data);
+skip:
+	write_db_version(&cdbm, primary_type_data, secondary_type_data);
 
 	if (cdb_make_finish(&cdbm) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_finish");
@@ -222,7 +226,8 @@ skip:	write_db_version(&cdbm, primary_type_data, secondary_type_data);
 }
 
 static void
-show_changes(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *hashtype_data) {
+show_changes(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *hashtype_data)
+{
 	int rc;
 	char *key = NULL;
 	void *old_data = NULL, *new_data = NULL;
@@ -235,7 +240,7 @@ show_changes(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *h
 
 	cdb_seqinit(&cpos, new_cdb);
 
-	while((rc = cdb_seqnext(&cpos, new_cdb)) > 0) {
+	while ((rc = cdb_seqnext(&cpos, new_cdb)) > 0) {
 		klen = (size_t) cdb_keylen(new_cdb);
 
 		if (klen > key_len) {
@@ -275,8 +280,7 @@ show_changes(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *h
 
 			if (!check_difference(key, new_data, new_dlen, old_data, old_dlen, hashtype_data))
 				check_bad_files(key, new_data, new_dlen);
-		}
-		else
+		} else
 			check_new(key, new_data, new_dlen, hashtype_data);
 	}
 
@@ -289,7 +293,8 @@ show_changes(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *h
 }
 
 static void
-show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *hashtype_data) {
+show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *hashtype_data)
+{
 	int rc;
 	char *key = NULL;
 	void *data = NULL;
@@ -300,7 +305,7 @@ show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *
 
 	cdb_seqinit(&cpos, old_cdb);
 
-	while((rc = cdb_seqnext(&cpos, old_cdb)) > 0) {
+	while ((rc = cdb_seqnext(&cpos, old_cdb)) > 0) {
 		klen = cdb_keylen(old_cdb);
 
 		if (klen > key_len) {
@@ -359,7 +364,8 @@ database_get_hashes(struct cdb *cdbm, const hash_type_data_t **new_hash, const h
 }
 
 static int
-process(char *dirname) {
+process(char *dirname)
+{
 	size_t len;
 	int retval = 1;
 	int new_fd, old_fd;
@@ -382,12 +388,10 @@ process(char *dirname) {
 			osec_fatal(EXIT_FAILURE, 0, "%s: file not look like osec database", old_dbname);
 
 		printf("Processing %s ...\n", dirname);
-	}
-	else if (errno == ENOENT) {
+	} else if (errno == ENOENT) {
 		dbversion = 0;
 		printf("Init database for %s ...\n", dirname);
-	}
-	else
+	} else
 		osec_fatal(EXIT_FAILURE, errno, "%s: open", old_dbname);
 
 	// Generate new state database
@@ -424,9 +428,7 @@ process(char *dirname) {
 		/*
 		 * if old hash and new hash from database doesn't match with requested type, use last requested hash type
 		 */
-		if (((old_hash == NULL) || (strcmp(old_hash->hashname, hash_type->hashname) != 0))
-			&& (strcmp(new_hash->hashname, hash_type->hashname) != 0))
-		{
+		if (((old_hash == NULL) || (strcmp(old_hash->hashname, hash_type->hashname) != 0)) && (strcmp(new_hash->hashname, hash_type->hashname) != 0)) {
 			secondary_type_data = new_hash;
 		}
 	}
@@ -439,8 +441,7 @@ process(char *dirname) {
 		if (old_fd != -1) {
 			show_changes(&new_cdb, &old_cdb, secondary_type_data);
 			show_oldfiles(&new_cdb, &old_cdb, secondary_type_data);
-		}
-		else
+		} else
 			show_changes(&new_cdb, NULL, primary_type_data);
 	}
 
@@ -461,9 +462,10 @@ process(char *dirname) {
 }
 
 static void
-allocate_globals(void) {
+allocate_globals(void)
+{
 	// Allocate buffer to read the files (digest.c).
-	read_bufsize = (size_t) (sysconf(_SC_PAGE_SIZE) - 1);
+	read_bufsize = (size_t)(sysconf(_SC_PAGE_SIZE) - 1);
 	read_buf = xmalloc(read_bufsize);
 
 	// (status.c)
@@ -477,7 +479,8 @@ allocate_globals(void) {
 }
 
 int
-main(int argc, char **argv) {
+main(int argc, char **argv)
+{
 	int c;
 	int retval = EXIT_SUCCESS;
 	int allow_root = 0;
@@ -489,19 +492,19 @@ main(int argc, char **argv) {
 	gcry_error_t gcrypt_error;
 
 	struct option long_options[] = {
-		{ "help",		no_argument,		0, 'h' },
-		{ "version",		no_argument,		0, 'v' },
-		{ "read-only",		no_argument,		0, 'r' },
-		{ "allow-root",		no_argument,		0, 'R' },
-		{ "numeric-ids",	no_argument,		0, 'n' },
-		{ "ignore",		required_argument,	0, 'i' },
-		{ "dbpath",		required_argument,	0, 'D' },
-		{ "file",		required_argument,	0, 'f' },
-		{ "user",		required_argument,	0, 'u' },
-		{ "group",		required_argument,	0, 'g' },
-		{ "exclude",		required_argument,	0, 'x' },
-		{ "exclude-from",	required_argument,	0, 'X' },
-		{ "hash-type",	required_argument, 0, 't' },
+		{ "help", no_argument, 0, 'h' },
+		{ "version", no_argument, 0, 'v' },
+		{ "read-only", no_argument, 0, 'r' },
+		{ "allow-root", no_argument, 0, 'R' },
+		{ "numeric-ids", no_argument, 0, 'n' },
+		{ "ignore", required_argument, 0, 'i' },
+		{ "dbpath", required_argument, 0, 'D' },
+		{ "file", required_argument, 0, 'f' },
+		{ "user", required_argument, 0, 'u' },
+		{ "group", required_argument, 0, 'g' },
+		{ "exclude", required_argument, 0, 'x' },
+		{ "exclude-from", required_argument, 0, 'X' },
+		{ "hash-type", required_argument, 0, 't' },
 		{ 0, 0, 0, 0 }
 	};
 
@@ -512,7 +515,7 @@ main(int argc, char **argv) {
 	if (argc == 1)
 		print_help(EXIT_SUCCESS);
 
-	while ((c = getopt_long (argc, argv, "hvnrRi:u:g:D:f:x:X:t:", long_options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "hvnrRi:u:g:D:f:x:X:t:", long_options, NULL)) != -1) {
 		switch (c) {
 			case 'v':
 				print_version();
@@ -548,11 +551,9 @@ main(int argc, char **argv) {
 				exclude_matches_file(optarg);
 				break;
 			case 't':
-				{
-					hash_type = get_hash_type_data_by_name(optarg, strlen(optarg));
-					if (hash_type == NULL)
-						osec_fatal(EXIT_FAILURE, 0, "unknown hash type: %s", optarg);
-				}
+				hash_type = get_hash_type_data_by_name(optarg, strlen(optarg));
+				if (hash_type == NULL)
+					osec_fatal(EXIT_FAILURE, 0, "unknown hash type: %s", optarg);
 				break;
 			default:
 			case 'h':
@@ -566,16 +567,15 @@ main(int argc, char **argv) {
 
 	//drop program privileges if we are root
 	if (!allow_root && !geteuid()) {
-		drop_privs((user  != NULL ? user  : def_user),
-			   (group != NULL ? group : def_group));
+		drop_privs((user != NULL ? user : def_user),
+		           (group != NULL ? group : def_group));
 
 		if (!geteuid())
 			osec_fatal(EXIT_FAILURE, 0, "cannot run from under privilege user");
 	}
 
 	// initialize libgcrypt
-	if (!gcry_check_version(GCRYPT_VERSION))
-	{
+	if (!gcry_check_version(GCRYPT_VERSION)) {
 		osec_fatal(EXIT_FAILURE, 0, "libgcrypt version mismatch");
 	}
 
@@ -603,14 +603,14 @@ main(int argc, char **argv) {
 		while ((n = getline(&line, &len, fd)) != -1) {
 			int i = 0;
 
-			while(isspace(line[i]))
+			while (isspace(line[i]))
 				i++;
 
 			if (strlen((line + i)) == 0 || line[i] == '#')
 				continue;
 
-			if (line[n-1] == '\n')
-				line[n-1] = '\0';
+			if (line[n - 1] == '\n')
+				line[n - 1] = '\0';
 
 			if ((path = validate_path((line + i))) == NULL)
 				continue;

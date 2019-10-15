@@ -33,19 +33,19 @@ int dbversion;
 #define OSEC_INO (1 << 7)
 
 #define OVALUE_XATTR 8
-#define OVALUE_LINK  4
-#define OVALUE_CSUM  2
-#define OVALUE_STAT  1
+#define OVALUE_LINK 4
+#define OVALUE_CSUM 2
+#define OVALUE_STAT 1
 
 typedef long long int osec_time_t;
 
 typedef struct osec_stat {
-	dev_t		dev;	/* ID of device containing file */
-	ino_t		ino;	/* inode number */
-	mode_t		mode;	/* file's permission bits */
-	uid_t		uid;	/* user ID of owner */
-	gid_t		gid;	/* group ID of owner */
-	osec_time_t	mtime;	/* time of last modification */
+	dev_t dev;         /* ID of device containing file */
+	ino_t ino;         /* inode number */
+	mode_t mode;       /* file's permission bits */
+	uid_t uid;         /* user ID of owner */
+	gid_t gid;         /* group ID of owner */
+	osec_time_t mtime; /* time of last modification */
 } osec_stat_t;
 
 struct record {
@@ -76,13 +76,13 @@ typedef struct hash_type_data {
 
 /* common.c */
 void osec_fatal(const int exitnum, const int errnum, const char *fmt, ...);
-int  osec_error(const char *fmt, ...);
+int osec_error(const char *fmt, ...);
 
 /* memory.c */
 void *xmempcpy(void *dest, const void *src, size_t n);
 void *xmalloc(size_t size);
 void *xrealloc(void *ptr, size_t size);
-void  xfree(void *ptr);
+void xfree(void *ptr);
 
 /* privs.c */
 void drop_privs(char *user, char *group);
@@ -109,7 +109,7 @@ void *osec_csum_field_next(const void *data, const size_t dlen, struct csum_fiel
 void osec_csum_append_value(const char *name, size_t namelen, const void *src, const size_t slen, struct record *rec);
 
 /* dbvalue.c */
-int  compat_db_version(int fd);
+int compat_db_version(int fd);
 void write_db_version(struct cdb_make *cdbm, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data);
 
 void get_hashes_from_string(const char *buffer, const size_t buffer_len, const hash_type_data_t **new_hash, const hash_type_data_t **old_hash);
@@ -127,6 +127,6 @@ void recreate_tempdir(void);
 char *validate_path(const char *path);
 
 /* hashtype.c */
-const hash_type_data_t* get_hash_type_data_by_name(const char *hashname, const size_t hashname_len);
+const hash_type_data_t *get_hash_type_data_by_name(const char *hashname, const size_t hashname_len);
 
 #endif /* OSEC_H */

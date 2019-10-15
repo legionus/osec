@@ -24,20 +24,23 @@
 
 char *progname = NULL;
 
-static void __attribute__ ((noreturn))
-print_help(int ret)  {
+static void __attribute__((noreturn))
+print_help(int ret)
+{
 	printf("Usage: %s [options] <DBFILE> <OUTFILE>\n"
 	       "\n"
 	       "Options:\n"
 	       "  -V, --version   print program version and exit;\n"
 	       "  -h, --help      output a brief help message.\n"
-	       "\n", progname);
+	       "\n",
+	       progname);
 	exit(ret);
 }
 
-static void __attribute__ ((noreturn))
-print_version(void) {
-	printf("%s version "PACKAGE_VERSION"\n"
+static void __attribute__((noreturn))
+print_version(void)
+{
+	printf("%s version " PACKAGE_VERSION "\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "Modified by Aleksei Nikiforov <darktemplar@basealt.ru>\n"
 	       "\n"
@@ -50,14 +53,16 @@ print_version(void) {
 }
 
 static void
-show_digest(int fd, const char *dst, size_t len) {
+show_digest(int fd, const char *dst, size_t len)
+{
 	size_t i = 0;
 	while (i < len)
 		dprintf(fd, "%02x", (unsigned char) dst[i++]);
 }
 
 static void
-dump_record(int fd, char *key, void *rec, size_t rlen) {
+dump_record(int fd, char *key, void *rec, size_t rlen)
+{
 	osec_stat_t *st;
 	int i;
 	char *field;
@@ -67,14 +72,14 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 		osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'stat' from dbvalue", key);
 
 	i = 0;
-	dprintf(fd,"file=\"");
+	dprintf(fd, "file=\"");
 	while (key[i]) {
 		if (key[i] == '"' || key[i] == '\\')
-			dprintf(fd,"\\");
-		dprintf(fd,"%c", key[i]);
+			dprintf(fd, "\\");
+		dprintf(fd, "%c", key[i]);
 		i++;
 	}
-	dprintf(fd,"\" \\\n");
+	dprintf(fd, "\" \\\n");
 
 	if (dbversion > 2) {
 		if ((field = (char *) osec_field(OVALUE_XATTR, rec, rlen, &field_data)) == NULL)
@@ -92,13 +97,12 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 		if (dbversion >= 4) {
 			struct csum_field csum_field_data;
 
-			while (field_data.len > 0)
-			{
+			while (field_data.len > 0) {
 				field = osec_csum_field_next(field, field_data.len, &csum_field_data, &(field_data.len));
 				if (field == NULL)
 					osec_fatal(EXIT_FAILURE, 0,
-						"%s: osec_field: too short",
-						key);
+					           "%s: osec_field: too short",
+					           key);
 
 				dprintf(fd, "\tchecksum=\"%.*s:", (int) csum_field_data.name_len, csum_field_data.name);
 				show_digest(fd, csum_field_data.data, csum_field_data.data_len);
@@ -120,24 +124,25 @@ dump_record(int fd, char *key, void *rec, size_t rlen) {
 			dprintf(fd, "\tsymlink=\"");
 			while (field[i]) {
 				if (field[i] == '"' || field[i] == '\\')
-					dprintf(fd,"\\");
-				dprintf(fd,"%c", field[i]);
+					dprintf(fd, "\\");
+				dprintf(fd, "%c", field[i]);
 				i++;
 			}
 			dprintf(fd, "\" \\\n");
 		}
 	}
 
-	dprintf(fd,"\tino=%ld \\\n", st->ino);
-	dprintf(fd,"\tdev=%lld \\\n", (long long) st->dev);
-	dprintf(fd,"\tmode=\\%06lo \\\n", (unsigned long) st->mode);
-	dprintf(fd,"\tuid=%ld \\\n", (long) st->uid);
-	dprintf(fd,"\tgid=%ld \\\n", (long) st->gid);
-	dprintf(fd,"\tmtime=%lld\n", (dbversion > 1) ? st->mtime : 0);
+	dprintf(fd, "\tino=%ld \\\n", st->ino);
+	dprintf(fd, "\tdev=%lld \\\n", (long long) st->dev);
+	dprintf(fd, "\tmode=\\%06lo \\\n", (unsigned long) st->mode);
+	dprintf(fd, "\tuid=%ld \\\n", (long) st->uid);
+	dprintf(fd, "\tgid=%ld \\\n", (long) st->gid);
+	dprintf(fd, "\tmtime=%lld\n", (dbversion > 1) ? st->mtime : 0);
 }
 
 int
-main(int argc, char **argv) {
+main(int argc, char **argv)
+{
 	int c, fd, outfd, rc;
 	size_t klen;
 	char *dbfile, *outfile = NULL, *key;
@@ -146,14 +151,14 @@ main(int argc, char **argv) {
 	void *data;
 
 	struct option long_options[] = {
-		{ "help",		no_argument,		0, 'h' },
-		{ "version",		no_argument,		0, 'V' },
+		{ "help", no_argument, 0, 'h' },
+		{ "version", no_argument, 0, 'V' },
 		{ 0, 0, 0, 0 }
 	};
 
 	progname = basename(argv[0]);
 
-	while ((c = getopt_long (argc, argv, "hV", long_options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "hV", long_options, NULL)) != -1) {
 		switch (c) {
 			case 'V':
 				print_version();
@@ -168,7 +173,7 @@ main(int argc, char **argv) {
 	if ((argc - optind) != 2)
 		print_help(EXIT_FAILURE);
 
-	dbfile  = argv[optind++];
+	dbfile = argv[optind++];
 	outfile = argv[optind];
 
 	// Open database
@@ -191,7 +196,7 @@ main(int argc, char **argv) {
 
 		chardata = xmalloc((size_t) dlen + 1);
 
-		if (cdb_read(&cdbm, chardata, (unsigned)dlen, cdb_datapos(&cdbm)) < 0)
+		if (cdb_read(&cdbm, chardata, (unsigned) dlen, cdb_datapos(&cdbm)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read(data)");
 
 		chardata[dlen] = 0;
@@ -203,11 +208,11 @@ main(int argc, char **argv) {
 
 	cdb_seqinit(&cpos, &cdbm);
 
-	while((rc = cdb_seqnext(&cpos, &cdbm)) > 0) {
+	while ((rc = cdb_seqnext(&cpos, &cdbm)) > 0) {
 		klen = cdb_keylen(&cdbm);
-		key = (char *) xmalloc((size_t) (klen + 1));
+		key = (char *) xmalloc((size_t)(klen + 1));
 
-		if (cdb_read(&cdbm, key, (unsigned)klen, cdb_keypos(&cdbm)) < 0)
+		if (cdb_read(&cdbm, key, (unsigned) klen, cdb_keypos(&cdbm)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read(key)");
 
 		if (key[0] != '/') {
@@ -220,7 +225,7 @@ main(int argc, char **argv) {
 		dlen = cdb_datalen(&cdbm);
 		data = xmalloc((size_t) dlen);
 
-		if (cdb_read(&cdbm, data, (unsigned)dlen, cdb_datapos(&cdbm)) < 0)
+		if (cdb_read(&cdbm, data, (unsigned) dlen, cdb_datapos(&cdbm)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read(data)");
 
 		dump_record(outfd, key, data, dlen);

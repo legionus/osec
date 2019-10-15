@@ -21,7 +21,8 @@
 
 /** drop process privs */
 void
-drop_privs(char *user, char *group) {
+drop_privs(char *user, char *group)
+{
 	cap_t caps;
 	struct passwd *pw;
 	struct group *gr;
@@ -41,7 +42,7 @@ drop_privs(char *user, char *group) {
 	if ((pw = getpwnam(user)) == NULL)
 		osec_fatal(EXIT_FAILURE, errno, "getpwnam");
 
-	if(prctl(PR_SET_KEEPCAPS, 1) == -1)
+	if (prctl(PR_SET_KEEPCAPS, 1) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "prctl");
 
 	//drop capabilities

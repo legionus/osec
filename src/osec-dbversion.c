@@ -13,7 +13,7 @@
 
 char *progname = NULL;
 
-static void __attribute__ ((noreturn))
+static void __attribute__((noreturn))
 print_help(int ret)
 {
 	printf("Usage: %s [options] <DBFILE>\n"
@@ -21,20 +21,21 @@ print_help(int ret)
 	       "Options:\n"
 	       "  -V, --version   print program version and exit;\n"
 	       "  -h, --help      output a brief help message.\n"
-	       "\n", progname);
+	       "\n",
+	       progname);
 	exit(ret);
 }
 
-static void __attribute__ ((noreturn))
+static void __attribute__((noreturn))
 print_version(void)
 {
-	printf("%s version "PACKAGE_VERSION"\n"
+	printf("%s version " PACKAGE_VERSION "\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "\n"
 	       "Copyright (C) 2013  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "This is free software; see the source for copying conditions.  There is NO\n"
 	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
-		progname);
+	       progname);
 	exit(EXIT_SUCCESS);
 }
 
@@ -45,14 +46,14 @@ main(int argc, char **argv)
 	char *dbname;
 
 	struct option long_options[] = {
-		{ "help",		no_argument,		0, 'h' },
-		{ "version",		no_argument,		0, 'V' },
+		{ "help", no_argument, 0, 'h' },
+		{ "version", no_argument, 0, 'V' },
 		{ 0, 0, 0, 0 }
 	};
 
 	progname = basename(argv[0]);
 
-	while ((c = getopt_long (argc, argv, "hV", long_options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "hV", long_options, NULL)) != -1) {
 		switch (c) {
 			case 'V':
 				print_version();
@@ -67,7 +68,7 @@ main(int argc, char **argv)
 	if ((argc - optind) != 1)
 		print_help(EXIT_FAILURE);
 
-	dbname   = argv[optind];
+	dbname = argv[optind];
 
 	// Open old database
 	errno = 0;

@@ -23,11 +23,12 @@
 
 #include "osec.h"
 
-void  *read_buf;
+void *read_buf;
 size_t read_bufsize;
 
 void *
-osec_field(const unsigned type, const void *data, const size_t dlen, struct field *ret) {
+osec_field(const unsigned type, const void *data, const size_t dlen, struct field *ret)
+{
 	size_t vlen, len = 0;
 	unsigned vtype;
 
@@ -41,7 +42,7 @@ osec_field(const unsigned type, const void *data, const size_t dlen, struct fiel
 		if (vtype == type) {
 			if (ret != NULL) {
 				ret->type = type;
-				ret->len  = vlen;
+				ret->len = vlen;
 				ret->data = (void *) (data + len);
 			}
 			return (void *) (data + len);
@@ -54,7 +55,8 @@ osec_field(const unsigned type, const void *data, const size_t dlen, struct fiel
 }
 
 void
-append_value(const unsigned type, const void *src, const size_t slen, struct record *rec) {
+append_value(const unsigned type, const void *src, const size_t slen, struct record *rec)
+{
 
 	size_t sz = sizeof(unsigned) + sizeof(size_t) + slen;
 
@@ -74,21 +76,23 @@ append_value(const unsigned type, const void *src, const size_t slen, struct rec
 }
 
 void
-osec_state(struct record *rec, const struct stat *st) {
+osec_state(struct record *rec, const struct stat *st)
+{
 	osec_stat_t ost;
 
-	ost.dev   = st->st_dev;
-	ost.ino   = st->st_ino;
-	ost.uid   = st->st_uid;
-	ost.gid   = st->st_gid;
-	ost.mode  = st->st_mode;
+	ost.dev = st->st_dev;
+	ost.ino = st->st_ino;
+	ost.uid = st->st_uid;
+	ost.gid = st->st_gid;
+	ost.mode = st->st_mode;
 	ost.mtime = st->st_mtime;
 
 	append_value(OVALUE_STAT, &ost, sizeof(ost), rec);
 }
 
 void
-osec_digest(struct record *rec, const char *fname, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data) {
+osec_digest(struct record *rec, const char *fname, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data)
+{
 	int fd;
 	ssize_t num;
 	gcry_error_t gcrypt_error;
@@ -98,8 +102,8 @@ osec_digest(struct record *rec, const char *fname, const hash_type_data_t *prima
 	struct record local_rec;
 
 	local_rec.offset = 0;
-	local_rec.len    = 1024;
-	local_rec.data   = xmalloc(local_rec.len);
+	local_rec.len = 1024;
+	local_rec.data = xmalloc(local_rec.len);
 
 	if ((fd = open(fname, OSEC_O_FLAGS)) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: open", fname);
@@ -115,7 +119,7 @@ osec_digest(struct record *rec, const char *fname, const hash_type_data_t *prima
 	}
 
 	/* Let the kernel know we are going to read everything in sequence. */
-	(void) posix_fadvise (fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+	(void) posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
 
 	while ((num = read(fd, read_buf, read_bufsize)) > 0) {
 		gcry_md_write(handle, read_buf, (size_t) num);
@@ -134,11 +138,11 @@ osec_digest(struct record *rec, const char *fname, const hash_type_data_t *prima
 		osec_fatal(EXIT_FAILURE, 0, "gcry_md_read returned NULL");
 
 	osec_csum_append_value(
-		primary_type_data->hashname,
-		strlen(primary_type_data->hashname),
-		data_ptr,
-		gcry_md_get_algo_dlen(primary_type_data->gcrypt_hashtype),
-		&local_rec);
+	    primary_type_data->hashname,
+	    strlen(primary_type_data->hashname),
+	    data_ptr,
+	    gcry_md_get_algo_dlen(primary_type_data->gcrypt_hashtype),
+	    &local_rec);
 
 	if (secondary_type_data->gcrypt_hashtype != primary_type_data->gcrypt_hashtype) {
 		data_ptr = gcry_md_read(handle, secondary_type_data->gcrypt_hashtype);
@@ -146,11 +150,11 @@ osec_digest(struct record *rec, const char *fname, const hash_type_data_t *prima
 			osec_fatal(EXIT_FAILURE, 0, "gcry_md_read returned NULL");
 
 		osec_csum_append_value(
-			secondary_type_data->hashname,
-			strlen(secondary_type_data->hashname),
-			data_ptr,
-			gcry_md_get_algo_dlen(secondary_type_data->gcrypt_hashtype),
-			&local_rec);
+		    secondary_type_data->hashname,
+		    strlen(secondary_type_data->hashname),
+		    data_ptr,
+		    gcry_md_get_algo_dlen(secondary_type_data->gcrypt_hashtype),
+		    &local_rec);
 	}
 
 	gcry_md_close(handle);
@@ -161,7 +165,8 @@ osec_digest(struct record *rec, const char *fname, const hash_type_data_t *prima
 }
 
 void
-osec_symlink(struct record *rec, const char *fname) {
+osec_symlink(struct record *rec, const char *fname)
+{
 	ssize_t lnklen;
 	char buf[MAXPATHLEN];
 
@@ -178,7 +183,8 @@ osec_symlink(struct record *rec, const char *fname) {
 #include <attr/attributes.h>
 
 void
-osec_xattr(struct record *rec, const char *fname) {
+osec_xattr(struct record *rec, const char *fname)
+{
 	const char empty = '\0';
 	int is_link;
 	char *xlist = NULL, *xkey = NULL, *xvalue = NULL, *res = NULL;
@@ -194,8 +200,8 @@ osec_xattr(struct record *rec, const char *fname) {
 	is_link = ((st.st_mode & S_IFMT) == S_IFLNK);
 
 	len = (is_link)
-		? llistxattr(fname, NULL, 0)
-		:  listxattr(fname, NULL, 0);
+	          ? llistxattr(fname, NULL, 0)
+	          : listxattr(fname, NULL, 0);
 
 	if (len == 0)
 		goto empty;
@@ -208,8 +214,8 @@ osec_xattr(struct record *rec, const char *fname) {
 
 	while (1) {
 		len = (is_link)
-			? llistxattr(fname, xlist, xlist_len)
-			:  listxattr(fname, xlist, xlist_len);
+		          ? llistxattr(fname, xlist, xlist_len)
+		          : listxattr(fname, xlist, xlist_len);
 
 		if (len > 0) {
 			xlist_len = (size_t) len;
@@ -239,8 +245,8 @@ osec_xattr(struct record *rec, const char *fname) {
 
 	while (xkey != (xlist + xlist_len)) {
 		len = (is_link)
-			? lgetxattr(fname, xkey, NULL, 0)
-			:  getxattr(fname, xkey, NULL, 0);
+		          ? lgetxattr(fname, xkey, NULL, 0)
+		          : getxattr(fname, xkey, NULL, 0);
 
 		if (len == -1) {
 			if (errno == ENOATTR)
@@ -256,8 +262,8 @@ osec_xattr(struct record *rec, const char *fname) {
 
 		while (1) {
 			len = (is_link)
-				? lgetxattr(fname, xkey, xvalue, xvalue_len)
-				:  getxattr(fname, xkey, xvalue, xvalue_len);
+			          ? lgetxattr(fname, xkey, xvalue, xvalue_len)
+			          : getxattr(fname, xkey, xvalue, xvalue_len);
 
 			if (len >= 0)
 				break;
@@ -298,7 +304,8 @@ osec_xattr(struct record *rec, const char *fname) {
 		res[offset] = '\0';
 		offset += 1;
 
-next:		xkey += xkey_len;
+	next:
+		xkey += xkey_len;
 	}
 
 	append_value(OVALUE_XATTR, res, res_len, rec);
@@ -308,13 +315,15 @@ next:		xkey += xkey_len;
 	xfree(xvalue);
 	return;
 
-empty:	append_value(OVALUE_XATTR, &empty, sizeof(empty), rec);
+empty:
+	append_value(OVALUE_XATTR, &empty, sizeof(empty), rec);
 	xfree(xlist);
 	xfree(xvalue);
 }
 
 void *
-osec_csum_field(const char *name, size_t namelen, const void *data, size_t dlen, struct csum_field *ret) {
+osec_csum_field(const char *name, size_t namelen, const void *data, size_t dlen, struct csum_field *ret)
+{
 
 	size_t item_namelen;
 	size_t item_digestlen;
@@ -326,17 +335,16 @@ osec_csum_field(const char *name, size_t namelen, const void *data, size_t dlen,
 		if (dlen < sizeof(size_t) * 2 + item_namelen + item_digestlen)
 			break;
 
-		if ((namelen == item_namelen)
-			&& (memcmp(name, data + sizeof(size_t) * 2, namelen) == 0)) {
+		if ((namelen == item_namelen) && (memcmp(name, data + sizeof(size_t) * 2, namelen) == 0)) {
 
 			if (ret) {
 				ret->name_len = item_namelen;
 				ret->data_len = item_digestlen;
 				ret->name = data + sizeof(size_t) * 2;
-				ret->data = (void*) data + sizeof(size_t) * 2 + namelen;
+				ret->data = (void *) data + sizeof(size_t) * 2 + namelen;
 			}
 
-			return (void*) data;
+			return (void *) data;
 		}
 
 		data += sizeof(size_t) * 2 + item_namelen + item_digestlen;
@@ -347,7 +355,8 @@ osec_csum_field(const char *name, size_t namelen, const void *data, size_t dlen,
 }
 
 void *
-osec_csum_field_next(const void *data, const size_t dlen, struct csum_field *ret, size_t *ret_len) {
+osec_csum_field_next(const void *data, const size_t dlen, struct csum_field *ret, size_t *ret_len)
+{
 
 	size_t namelen;
 	size_t digestlen;
@@ -365,18 +374,19 @@ osec_csum_field_next(const void *data, const size_t dlen, struct csum_field *ret
 		ret->name_len = namelen;
 		ret->data_len = digestlen;
 		ret->name = data + sizeof(size_t) * 2;
-		ret->data = (void*) data + sizeof(size_t) * 2 + namelen;
+		ret->data = (void *) data + sizeof(size_t) * 2 + namelen;
 	}
 
 	if (ret_len) {
 		*ret_len = dlen - sizeof(size_t) * 2 - namelen - digestlen;
 	}
 
-	return (void*) data + sizeof(size_t) * 2 + namelen + digestlen;
+	return (void *) data + sizeof(size_t) * 2 + namelen + digestlen;
 }
 
 void
-osec_csum_append_value(const char *name, size_t namelen, const void *src, const size_t slen, struct record *rec) {
+osec_csum_append_value(const char *name, size_t namelen, const void *src, const size_t slen, struct record *rec)
+{
 
 	size_t sz = sizeof(size_t) * 2 + namelen + slen;
 

@@ -18,14 +18,13 @@ static hash_type_data_t data[] = {
 	{ GCRY_MD_STRIBOG512, "stribog512" },
 };
 
-const hash_type_data_t* get_hash_type_data_by_name(const char *hashname, const size_t hashname_len)
+const hash_type_data_t *
+get_hash_type_data_by_name(const char *hashname, const size_t hashname_len)
 {
 	size_t i = 0;
 
-	for (i = 0; i < sizeof(data)/sizeof(data[0]); ++i) {
-		if ((hashname_len == strlen(data[i].hashname))
-			&& (memcmp(data[i].hashname, hashname, hashname_len) == 0))
-		{
+	for (i = 0; i < sizeof(data) / sizeof(data[0]); ++i) {
+		if ((hashname_len == strlen(data[i].hashname)) && (memcmp(data[i].hashname, hashname, hashname_len) == 0)) {
 			return &data[i];
 		}
 	}

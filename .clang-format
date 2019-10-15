@@ -1,0 +1,17 @@
+BasedOnStyle: LLVM
+IndentWidth: 8
+ColumnLimit: 0
+UseTab: ForIndentation
+BreakBeforeBraces: Linux
+Cpp11BracedListStyle: false
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+SpaceAfterCStyleCast: true
+IndentCaseLabels: true
+IndentWrappedFunctionNames: false
+#IndentGotoLabels: false
+AlignConsecutiveAssignments: false
+SortIncludes: false
+AlwaysBreakAfterDefinitionReturnType: TopLevel
+AlwaysBreakAfterReturnType: TopLevelDefinitions
+FixNamespaceComments: true

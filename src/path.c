@@ -23,7 +23,8 @@
 extern char *db_path;
 
 static int
-remove_recursive(char *fname) {
+remove_recursive(char *fname)
+{
 	DIR *d;
 	struct dirent *dir;
 	struct stat st;
@@ -41,8 +42,7 @@ remove_recursive(char *fname) {
 		if (errno == EACCES) {
 			osec_error("%s: opendir: %s\n", fname, strerror(errno));
 			return 0;
-		}
-		else
+		} else
 			osec_fatal(EXIT_FAILURE, errno, "%s: opendir", fname);
 	}
 
@@ -70,7 +70,8 @@ remove_recursive(char *fname) {
 }
 
 void
-recreate_tempdir(void) {
+recreate_tempdir(void)
+{
 	struct stat st;
 	char *tempdir;
 
@@ -83,8 +84,7 @@ recreate_tempdir(void) {
 	if (lstat(tempdir, &st) == -1) {
 		if (errno != ENOENT)
 			osec_fatal(EXIT_FAILURE, errno, "%s: lstat", tempdir);
-	}
-	else if(remove_recursive(tempdir) == 0)
+	} else if (remove_recursive(tempdir) == 0)
 		osec_fatal(EXIT_FAILURE, 0, "%s: remove_recursive: Unable to remove tempdir", tempdir);
 
 	if (mkdir(tempdir, 0700) == -1)
@@ -94,7 +94,8 @@ recreate_tempdir(void) {
 }
 
 char *
-validate_path(const char *path) {
+validate_path(const char *path)
+{
 	unsigned int i, j = 0;
 	char *buf = NULL;
 	size_t len;
@@ -103,23 +104,23 @@ validate_path(const char *path) {
 
 	if (path[0] != '/' ||
 	    strstr(path, "/../") != NULL ||
-	    strstr(path, "/./" ) != NULL) {
+	    strstr(path, "/./") != NULL) {
 		osec_error("Canonical path required\n");
 		return buf;
 	}
 
-	buf = (char *) xmalloc(sizeof(char) * (len+1));
+	buf = (char *) xmalloc(sizeof(char) * (len + 1));
 	buf[j++] = '/';
 
-	for(i = 1; i < len; i++) {
-		if (path[i-1] == '/' && path[i] == '/')
+	for (i = 1; i < len; i++) {
+		if (path[i - 1] == '/' && path[i] == '/')
 			continue;
 		buf[j++] = path[i];
 	}
 	buf[j] = '\0';
 
-	if (buf[j-1] == '/')
-		buf[j-1] = '\0';
+	if (buf[j - 1] == '/')
+		buf[j - 1] = '\0';
 
 	if (j < len)
 		buf = xrealloc(buf, sizeof(char) * j);
