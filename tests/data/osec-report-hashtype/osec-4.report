@@ -1,0 +1,3 @@
+Processing root ...
+root/bin/aaa	checksum	changed	old checksum=sha512:ea2fe56bb8c1fb5ada84963b42ed71b764a74b092d75755173ade06f2f4aada9c00d6c302e185035cbe85fdff31698bca93e8661f0cbcef52cf2ff65864fd742	new checksum=sha512:cd700d9a444df8f03b8ce88cb90261ed1bc49f27c6ac66eff7dbf8a141fc74e24ad651510ddac0121ded36250b4168c9b0a97246e97e436ee2a223772e16e341
+root/bin/aaa	stat	changed	old mtime=@MTIME3_aaa@	new mtime=@MTIME4_aaa@

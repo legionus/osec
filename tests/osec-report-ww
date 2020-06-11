@@ -1,0 +1,24 @@
+#!/bin/sh -efu
+
+. "${0%/*}/tests-sh-functions"
+
+tc_init
+
+mkdir -p -- "$rootdir"/bin
+touch "$rootdir"/bin/aaa
+chmod 777 "$rootdir"/bin/aaa
+
+tc_state 1
+
+subst < "$datadir/osec-$i.report" > "$tmpdir/expect-$i"
+osec | subst > "$tmpdir/output-$i"
+diff -u "$tmpdir/expect-$i" "$tmpdir/output-$i"
+
+touch "$rootdir"/bin/bbb
+chmod 777 "$rootdir"/bin/bbb
+
+tc_state 2
+
+subst < "$datadir/osec-$i.report" > "$tmpdir/expect-$i"
+osec | subst > "$tmpdir/output-$i"
+diff -u "$tmpdir/expect-$i" "$tmpdir/output-$i"

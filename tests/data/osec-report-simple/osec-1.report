@@ -1,0 +1,11 @@
+Init database for root ...
+root	stat	new	 uid=@USER@ gid=@GROUP@ mode=40755 inode=@INODE1_root@
+root/bin	stat	new	 uid=@USER@ gid=@GROUP@ mode=40755 inode=@INODE1_bin@
+root/bin/aaa	checksum	new	 checksum=sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
+root/bin/aaa	stat	new	 uid=@USER@ gid=@GROUP@ mode=100755 inode=@INODE1_aaa@
+root/lib64	stat	new	 uid=@USER@ gid=@GROUP@ mode=40755 inode=@INODE1_lib64@
+root/sbin	stat	new	 uid=@USER@ gid=@GROUP@ mode=40755 inode=@INODE1_sbin@
+root/sbin/bbb	checksum	new	 checksum=sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
+root/sbin/bbb	stat	new	 uid=@USER@ gid=@GROUP@ mode=100755 inode=@INODE1_bbb@
+root/sbin/ccc	checksum	new	 checksum=sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
+root/sbin/ccc	stat	new	 uid=@USER@ gid=@GROUP@ mode=100750 inode=@INODE1_ccc@

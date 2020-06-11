@@ -1,0 +1,5 @@
+Processing root ...
+root/bin	stat	changed	old mtime=@MTIME1_bin@	new mtime=@MTIME2_bin@
+root/bin/aaa	stat	info	 uid=@USER@ gid=@GROUP@ mode=100777 inode=@INODE2_aaa@ mtime=@MTIME2_aaa@ [ ww ]
+root/bin/bbb	checksum	new	 checksum=sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
+root/bin/bbb	stat	new	 uid=@USER@ gid=@GROUP@ mode=100777 inode=@INODE2_bbb@ mtime=@MTIME2_bbb@ [ ww ]

@@ -1,0 +1,87 @@
+#!/bin/ash -efu
+
+prog="${0##*/}"
+
+tmpdir=
+exit_handler()
+{
+	local rc=$?
+	trap - EXIT
+	[ "$rc" != 0 ] ||
+		rm -rf -- "$tmpdir"
+	exit "$rc"
+}
+
+tc_init()
+{
+	topdir="$(readlink -ev ..)"
+	srcdir="$topdir/src"
+	datadir="$topdir/tests/data/$prog"
+	tmpdir="$topdir/tests/temp/$prog"
+	rootdir="$tmpdir/root"
+	dbdir="$tmpdir/db"
+
+	rm -rf -- "$rootdir" "$dbdir"
+	mkdir -p -- "$rootdir" "$dbdir"
+
+	trap exit_handler EXIT HUP PIPE INT QUIT TERM
+}
+
+tc_priv()
+{
+	[ "$(id -u)" = 0 ] ||
+		exit 77
+}
+
+tc_state()
+{
+	i="$1"
+	state "$i" "$rootdir"
+	subst_create
+	sleep 1
+}
+
+LIST=
+state()
+{
+	local n f l
+	l=
+	while read f; do
+		n="${f##*/}"
+		l="${l:+$l }$n"
+		eval "$(stat --printf="INODE${1}_$n=%i; MTIME${1}_$n=%Y;\n" "$f")"
+	done <<-EOF
+	`find "$2"`
+	EOF
+	eval "$(printf 'LIST%s="%s"\n' "$1" "$l")"
+	LIST="$LIST $1"
+}
+
+subst_create()
+{
+	local i l n p v
+	for i in $LIST; do
+		eval "l=\"\${LIST$i-}\""
+		for n in $l; do
+			for p in "INODE$i" "MTIME$i"; do
+				eval "v=\"\${${p}_${n}-}\""
+				printf 's#@%s@#%s#g\n' "${p}_${n}" "$v"
+			done
+		done
+	done >"$tmpdir/normalize.sed"
+	{
+		printf 's#%s##g\n' "$tmpdir/"
+		printf 's#@USER@#%s#g\n' "$(id -nu)"
+		printf 's#@GROUP@#%s#g\n' "$(id -ng)"
+	} >> "$tmpdir/normalize.sed"
+}
+
+subst()
+{
+	sed -f "$tmpdir/normalize.sed"
+}
+
+osec()
+{
+	"$srcdir/osec" -R -D "$dbdir" "$@" "$rootdir"
+}

@@ -1,0 +1,39 @@
+#!/bin/sh -efu
+
+. "${0%/*}/tests-sh-functions"
+
+tc_priv
+tc_init
+
+for n in bin sbin lib64; do
+	mkdir -p -- "$rootdir/$n"
+done
+
+touch \
+	"$rootdir"/bin/aaa \
+	"$rootdir"/sbin/bbb \
+	"$rootdir"/sbin/ccc
+
+chmod 755  "$rootdir"/bin/aaa
+chmod 6750 "$rootdir"/sbin/bbb
+chmod 6755 "$rootdir"/sbin/ccc
+
+tc_state 1
+
+subst < "$datadir/osec-$i.report" > "$tmpdir/expect-$i"
+osec | subst > "$tmpdir/output-$i"
+diff -u "$tmpdir/expect-$i" "$tmpdir/output-$i"
+
+echo "123" > "$rootdir"/bin/aaa
+echo "456" > "$rootdir"/lib64/ddd
+
+rm -f -- "$rootdir"/sbin/bbb
+
+echo > "$rootdir"/bin/eee
+chmod 6755 "$rootdir"/bin/eee
+
+tc_state 2
+
+subst < "$datadir/osec-$i.report" > "$tmpdir/expect-$i"
+osec | subst > "$tmpdir/output-$i"
+diff -u "$tmpdir/expect-$i" "$tmpdir/output-$i"

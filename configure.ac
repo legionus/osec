@@ -59,5 +59,6 @@ AC_ARG_ENABLE(werror,
 	[USE_WERROR=$enableval],[USE_WERROR=no])
 AM_CONDITIONAL(USE_WERROR, test "$USE_WERROR" = "yes")
 
-AC_CONFIG_FILES([Makefile src/Makefile update/Makefile data/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile update/Makefile data/Makefile
+		 tests/Makefile])
 AC_OUTPUT
