@@ -31,20 +31,19 @@ extern size_t gr_bufsize;
 extern int numeric_user_group;
 extern unsigned ignore;
 
-static void
-printf_pwname(const char *var, uid_t uid)
+static void printf_pwname(const char *var, uid_t uid)
 {
 	struct passwd pwbuf, *pw;
 	char *buf = NULL;
 	int rc;
 
-	if (numeric_user_group) {
-		printf(" %s=%ld", var, (long) uid);
-		return;
-	}
+	if (numeric_user_group)
+		goto shownum;
 
 	while (1) {
-		buf = (char *) xmalloc(pw_bufsize);
+		buf = malloc(pw_bufsize);
+		if (buf == NULL)
+			goto shownum;
 
 		rc = getpwuid_r(uid, &pwbuf, buf, pw_bufsize, &pw);
 
@@ -57,30 +56,34 @@ printf_pwname(const char *var, uid_t uid)
 			continue;
 		}
 
-		osec_fatal(EXIT_FAILURE, rc, "getpwuid_r");
+		goto shownum;
 	}
 
-	(pw != NULL)
-	    ? printf(" %s=%s", var, pw->pw_name)
-	    : printf(" %s=#%ld", var, (long) uid);
+	if (pw == NULL)
+		goto shownum;
 
+	printf(" %s=%s", var, pw->pw_name);
 	xfree(buf);
+	return;
+shownum:
+	xfree(buf);
+	printf(" %s=%ld", var, (long) uid);
+	return;
 }
 
-static void
-printf_grname(const char *var, gid_t gid)
+static void printf_grname(const char *var, gid_t gid)
 {
 	struct group grbuf, *gr = NULL;
 	char *buf = NULL;
 	int rc;
 
-	if (numeric_user_group) {
-		printf(" %s=%ld", var, (long) gid);
-		return;
-	}
+	if (numeric_user_group)
+		goto shownum;
 
 	while (1) {
-		buf = (char *) xmalloc(gr_bufsize);
+		buf = malloc(gr_bufsize);
+		if (buf == NULL)
+			goto shownum;
 
 		rc = getgrgid_r(gid, &grbuf, buf, gr_bufsize, &gr);
 
@@ -93,14 +96,19 @@ printf_grname(const char *var, gid_t gid)
 			continue;
 		}
 
-		osec_fatal(EXIT_FAILURE, rc, "getgrgid_r");
+		goto shownum;
 	}
 
-	(gr != NULL)
-	    ? printf(" %s=%s", var, gr->gr_name)
-	    : printf(" %s=#%ld", var, (long) gid);
+	if (gr == NULL)
+		goto shownum;
 
+	printf(" %s=%s", var, gr->gr_name);
 	xfree(buf);
+	return;
+shownum:
+	xfree(buf);
+	printf(" %s=%ld", var, (long) gid);
+	return;
 }
 
 static int
