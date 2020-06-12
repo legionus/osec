@@ -42,7 +42,7 @@ enum {
 	FLAG_CSUM  = (01 << 1),
 	FLAG_LINK  = (01 << 2),
 	FLAG_MODE  = (01 << 3),
-	FLAG_MTIME = (01 << 4),	
+	FLAG_MTIME = (01 << 4),
 	FLAG_DEV   = (01 << 5),
 	FLAG_INO   = (01 << 6),
 	FLAG_UID   = (01 << 7),
@@ -73,7 +73,7 @@ int yylex (void);
 
 /* BISON Declarations */
 %token FILENAME DEVICE INODE UID GID MTIME CHECKSUM SYMLINK MODE
-%token EQUALS EOL ERROR
+%token EQUALS DOT EOL ERROR
 %token NUMBER OCTAL STRLITERAL
 %token HASHNAMES
 %token XATTR
@@ -94,7 +94,8 @@ range0		: devline
 		| inoline
 		| uidline
 		| gidline
-		| mtimeline
+		| mtimeline1
+		| mtimeline2
 		| csumline
 		| linkline
 		| modeline
@@ -169,8 +170,14 @@ gidline		: GID EQUALS NUMBER
 		  ost.gid = (gid_t) $3;
 		  flags |= FLAG_GID; }
 		;
-mtimeline	: MTIME EQUALS NUMBER
+mtimeline1	: MTIME EQUALS NUMBER DOT NUMBER
 		{ ost.mtime = (int64_t) $3;
+		  ost.mtime_nsec = (int64_t) $5;
+		  flags |= FLAG_MTIME; }
+		;
+mtimeline2	: MTIME EQUALS NUMBER
+		{ ost.mtime = (int64_t) $3;
+		  ost.mtime_nsec = 0;
 		  flags |= FLAG_MTIME; }
 		;
 modeline	: MODE EQUALS OCTAL

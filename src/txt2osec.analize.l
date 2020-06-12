@@ -39,6 +39,7 @@ Continuation	\\\n
 Comment		#|!
 Delim		[ \t]
 Equals		=
+Dot		\.
 Whitesp		{Delim}+
 Number		[0-9]+
 Octa		\\([0-7]){1,6}
@@ -63,7 +64,7 @@ Xattr		xattr|Xattr
 {Octa}			{ yylval = strtoll(yytext+1,NULL,8); return(OCTAL); }
 {Hashnames}		{ return(HASHNAMES); }
 {Filename}		{ return(FILENAME); }
-{Xattr}		{ return(XATTR); }
+{Xattr}			{ return(XATTR); }
 {Checksum}		{ return(CHECKSUM); }
 {Symlink}		{ return(SYMLINK); }
 {Device}		{ return(DEVICE); }
@@ -72,7 +73,8 @@ Xattr		xattr|Xattr
 {Gid}			{ return(GID); }
 {Mtime}			{ return(MTIME); }
 {Mode}			{ return(MODE); }
-{Equals}                { return(EQUALS); }
+{Equals}		{ return(EQUALS); }
+{Dot}			{ return(DOT); }
 {Eol}			{ line_nr++;
 			  BEGIN(0);
 			  return(EOL); }

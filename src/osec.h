@@ -21,7 +21,8 @@
 // OSEC_DB_VERSION 2 - mtime added
 // OSEC_DB_VERSION 3 - xattr added
 // OSEC_DB_VERSION 4 - csum now contains pairs of "hash name" and "hash value"
-#define OSEC_DB_VERSION 4
+// OSEC_DB_VERSION 5 - mtime_nsec added
+#define OSEC_DB_VERSION 5
 int dbversion;
 
 #define OSEC_CSM (1 << 1)
@@ -46,6 +47,7 @@ typedef struct osec_stat {
 	uid_t uid;         /* user ID of owner */
 	gid_t gid;         /* group ID of owner */
 	osec_time_t mtime; /* time of last modification */
+	osec_time_t mtime_nsec;
 } osec_stat_t;
 
 struct record {

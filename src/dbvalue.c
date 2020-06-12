@@ -85,7 +85,8 @@ osec_state(struct record *rec, const struct stat *st)
 	ost.uid = st->st_uid;
 	ost.gid = st->st_gid;
 	ost.mode = st->st_mode;
-	ost.mtime = st->st_mtime;
+	ost.mtime = st->st_mtim.tv_sec;
+	ost.mtime_nsec = st->st_mtim.tv_nsec;
 
 	append_value(OVALUE_STAT, &ost, sizeof(ost), rec);
 }

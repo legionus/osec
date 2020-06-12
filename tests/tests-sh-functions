@@ -38,20 +38,18 @@ tc_state()
 	i="$1"
 	state "$i" "$rootdir"
 	subst_create
-	sleep 1
 }
 
 LIST=
 state()
 {
-	local n f l
+	local n s l
 	l=
-	while read f; do
-		n="${f##*/}"
+	while read n s; do
 		l="${l:+$l }$n"
-		eval "$(stat --printf="INODE${1}_$n=%i; MTIME${1}_$n=%Y;\n" "$f")"
+		eval "$s"
 	done <<-EOF
-	`find "$2"`
+	`find "$2" -printf "%f INODE${1}_%f=%i; MTIME${1}_%f=%T@;\n"`
 	EOF
 	eval "$(printf 'LIST%s="%s"\n' "$1" "$l")"
 	LIST="$LIST $1"

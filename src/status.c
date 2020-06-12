@@ -149,8 +149,18 @@ show_state(const char *mode, const char *fname, osec_stat_t *st)
 	printf_pwname((char *) "uid", st->uid);
 	printf_grname((char *) "gid", st->gid);
 	printf(" mode=%lo inode=%ld", (unsigned long) st->mode, (long) st->ino);
-	if (dbversion > 1)
+	if (dbversion > 1) {
 		printf(" mtime=%lld", st->mtime);
+		if (dbversion > 4)
+			/*
+			 * Format the nanoseconds part.  Leave a trailing zero to
+			 * discourage people from writing scripts which extract the
+			 * fractional part of the timestamp by using column offsets.
+			 * The reason for discouraging this is that in the future, the
+			 * granularity may not be nanoseconds.
+			 */
+			printf(".%09lld0", st->mtime_nsec);
+	}
 
 	check_insecure(st);
 	printf("\n");
@@ -393,8 +403,12 @@ check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_
 	if (!(ignore & OSEC_GID) && old_st->gid   != new_st->gid)    state |= OSEC_GID;
 	if (!(ignore & OSEC_MOD) && old_st->mode  != new_st->mode)   state |= OSEC_MOD;
 	if (!(ignore & OSEC_INO) && old_st->ino   != new_st->ino)    state |= OSEC_INO;
-	if (dbversion > 1 &&
-	   (!(ignore & OSEC_MTS) && old_st->mtime != new_st->mtime)) state |= OSEC_MTS;
+	if (dbversion > 1 && !(ignore & OSEC_MTS)) {
+		if (old_st->mtime != new_st->mtime)
+			state |= OSEC_MTS;
+		if (dbversion > 4 && old_st->mtime_nsec != new_st->mtime_nsec)
+			state |= OSEC_MTS;
+	}
 	// clang-format on
 
 	if (!(state & (OSEC_UID | OSEC_GID | OSEC_MOD | OSEC_INO | OSEC_MTS)))
@@ -416,7 +430,7 @@ check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_
 		printf(" inode=%ld", (long) old_st->ino);
 
 	if (state & OSEC_MTS)
-		printf(" mtime=%lld", old_st->mtime);
+		printf(" mtime=%lld.%09lld0", old_st->mtime, old_st->mtime_nsec);
 
 	check_insecure(old_st);
 
@@ -436,7 +450,7 @@ check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_
 		printf(" inode=%ld", (long) new_st->ino);
 
 	if (state & OSEC_MTS)
-		printf(" mtime=%lld", new_st->mtime);
+		printf(" mtime=%lld.%09lld0", new_st->mtime, new_st->mtime_nsec);
 
 	check_insecure(new_st);
 	printf("\n");

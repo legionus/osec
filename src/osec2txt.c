@@ -135,7 +135,13 @@ dump_record(int fd, char *key, void *rec, size_t rlen)
 	dprintf(fd, "\tmode=\\%06lo \\\n", (unsigned long) st->mode);
 	dprintf(fd, "\tuid=%ld \\\n", (long) st->uid);
 	dprintf(fd, "\tgid=%ld \\\n", (long) st->gid);
-	dprintf(fd, "\tmtime=%lld\n", (dbversion > 1) ? st->mtime : 0);
+	if (dbversion > 1) {
+		dprintf(fd, "\tmtime=%lld", st->mtime);
+		dprintf(fd, ".%09lld0", (dbversion > 4) ? st->mtime_nsec : 0);
+		dprintf(fd, "\n");
+	} else {
+		dprintf(fd, "\tmtime=0.0\n");
+	}
 }
 
 int
