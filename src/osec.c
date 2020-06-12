@@ -692,10 +692,12 @@ main(int argc, char **argv)
 				dirslist_file = optarg;
 				break;
 			case 'x':
-				exclude_match_append(optarg);
+				if (!exclude_match_append(optarg))
+					exit(EXIT_FAILURE);
 				break;
 			case 'X':
-				exclude_matches_file(optarg);
+				if (!exclude_matches_file(optarg))
+					exit(EXIT_FAILURE);
 				break;
 			case 't':
 				hash_type = get_hash_type_data_by_name(optarg, strlen(optarg));

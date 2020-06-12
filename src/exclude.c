@@ -19,35 +19,45 @@
 extern char *exclude_matches;
 extern size_t exclude_matches_len;
 
-void
-exclude_match_append(char *pattern)
+bool exclude_match_append(char *pattern)
 {
+	char *ptr;
 	size_t len = strlen(pattern);
 
 	if (!len)
-		return;
+		return true;
 	len++;
 
-	exclude_matches = (char *) xrealloc(exclude_matches,
-	                                    (sizeof(char) * (exclude_matches_len + sizeof(size_t) + len)));
+	ptr = realloc(exclude_matches,
+			(sizeof(char) * (exclude_matches_len + sizeof(size_t) + len)));
+
+	if (ptr == NULL) {
+		osec_error("realloc: %m");
+		return false;
+	}
+	exclude_matches = ptr;
 
 	memcpy((exclude_matches + exclude_matches_len), &len, sizeof(size_t));
 	exclude_matches_len += sizeof(size_t);
 
 	memcpy((exclude_matches + exclude_matches_len), pattern, len);
 	exclude_matches_len += len;
+
+	return true;
 }
 
-void
-exclude_matches_file(char *file)
+bool exclude_matches_file(char *file)
 {
 	FILE *fd;
 	char *line = NULL;
 	ssize_t len;
 	size_t bufsiz = 0;
+	bool retval = false;
 
-	if ((fd = fopen(file, "r")) == NULL)
-		osec_fatal(EXIT_FAILURE, errno, "%s: fopen", file);
+	if ((fd = fopen(file, "r")) == NULL) {
+		osec_error("fopen: %s: %m", file);
+		return false;
+	}
 
 	while ((len = getline(&line, &bufsiz, fd)) != -1) {
 		unsigned int i = 0;
@@ -61,29 +71,36 @@ exclude_matches_file(char *file)
 		if (line[len - 1] == '\n')
 			line[len - 1] = '\0';
 
-		exclude_match_append(line + i);
+		if (!exclude_match_append(line + i))
+			goto end;
 	}
+	retval = true;
+end:
 	xfree(line);
 
-	if (fclose(fd) != 0)
-		osec_fatal(EXIT_FAILURE, errno, "%s: fclose", file);
+	if (fclose(fd) != 0) {
+		osec_error("fclose: %s: %m", file);
+		retval = false;
+	}
+
+	return retval;
 }
 
-int
-is_exclude(char *str)
+bool is_exclude(char *str)
 {
 	size_t siz, len = 0;
 
 	if (!exclude_matches_len)
-		return 0;
+		return false;
 
 	while (len < exclude_matches_len) {
 		memcpy(&siz, (exclude_matches + len), sizeof(size_t));
 		len += sizeof(size_t);
 
 		if (fnmatch((exclude_matches + len), str, FNM_NOESCAPE) == 0)
-			return 1;
+			return true;
 		len += siz;
 	}
-	return 0;
+
+	return false;
 }

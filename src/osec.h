@@ -165,15 +165,17 @@ bool get_hashes_from_string(const char *buffer, const size_t buffer_len,
 	__attribute__((warn_unused_result));
 
 /* exclude.c */
-int is_exclude(char *file)
+bool is_exclude(char *file)
 	__attribute__((nonnull(1)))
 	__attribute__((warn_unused_result));
 
-void exclude_match_append(char *pattern)
-	__attribute__((nonnull(1)));
+bool exclude_match_append(char *pattern)
+	__attribute__((nonnull(1)))
+	__attribute__((warn_unused_result));
 
-void exclude_matches_file(char *file)
-	__attribute__((nonnull(1)));
+bool exclude_matches_file(char *file)
+	__attribute__((nonnull(1)))
+	__attribute__((warn_unused_result));
 
 /* ignore.c */
 void process_ignore(const char *param)
