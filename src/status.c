@@ -146,8 +146,7 @@ static void print_insecure(osec_stat_t *st)
 	printf(" ]");
 }
 
-static void
-show_state(const char *mode, const char *fname, osec_stat_t *st)
+static void print_state(const char *mode, const char *fname, osec_stat_t *st)
 {
 	printf("%s\tstat\t%s\t", fname, mode);
 
@@ -475,7 +474,7 @@ check_bad_files(const char *fname, void *data, size_t len)
 	if (!is_bad(st))
 		return 0;
 
-	show_state((char *) "info", fname, st);
+	print_state((char *) "info", fname, st);
 	return 1;
 }
 
@@ -507,7 +506,7 @@ check_new(const char *fname, void *data, size_t dlen, const hash_type_data_t *ha
 		printf("\n");
 	}
 
-	show_state((char *) "new", fname, st);
+	print_state((char *) "new", fname, st);
 
 	if (dbversion > 2) {
 		if ((osec_field(OVALUE_XATTR, data, dlen, &attrs)) == NULL)
@@ -556,7 +555,7 @@ check_removed(const char *fname, void *data, size_t len, const hash_type_data_t 
 			printf("\n");
 		}
 	}
-	show_state((char *) "removed", fname, st);
+	print_state((char *) "removed", fname, st);
 
 	if (dbversion > 2) {
 		if ((osec_field(OVALUE_XATTR, data, len, &attrs)) == NULL)
