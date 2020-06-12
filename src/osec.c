@@ -205,7 +205,7 @@ create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data,
 			case FTS_ERR:
 			case FTS_NS:
 				osec_error("fts_read: %s: %m", p->fts_path);
-				goto end;
+				continue;
 			case FTS_D:
 			case FTS_DC:
 			case FTS_F:
@@ -582,9 +582,9 @@ process(char *dirname)
 	}
 
 	if (old_fd != -1) {
-		if (!show_changes(&new_cdb, &old_cdb, secondary_type_data))
+		if (!show_changes(&new_cdb, &old_cdb, secondary_type_data) ||
+		    !show_oldfiles(&new_cdb, &old_cdb, secondary_type_data))
 			goto end;
-		show_oldfiles(&new_cdb, &old_cdb, secondary_type_data);
 	} else {
 		if (!show_changes(&new_cdb, NULL, primary_type_data))
 			goto end;

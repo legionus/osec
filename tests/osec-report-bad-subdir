@@ -14,5 +14,5 @@ chmod 0 "$rootdir"/sbin
 
 tc_state 1
 
-! osec >/dev/null ||
+osec >/dev/null ||
 	exit 1
