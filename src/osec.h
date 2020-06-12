@@ -151,7 +151,8 @@ bool osec_csum_append_value(const char *name, size_t namelen,
 	__attribute__((warn_unused_result));
 
 /* dbvalue.c */
-int compat_db_version(int fd);
+bool compat_db_version(int fd)
+	__attribute__((warn_unused_result));
 
 bool write_db_version(struct cdb_make *cdbm, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data)
 	__attribute__((nonnull(1, 2)))

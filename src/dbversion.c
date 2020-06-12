@@ -15,27 +15,31 @@
 #include <errno.h>
 #include "osec.h"
 
-int
-compat_db_version(int fd)
+bool compat_db_version(int fd)
 {
 	struct cdb cdbm;
 	char key[] = "version";
 	size_t klen = 7;
 
-	if (cdb_init(&cdbm, fd) < 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_init(db)");
+	if (cdb_init(&cdbm, fd) < 0) {
+		osec_error("cdb_init(db): %m");
+		return false;
+	}
 
 	if (cdb_find(&cdbm, key, (unsigned) klen) == 0)
-		return 0;
+		return false;
 
-	if (cdb_read(&cdbm, &dbversion, sizeof(dbversion), cdb_datapos(&cdbm)) < 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_read(dbversion)");
+	if (cdb_read(&cdbm, &dbversion, sizeof(dbversion), cdb_datapos(&cdbm)) < 0) {
+		osec_error("cdb_read(dbversion): %m");
+		return false;
+	}
 
-	return 1;
+	return true;
 }
 
-bool
-write_db_version(struct cdb_make *cdbm, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data)
+bool write_db_version(struct cdb_make *cdbm,
+		const hash_type_data_t *primary_type_data,
+		const hash_type_data_t *secondary_type_data)
 {
 	int ver = OSEC_DB_VERSION;
 	char *buffer;
