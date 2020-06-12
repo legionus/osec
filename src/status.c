@@ -135,10 +135,10 @@ static void print_insecure(osec_stat_t *st)
 	printf(" [");
 
 	if (st->mode & S_ISUID)
-		printf_pwname((char *) "suid", st->uid);
+		printf_pwname("suid", st->uid);
 
 	if (st->mode & S_ISGID)
-		printf_grname((char *) "sgid", st->gid);
+		printf_grname("sgid", st->gid);
 
 	if (st->mode & S_IWOTH)
 		printf(" ww");
@@ -150,8 +150,8 @@ static void print_state(const char *mode, const char *fname, osec_stat_t *st)
 {
 	printf("%s\tstat\t%s\t", fname, mode);
 
-	printf_pwname((char *) "uid", st->uid);
-	printf_grname((char *) "gid", st->gid);
+	printf_pwname("uid", st->uid);
+	printf_grname("gid", st->gid);
 	printf(" mode=%lo inode=%ld", (unsigned long) st->mode, (long) st->ino);
 	if (dbversion > 1) {
 		printf(" mtime=%lld", st->mtime);
@@ -393,9 +393,9 @@ static bool check_xattr(const char *fname,
 	if (nattrs.len == oattrs.len && !memcmp(nattrs.data, oattrs.data, nattrs.len))
 		return true;
 
-	print_xattr_nonexistent("new", fname, (char *) nattrs.data, nattrs.len, (char *) oattrs.data, oattrs.len);
-	print_xattr_nonexistent("old", fname, (char *) oattrs.data, oattrs.len, (char *) nattrs.data, nattrs.len);
-	print_xattr_difference("changed", fname, (char *) nattrs.data, nattrs.len, (char *) oattrs.data, oattrs.len);
+	print_xattr_nonexistent("new", fname, nattrs.data, nattrs.len, oattrs.data, oattrs.len);
+	print_xattr_nonexistent("old", fname, oattrs.data, oattrs.len, nattrs.data, nattrs.len);
+	print_xattr_difference("changed", fname, nattrs.data, nattrs.len, oattrs.data, oattrs.len);
 
 	return true;
 }
@@ -454,10 +454,10 @@ int check_difference(const char *fname,
 
 	/* Old state */
 	if (state & OSEC_UID)
-		printf_pwname((char *) "uid", old_st->uid);
+		printf_pwname("uid", old_st->uid);
 
 	if (state & OSEC_GID)
-		printf_grname((char *) "gid", old_st->gid);
+		printf_grname("gid", old_st->gid);
 
 	if (state & OSEC_MOD)
 		printf(" mode=%lo", (unsigned long) old_st->mode);
@@ -474,10 +474,10 @@ int check_difference(const char *fname,
 	printf("\tnew");
 
 	if (state & OSEC_UID)
-		printf_pwname((char *) "uid", new_st->uid);
+		printf_pwname("uid", new_st->uid);
 
 	if (state & OSEC_GID)
-		printf_grname((char *) "gid", new_st->gid);
+		printf_grname("gid", new_st->gid);
 
 	if (state & OSEC_MOD)
 		printf(" mode=%lo", (unsigned long) new_st->mode);
@@ -555,7 +555,7 @@ bool check_new(const char *fname, void *data, size_t dlen,
 			return false;
 		}
 
-		print_xattr_nonexistent("new", fname, (char *) attrs.data, attrs.len, NULL, 0);
+		print_xattr_nonexistent("new", fname, attrs.data, attrs.len, NULL, 0);
 	}
 
 	return true;
@@ -605,7 +605,7 @@ bool check_removed(const char *fname, void *data, size_t len,
 			printf("\n");
 		}
 	}
-	print_state((char *) "removed", fname, st);
+	print_state("removed", fname, st);
 
 	if (dbversion > 2) {
 		if ((osec_field(OVALUE_XATTR, data, len, &attrs)) == NULL) {
@@ -613,7 +613,7 @@ bool check_removed(const char *fname, void *data, size_t len,
 			return false;
 		}
 
-		print_xattr_nonexistent("old", fname, (char *) attrs.data, attrs.len, NULL, 0);
+		print_xattr_nonexistent("old", fname, attrs.data, attrs.len, NULL, 0);
 	}
 
 	return true;
