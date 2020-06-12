@@ -25,6 +25,7 @@ osec_error(const char *fmt, ...)
 	fprintf(stderr, "%s: ", program_invocation_short_name);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
+	fprintf(stderr, "\n");
 	return 0;
 }
 

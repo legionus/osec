@@ -35,13 +35,13 @@ remove_recursive(char *fname)
 
 	if (!S_ISDIR(st.st_mode)) {
 		if (remove(fname) == -1)
-			osec_error("remove: %s: %m\n", fname);
+			osec_error("remove: %s: %m", fname);
 		return retval;
 	}
 
 	if ((d = opendir(fname)) == NULL) {
 		if (errno == EACCES) {
-			osec_error("%s: opendir: %s\n", fname, strerror(errno));
+			osec_error("opendir: %s: %m", fname);
 			return 0;
 		} else
 			osec_fatal(EXIT_FAILURE, errno, "%s: opendir", fname);
@@ -65,7 +65,7 @@ remove_recursive(char *fname)
 		osec_fatal(EXIT_FAILURE, errno, "%s: closedir", fname);
 
 	if (retval && remove(fname) == -1)
-		osec_error("remove: %s: %m\n", fname);
+		osec_error("remove: %s: %m", fname);
 
 	return retval;
 }
@@ -101,7 +101,7 @@ validate_path(const char *path)
 	if (path[0] != '/' ||
 	    strstr(path, "/../") != NULL ||
 	    strstr(path, "/./") != NULL) {
-		osec_error("Canonical path required\n");
+		osec_error("Canonical path required: %s", path);
 		return buf;
 	}
 
