@@ -7,8 +7,10 @@ exit_handler()
 {
 	local rc=$?
 	trap - EXIT
-	[ "$rc" != 0 ] ||
+	[ "$rc" != 0 ] || {
+		chmod -R 755 "$tmpdir"
 		rm -rf -- "$tmpdir"
+	}
 	exit "$rc"
 }
 
@@ -54,7 +56,7 @@ state()
 		l="${l:+$l }$n"
 		eval "$s"
 	done <<-EOF
-	`find "$2" -printf "%f INODE${1}_%f=%i; MTIME${1}_%f=%T@;\n"`
+	`find "$2" -printf "%f INODE${1}_%f=%i; MTIME${1}_%f=%T@;\n" ||:`
 	EOF
 	eval "$(printf 'LIST%s="%s"\n' "$1" "$l")"
 	LIST="$LIST $1"

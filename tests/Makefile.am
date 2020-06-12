@@ -1,6 +1,7 @@
 NULL =
 
 check_SCRIPTS = \
+	osec-report-bad-subdir \
 	osec-report-hashtype \
 	osec-report-ignore \
 	osec-report-selinux \

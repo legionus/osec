@@ -1,0 +1,18 @@
+#!/bin/sh -efu
+
+. "${0%/*}/tests-sh-functions"
+
+tc_init
+
+mkdir -p -- "$rootdir"/bin
+touch "$rootdir"/bin/aaa
+chmod 755 "$rootdir"/bin/aaa
+
+mkdir -p -- "$rootdir"/sbin
+touch "$rootdir"/sbin/bbb
+chmod 0 "$rootdir"/sbin
+
+tc_state 1
+
+! osec >/dev/null ||
+	exit 1
