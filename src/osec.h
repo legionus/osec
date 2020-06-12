@@ -99,10 +99,6 @@ void drop_privs(char *user, char *group)
 void check_new(const char *fname, void *data, size_t len, const hash_type_data_t *hashtype_data)
 	__attribute__((nonnull(1, 2, 4)));
 
-/* Return 1 if check is true. Otherwise, 0 is returned. */
-int check_insecure(osec_stat_t *st)
-	__attribute__((nonnull(1)));
-
 int check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen, const hash_type_data_t *hashtype_data)
 	__attribute__((nonnull(1, 2, 4, 6)));
 

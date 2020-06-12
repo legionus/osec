@@ -111,28 +111,26 @@ shownum:
 	return;
 }
 
-static int
-is_bad(osec_stat_t *st)
+static bool is_bad(osec_stat_t *st)
 {
 	if (!(st->mode & (S_ISUID | S_ISGID | S_IWOTH)))
-		return 0;
+		return false;
 
 	//skip suid or sgid directory
 	if (S_ISDIR(st->mode) && !(st->mode & S_IWOTH))
-		return 0;
+		return false;
 
 	//skip symlinks
 	if (S_ISLNK(st->mode))
-		return 0;
+		return false;
 
-	return 1;
+	return true;
 }
 
-int
-check_insecure(osec_stat_t *st)
+static void print_insecure(osec_stat_t *st)
 {
 	if (!is_bad(st))
-		return 0;
+		return;
 
 	printf(" [");
 
@@ -146,7 +144,6 @@ check_insecure(osec_stat_t *st)
 		printf(" ww");
 
 	printf(" ]");
-	return 1;
 }
 
 static void
@@ -170,7 +167,7 @@ show_state(const char *mode, const char *fname, osec_stat_t *st)
 			printf(".%09lld0", st->mtime_nsec);
 	}
 
-	check_insecure(st);
+	print_insecure(st);
 	printf("\n");
 }
 
@@ -440,7 +437,7 @@ check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_
 	if (state & OSEC_MTS)
 		printf(" mtime=%lld.%09lld0", old_st->mtime, old_st->mtime_nsec);
 
-	check_insecure(old_st);
+	print_insecure(old_st);
 
 	/* New state */
 	printf("\tnew");
@@ -460,7 +457,7 @@ check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_
 	if (state & OSEC_MTS)
 		printf(" mtime=%lld.%09lld0", new_st->mtime, new_st->mtime_nsec);
 
-	check_insecure(new_st);
+	print_insecure(new_st);
 	printf("\n");
 	return 1;
 }
