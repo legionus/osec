@@ -341,10 +341,16 @@ show_changes(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *h
 				goto end;
 			}
 
-			if (!check_difference(key, new_data, new_dlen, old_data, old_dlen, hashtype_data))
-				check_bad_files(key, new_data, new_dlen);
-		} else
-			check_new(key, new_data, new_dlen, hashtype_data);
+			rc = check_difference(key, new_data, new_dlen,
+					old_data, old_dlen, hashtype_data);
+			if (rc < 0)
+				goto end;
+			if (!rc && !check_bad_files(key, new_data, new_dlen))
+				goto end;
+		} else {
+			if (!check_new(key, new_data, new_dlen, hashtype_data))
+				goto end;
+		}
 	}
 
 	if (rc < 0) {
@@ -420,7 +426,8 @@ show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *
 				goto end;
 			}
 
-			check_removed(key, data, (size_t) dlen, hashtype_data);
+			if (!check_removed(key, data, (size_t) dlen, hashtype_data))
+				goto end;
 		}
 	}
 

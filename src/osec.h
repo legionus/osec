@@ -96,17 +96,21 @@ void drop_privs(char *user, char *group)
 	__attribute__((nonnull(1, 2)));
 
 /* status.c */
-void check_new(const char *fname, void *data, size_t len, const hash_type_data_t *hashtype_data)
-	__attribute__((nonnull(1, 2, 4)));
+bool check_new(const char *fname, void *data, size_t len, const hash_type_data_t *hashtype_data)
+	__attribute__((nonnull(1, 2, 4)))
+	__attribute__((warn_unused_result));
 
 int check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen, const hash_type_data_t *hashtype_data)
-	__attribute__((nonnull(1, 2, 4, 6)));
+	__attribute__((nonnull(1, 2, 4, 6)))
+	__attribute__((warn_unused_result));
 
-int check_bad_files(const char *fname, void *data, size_t len)
-	__attribute__((nonnull(1, 2)));
+bool check_bad_files(const char *fname, void *data, size_t len)
+	__attribute__((nonnull(1, 2)))
+	__attribute__((warn_unused_result));
 
-int check_removed(const char *fname, void *data, size_t len, const hash_type_data_t *hashtype_data)
-	__attribute__((nonnull(1, 2, 4)));
+bool check_removed(const char *fname, void *data, size_t len, const hash_type_data_t *hashtype_data)
+	__attribute__((nonnull(1, 2, 4)))
+	__attribute__((warn_unused_result));
 
 /* dbvalue.c */
 void *osec_field(const unsigned type, const void *data, const size_t dlen, struct field *ret)

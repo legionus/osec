@@ -176,47 +176,58 @@ static inline void print_digest(const char *dst, size_t len)
 		printf("%02x", (unsigned char) dst[i]);
 }
 
-static void
-check_checksum(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen, const hash_type_data_t *hashtype_data)
+static bool check_checksum(const char *fname,
+		void *ndata, size_t nlen,
+		void *odata, size_t olen,
+		const hash_type_data_t *hashtype_data)
 {
 	char *old, *new;
 	struct field old_data, new_data;
 	struct csum_field old_csum_data, new_csum_data;
 
 	if (ignore & OSEC_CSM)
-		return;
+		return true;
 
-	if ((old = osec_field(OVALUE_CSUM, odata, olen, &old_data)) == NULL)
-		osec_fatal(EXIT_FAILURE, 0,
-		           "%s: osec_field(odata): Unable to get 'checksum' from database value",
-		           fname);
+	old = osec_field(OVALUE_CSUM, odata, olen, &old_data);
+	if (old == NULL) {
+		osec_error("%s: osec_field(odata): unable to get `checksum' from database value",
+				fname);
+		return false;
+	}
 
-	if ((new = osec_field(OVALUE_CSUM, ndata, nlen, &new_data)) == NULL)
-		osec_fatal(EXIT_FAILURE, 0,
-		           "%s: osec_field(ndata): Unable to get 'checksum' from database value",
-		           fname);
+	new = osec_field(OVALUE_CSUM, ndata, nlen, &new_data);
+	if (new == NULL) {
+		osec_error("%s: osec_field(ndata): unable to get `checksum' from database value",
+				fname);
+		return false;
+	}
 
 	if (dbversion >= 4) {
-		old = osec_csum_field(hashtype_data->hashname, strlen(hashtype_data->hashname), old, old_data.len, &old_csum_data);
-		if (old == NULL)
-			osec_fatal(EXIT_FAILURE, 0,
-			           "%s: osec_field(odata): Checksum doesn't contain '%s' hash",
-			           fname, hashtype_data->hashname);
+		old = osec_csum_field(hashtype_data->hashname, strlen(hashtype_data->hashname),
+				old, old_data.len, &old_csum_data);
+		if (old == NULL) {
+			osec_error("%s: osec_field(odata): checksum doesn't contain '%s' hash",
+					fname, hashtype_data->hashname);
+			return false;
+		}
 	} else {
-		if (strcmp(hashtype_data->hashname, "sha1") != 0)
-			osec_fatal(EXIT_FAILURE, 0,
-			           "%s: osec_field(odata): Checksum doesn't contain '%s' hash",
-			           fname, hashtype_data->hashname);
+		if (strcmp(hashtype_data->hashname, "sha1") != 0) {
+			osec_error("%s: osec_field(odata): checksum doesn't contain '%s' hash",
+					fname, hashtype_data->hashname);
+			return false;
+		}
 
 		old_csum_data.data_len = old_data.len;
 		old_csum_data.data = old;
 	}
 
-	new = osec_csum_field(hashtype_data->hashname, strlen(hashtype_data->hashname), new, new_data.len, &new_csum_data);
-	if (new == NULL)
-		osec_fatal(EXIT_FAILURE, 0,
-		           "%s: osec_field(ndata): Checksum doesn't contain '%s' hash",
-		           fname, hashtype_data->hashname);
+	new = osec_csum_field(hashtype_data->hashname, strlen(hashtype_data->hashname),
+			new, new_data.len, &new_csum_data);
+	if (new == NULL) {
+		osec_error("%s: osec_field(ndata): checksum doesn't contain '%s' hash",
+				fname, hashtype_data->hashname);
+		return false;
+	}
 
 	if ((old_csum_data.data_len != new_csum_data.data_len) || (memcmp(old_csum_data.data, new_csum_data.data, old_csum_data.data_len) != 0)) {
 		printf("%s\tchecksum\tchanged\told checksum=%s:", fname, hashtype_data->hashname);
@@ -227,44 +238,52 @@ check_checksum(const char *fname, void *ndata, size_t nlen, void *odata, size_t 
 
 		printf("\n");
 	}
+
+	return true;
 }
 
-static void
-check_symlink(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen)
+static bool check_symlink(const char *fname,
+		void *ndata, size_t nlen,
+		void *odata, size_t olen)
 {
 	char *old, *new;
 
 	if (ignore & OSEC_LNK)
-		return;
+		return true;
 
-	if ((old = (char *) osec_field(OVALUE_LINK, odata, olen, NULL)) == NULL)
-		osec_fatal(EXIT_FAILURE, 0,
-		           "%s: osec_field(odata): Unable to get 'symlink' from database value",
-		           fname);
+	old = osec_field(OVALUE_LINK, odata, olen, NULL);
+	if (old == NULL) {
+		osec_error("%s: osec_field(odata): unable to get `symlink' from database value",
+				fname);
+		return false;
+	}
 
-	if ((new = (char *) osec_field(OVALUE_LINK, ndata, nlen, NULL)) == NULL)
-		osec_fatal(EXIT_FAILURE, 0,
-		           "%s: osec_field(ndata): Unable to get 'symlink' from database value",
-		           fname);
+	new = osec_field(OVALUE_LINK, ndata, nlen, NULL);
+	if (new == NULL) {
+		osec_error("%s: osec_field(ndata): unable to get `symlink' from database value",
+				fname);
+		return false;
+	}
 
 	if (strcmp(old, new) != 0)
 		printf("%s\tsymlink\tchanged\told target=%s\tnew target=%s\n",
-		       fname, old, new);
+				fname, old, new);
+
+	return true;
 }
 
-static int
-printable(char *data, size_t len)
+static inline bool printable(char *data, size_t len)
 {
-	unsigned int i;
-
-	for (i = 0; i < len; i++)
+	for (unsigned int i = 0; i < len; i++) {
 		if (!isprint(data[i]) && data[i] != '\0')
-			return 0;
-	return 1;
+			return false;
+	}
+	return true;
 }
 
-static void
-xattr_nonexistent(const char *msg, const char *fn, char *list1, size_t len1, char *list2, size_t len2)
+static void print_xattr_nonexistent(const char *msg, const char *fn,
+		char *list1, size_t len1,
+		char *list2, size_t len2)
 {
 	char *nkey, *value;
 	size_t klen, vlen;
@@ -311,8 +330,9 @@ xattr_nonexistent(const char *msg, const char *fn, char *list1, size_t len1, cha
 	}
 }
 
-static void
-xattr_difference(const char *msg, const char *fn, char *list1, size_t len1, char *list2, size_t len2)
+static void print_xattr_difference(const char *msg, const char *fn,
+		char *list1, size_t len1,
+		char *list2, size_t len2)
 {
 	char *nkey, *okey, *nvalue, *ovalue;
 	size_t nvalue_len, ovalue_len;
@@ -352,53 +372,67 @@ xattr_difference(const char *msg, const char *fn, char *list1, size_t len1, char
 	}
 }
 
-static void
-check_xattr(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen)
+static bool check_xattr(const char *fname,
+		void *ndata, size_t nlen,
+		void *odata, size_t olen)
 {
 	struct field oattrs, nattrs;
 
-	if (osec_field(OVALUE_XATTR, odata, olen, &oattrs) == NULL)
-		osec_fatal(EXIT_FAILURE, 0,
-		           "%s: osec_field(odata): Unable to get 'xattr' from database value",
-		           fname);
+	if (osec_field(OVALUE_XATTR, odata, olen, &oattrs) == NULL) {
+		osec_error("%s: osec_field(odata): unable to get `xattr' from database value",
+				fname);
+		return false;
+	}
 
-	if (osec_field(OVALUE_XATTR, ndata, nlen, &nattrs) == NULL)
-		osec_fatal(EXIT_FAILURE, 0,
-		           "%s: osec_field(ndata): Unable to get 'xattr' from database value",
-		           fname);
+	if (osec_field(OVALUE_XATTR, ndata, nlen, &nattrs) == NULL) {
+		osec_error("%s: osec_field(ndata): unable to get `xattr' from database value",
+				fname);
+		return false;
+	}
 
 	if (nattrs.len == oattrs.len && !memcmp(nattrs.data, oattrs.data, nattrs.len))
-		return;
+		return true;
 
-	xattr_nonexistent("new", fname, (char *) nattrs.data, nattrs.len, (char *) oattrs.data, oattrs.len);
-	xattr_nonexistent("old", fname, (char *) oattrs.data, oattrs.len, (char *) nattrs.data, nattrs.len);
-	xattr_difference("changed", fname, (char *) nattrs.data, nattrs.len, (char *) oattrs.data, oattrs.len);
+	print_xattr_nonexistent("new", fname, (char *) nattrs.data, nattrs.len, (char *) oattrs.data, oattrs.len);
+	print_xattr_nonexistent("old", fname, (char *) oattrs.data, oattrs.len, (char *) nattrs.data, nattrs.len);
+	print_xattr_difference("changed", fname, (char *) nattrs.data, nattrs.len, (char *) oattrs.data, oattrs.len);
+
+	return true;
 }
 
-int
-check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen, const hash_type_data_t *hashtype_data)
+int check_difference(const char *fname,
+		void *ndata, size_t nlen,
+		void *odata, size_t olen,
+		const hash_type_data_t *hashtype_data)
 {
 	osec_stat_t *new_st, *old_st;
 	unsigned state = 0;
 
-	if ((old_st = osec_field(OVALUE_STAT, odata, olen, NULL)) == NULL)
-		osec_fatal(EXIT_FAILURE, 0,
-		           "%s: osec_field(odata): Unable to get 'stat' from database value",
-		           fname);
+	old_st = osec_field(OVALUE_STAT, odata, olen, NULL);
+	if (old_st == NULL) {
+		osec_error("%s: osec_field(odata): Unable to get `stat' from database value",
+				fname);
+		return -1;
+	}
 
-	if ((new_st = osec_field(OVALUE_STAT, ndata, nlen, NULL)) == NULL)
-		osec_fatal(EXIT_FAILURE, 0,
-		           "%s: osec_field(ndata): Unable to get 'stat' from database value",
-		           fname);
+	new_st = osec_field(OVALUE_STAT, ndata, nlen, NULL);
+	if (new_st == NULL) {
+		osec_error("%s: osec_field(ndata): Unable to get `stat' from database value",
+				fname);
+		return -1;
+	}
 
-	if (S_ISREG(new_st->mode) && S_ISREG(old_st->mode))
-		check_checksum(fname, ndata, nlen, odata, olen, hashtype_data);
+	if (S_ISREG(new_st->mode) && S_ISREG(old_st->mode)) {
+		if (!check_checksum(fname, ndata, nlen, odata, olen, hashtype_data))
+			return -1;
+	}
+	else if (S_ISLNK(new_st->mode) && S_ISLNK(old_st->mode)) {
+		if (!check_symlink(fname, ndata, nlen, odata, olen))
+			return -1;
+	}
 
-	else if (S_ISLNK(new_st->mode) && S_ISLNK(old_st->mode))
-		check_symlink(fname, ndata, nlen, odata, olen);
-
-	if (dbversion > 2)
-		check_xattr(fname, ndata, nlen, odata, olen);
+	if (dbversion > 2 && !check_xattr(fname, ndata, nlen, odata, olen))
+		return -1;
 
 	// clang-format off
 	if (!(ignore & OSEC_UID) && old_st->uid   != new_st->uid)    state |= OSEC_UID;
@@ -456,93 +490,111 @@ check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_
 
 	print_insecure(new_st);
 	printf("\n");
+
 	return 1;
 }
 
-int
-check_bad_files(const char *fname, void *data, size_t len)
+bool check_bad_files(const char *fname, void *data, size_t len)
 {
 	osec_stat_t *st;
 
-	if ((st = osec_field(OVALUE_STAT, data, len, NULL)) == NULL)
-		osec_fatal(EXIT_FAILURE, 0,
-		           "%s: osec_field: Unable to get 'stat' from database value",
-		           fname);
+	st = osec_field(OVALUE_STAT, data, len, NULL);
+	if (st == NULL) {
+		osec_error("%s: osec_field: unable to get `stat' from database value",
+				fname);
+		return false;
+	}
 
-	if (!is_bad(st))
-		return 0;
+	if (is_bad(st))
+		print_state("info", fname, st);
 
-	print_state((char *) "info", fname, st);
-	return 1;
+	return true;
 }
 
-void
-check_new(const char *fname, void *data, size_t dlen, const hash_type_data_t *hashtype_data)
+bool check_new(const char *fname, void *data, size_t dlen,
+		const hash_type_data_t *hashtype_data)
 {
 	struct field attrs;
 	osec_stat_t *st;
 
-	if ((st = osec_field(OVALUE_STAT, data, dlen, NULL)) == NULL)
-		osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field");
+	st = osec_field(OVALUE_STAT, data, dlen, NULL);
+	if (st == NULL) {
+		osec_error("osec_field: unable to parse `stat' field");
+		return false;
+	}
 
 	if (S_ISREG(st->mode)) {
 		char *csum;
 		struct field csum_data;
 		struct csum_field csum_field_data;
 
-		if ((csum = osec_field(OVALUE_CSUM, data, dlen, &csum_data)) == NULL)
-			osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field");
+		csum = osec_field(OVALUE_CSUM, data, dlen, &csum_data);
+		if (csum == NULL) {
+			osec_error("osec_field: unable to parse `checksum' field");
+			return false;
+		}
 
-		csum = osec_csum_field(hashtype_data->hashname, strlen(hashtype_data->hashname), csum, csum_data.len, &csum_field_data);
-		if (csum == NULL)
-			osec_fatal(EXIT_FAILURE, 0,
-			           "%s: osec_field(ndata): Checksum doesn't contain '%s' hash",
-			           fname, hashtype_data->hashname);
+		csum = osec_csum_field(hashtype_data->hashname, strlen(hashtype_data->hashname),
+				csum, csum_data.len, &csum_field_data);
+		if (csum == NULL) {
+			osec_error("%s: osec_field(ndata): checksum doesn't contain `%s' hash",
+					fname, hashtype_data->hashname);
+			return false;
+		}
 
 		printf("%s\tchecksum\tnew\t checksum=%s:", fname, hashtype_data->hashname);
 		print_digest(csum_field_data.data, csum_field_data.data_len);
 		printf("\n");
 	}
 
-	print_state((char *) "new", fname, st);
+	print_state("new", fname, st);
 
 	if (dbversion > 2) {
-		if ((osec_field(OVALUE_XATTR, data, dlen, &attrs)) == NULL)
-			osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field");
+		if ((osec_field(OVALUE_XATTR, data, dlen, &attrs)) == NULL) {
+			osec_error("osec_field: unable to parse `xattr' field");
+			return false;
+		}
 
-		xattr_nonexistent("new", fname, (char *) attrs.data, attrs.len, NULL, 0);
+		print_xattr_nonexistent("new", fname, (char *) attrs.data, attrs.len, NULL, 0);
 	}
+
+	return true;
 }
 
-int
-check_removed(const char *fname, void *data, size_t len, const hash_type_data_t *hashtype_data)
+bool check_removed(const char *fname, void *data, size_t len,
+		const hash_type_data_t *hashtype_data)
 {
 	struct field attrs;
 	osec_stat_t *st;
 
-	if ((st = osec_field(OVALUE_STAT, data, len, NULL)) == NULL)
-		osec_fatal(EXIT_FAILURE, 0,
-		           "%s: osec_field: Unable to get 'stat' from database value",
-		           fname);
+	st = osec_field(OVALUE_STAT, data, len, NULL);
+	if (st == NULL) {
+		osec_error("%s: osec_field: unable to get `stat' from database value",
+				fname);
+		return false;
+	}
 
 	if (S_ISREG(st->mode)) {
 		char *csum;
 		struct field csum_data;
 
-		if ((csum = osec_field(OVALUE_CSUM, data, len, &csum_data)) == NULL)
-			osec_fatal(EXIT_FAILURE, 0,
-			           "%s: osec_field: Unable to get 'checksum' from database value",
-			           fname);
+		csum = osec_field(OVALUE_CSUM, data, len, &csum_data);
+		if (csum == NULL) {
+			osec_error("%s: osec_field: Unable to get `checksum' from database value",
+					fname);
+			return false;
+		}
 
 		if (dbversion >= 4) {
-
 			struct csum_field csum_field_data;
 
-			csum = osec_csum_field(hashtype_data->hashname, strlen(hashtype_data->hashname), csum, csum_data.len, &csum_field_data);
-			if (csum == NULL)
-				osec_fatal(EXIT_FAILURE, 0,
-				           "%s: osec_field: Checksum doesn't contain '%s' hash",
-				           fname, hashtype_data->hashname);
+			csum = osec_csum_field(hashtype_data->hashname, strlen(hashtype_data->hashname),
+					csum, csum_data.len, &csum_field_data);
+			if (csum == NULL) {
+				osec_error("%s: osec_field: Checksum doesn't contain `%s' hash",
+						fname, hashtype_data->hashname);
+				return false;
+			}
 
 			printf("%s\tchecksum\tremoved\t checksum=%s:", fname, hashtype_data->hashname);
 			print_digest(csum_field_data.data, csum_field_data.data_len);
@@ -556,11 +608,13 @@ check_removed(const char *fname, void *data, size_t len, const hash_type_data_t 
 	print_state((char *) "removed", fname, st);
 
 	if (dbversion > 2) {
-		if ((osec_field(OVALUE_XATTR, data, len, &attrs)) == NULL)
-			osec_fatal(EXIT_FAILURE, 0, "osec_field: Unable to parse field");
+		if ((osec_field(OVALUE_XATTR, data, len, &attrs)) == NULL) {
+			osec_error("osec_field: unable to parse `xattr' field");
+			return false;
+		}
 
-		xattr_nonexistent("old", fname, (char *) attrs.data, attrs.len, NULL, 0);
+		print_xattr_nonexistent("old", fname, (char *) attrs.data, attrs.len, NULL, 0);
 	}
 
-	return 1;
+	return true;
 }
