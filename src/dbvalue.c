@@ -26,8 +26,8 @@
 void *read_buf;
 size_t read_bufsize;
 
-void *
-osec_field(const unsigned type, const void *data, const size_t dlen, struct field *ret)
+void *osec_field(const unsigned type, const void *data, const size_t dlen,
+		struct field *ret)
 {
 	size_t vlen, len = 0;
 	unsigned vtype;
@@ -54,15 +54,20 @@ osec_field(const unsigned type, const void *data, const size_t dlen, struct fiel
 	return NULL;
 }
 
-void
-append_value(const unsigned type, const void *src, const size_t slen, struct record *rec)
+bool append_value(const unsigned type, const void *src, const size_t slen,
+		struct record *rec)
 {
-
+	char *ptr;
 	size_t sz = sizeof(unsigned) + sizeof(size_t) + slen;
 
 	if (sz > (rec->len - rec->offset)) {
 		rec->len += sz - (rec->len - rec->offset);
-		rec->data = xrealloc(rec->data, rec->len);
+		ptr = realloc(rec->data, rec->len);
+		if (ptr == NULL) {
+			osec_error("realloc: %m");
+			return false;
+		}
+		rec->data = ptr;
 	}
 
 	memcpy(rec->data + rec->offset, &type, sizeof(unsigned));
@@ -73,10 +78,11 @@ append_value(const unsigned type, const void *src, const size_t slen, struct rec
 
 	memcpy(rec->data + rec->offset, src, slen);
 	rec->offset += slen;
+
+	return true;
 }
 
-void
-osec_state(struct record *rec, const struct stat *st)
+bool osec_state(struct record *rec, const struct stat *st)
 {
 	osec_stat_t ost;
 
@@ -88,35 +94,54 @@ osec_state(struct record *rec, const struct stat *st)
 	ost.mtime = st->st_mtim.tv_sec;
 	ost.mtime_nsec = st->st_mtim.tv_nsec;
 
-	append_value(OVALUE_STAT, &ost, sizeof(ost), rec);
+	return append_value(OVALUE_STAT, &ost, sizeof(ost), rec);
 }
 
-void
-osec_digest(struct record *rec, const char *fname, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data)
+bool osec_digest(struct record *rec, const char *fname,
+		const hash_type_data_t *primary_type_data,
+		const hash_type_data_t *secondary_type_data)
 {
 	int fd;
 	ssize_t num;
 	gcry_error_t gcrypt_error;
-	gcry_md_hd_t handle;
+	gcry_md_hd_t handle = NULL;
 	unsigned char *data_ptr;
+	bool ret, retval = false;
 
 	struct record local_rec;
 
 	local_rec.offset = 0;
 	local_rec.len = 1024;
-	local_rec.data = xmalloc(local_rec.len);
+	local_rec.data = malloc(local_rec.len);
 
-	if ((fd = open(fname, OSEC_O_FLAGS)) == -1)
-		osec_fatal(EXIT_FAILURE, errno, "%s: open", fname);
+	if (local_rec.data == NULL) {
+		osec_error("malloc: %m");
+		return false;
+	}
+
+	if ((fd = open(fname, OSEC_O_FLAGS)) == -1) {
+		osec_error("open: %s: %m", fname);
+		goto end;
+	}
 
 	gcrypt_error = gcry_md_open(&handle, primary_type_data->gcrypt_hashtype, 0);
-	if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR)
-		osec_fatal(EXIT_FAILURE, gcry_err_code_to_errno(gcry_err_code(gcrypt_error)), "gcry_md_open error: %s, source: %s", gcry_strerror(gcrypt_error), gcry_strsource(gcrypt_error));
+	if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR) {
+		errno = gcry_err_code_to_errno(gcry_err_code(gcrypt_error));
+		osec_error("gcry_md_open error: %s, source: %s: %m",
+				gcry_strerror(gcrypt_error),
+				gcry_strsource(gcrypt_error));
+		goto end;
+	}
 
 	if (secondary_type_data->gcrypt_hashtype != primary_type_data->gcrypt_hashtype) {
 		gcrypt_error = gcry_md_enable(handle, secondary_type_data->gcrypt_hashtype);
-		if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR)
-			osec_fatal(EXIT_FAILURE, gcry_err_code_to_errno(gcry_err_code(gcrypt_error)), "gcry_md_enable error: %s, source: %s", gcry_strerror(gcrypt_error), gcry_strsource(gcrypt_error));
+		if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR) {
+			errno = gcry_err_code_to_errno(gcry_err_code(gcrypt_error));
+			osec_error("gcry_md_enable error: %s, source: %s: %m",
+					gcry_strerror(gcrypt_error),
+					gcry_strsource(gcrypt_error));
+			goto end;
+		}
 	}
 
 	/* Let the kernel know we are going to read everything in sequence. */
@@ -126,77 +151,98 @@ osec_digest(struct record *rec, const char *fname, const hash_type_data_t *prima
 		gcry_md_write(handle, read_buf, (size_t) num);
 	}
 
-	if (num == -1)
-		osec_fatal(EXIT_FAILURE, errno, "%s: read", fname);
-
-	if (close(fd) == -1)
-		osec_fatal(EXIT_FAILURE, errno, "%s: close", fname);
+	if (num == -1) {
+		osec_error("read: %s: %m", fname);
+		goto end;
+	}
 
 	gcry_md_final(handle);
 
 	data_ptr = gcry_md_read(handle, primary_type_data->gcrypt_hashtype);
-	if (data_ptr == NULL)
-		osec_fatal(EXIT_FAILURE, 0, "gcry_md_read returned NULL");
+	if (data_ptr == NULL) {
+		osec_error("gcry_md_read returned NULL");
+		goto end;
+	}
 
-	osec_csum_append_value(
+	ret = osec_csum_append_value(
 	    primary_type_data->hashname,
 	    strlen(primary_type_data->hashname),
 	    data_ptr,
 	    gcry_md_get_algo_dlen(primary_type_data->gcrypt_hashtype),
 	    &local_rec);
 
+	if (!ret)
+		goto end;
+
 	if (secondary_type_data->gcrypt_hashtype != primary_type_data->gcrypt_hashtype) {
 		data_ptr = gcry_md_read(handle, secondary_type_data->gcrypt_hashtype);
-		if (data_ptr == NULL)
-			osec_fatal(EXIT_FAILURE, 0, "gcry_md_read returned NULL");
+		if (data_ptr == NULL) {
+			osec_error("gcry_md_read returned NULL");
+			goto end;
+		}
 
-		osec_csum_append_value(
+		ret = osec_csum_append_value(
 		    secondary_type_data->hashname,
 		    strlen(secondary_type_data->hashname),
 		    data_ptr,
 		    gcry_md_get_algo_dlen(secondary_type_data->gcrypt_hashtype),
 		    &local_rec);
+
+		if (!ret)
+			goto end;
 	}
 
-	gcry_md_close(handle);
+	retval = append_value(OVALUE_CSUM, local_rec.data, local_rec.offset, rec);
 
-	append_value(OVALUE_CSUM, local_rec.data, local_rec.offset, rec);
+end:
+	if (handle)
+		gcry_md_close(handle);
+
+	if (close(fd) == -1) {
+		osec_error("close: %s: %m", fname);
+		retval = false;
+	}
 
 	xfree(local_rec.data);
+
+	return retval;
 }
 
-void
-osec_symlink(struct record *rec, const char *fname)
+bool osec_symlink(struct record *rec, const char *fname)
 {
 	ssize_t lnklen;
 	char buf[MAXPATHLEN];
 
-	if ((lnklen = readlink(fname, buf, (size_t) MAXPATHLEN)) == -1)
-		osec_fatal(EXIT_FAILURE, errno, "%s: readlink", fname);
+	if ((lnklen = readlink(fname, buf, (size_t) MAXPATHLEN)) == -1) {
+		osec_error("readlink: %s: %m", fname);
+		return false;
+	}
 
 	buf[lnklen] = '\0';
 
-	append_value(OVALUE_LINK, buf, (size_t) lnklen + 1, rec);
+	return append_value(OVALUE_LINK, buf, (size_t) lnklen + 1, rec);
 }
 
 #include <sys/types.h>
 #include <sys/xattr.h>
 #include <attr/attributes.h>
 
-void
-osec_xattr(struct record *rec, const char *fname)
+bool osec_xattr(struct record *rec, const char *fname)
 {
 	const char empty = '\0';
 	int is_link;
-	char *xlist = NULL, *xkey = NULL, *xvalue = NULL, *res = NULL;
+	char *xlist = NULL, *xkey = NULL, *xvalue = NULL, *res = NULL, *ptr;
 	size_t xlist_len = 0, xkey_len = 0, xvalue_len = 0, res_len = 0;
 	size_t offset;
 	ssize_t len;
+	bool retval = false;
 
 	struct stat st;
 
-	if (lstat(fname, &st) == -1)
-		osec_fatal(EXIT_FAILURE, errno, "%s: lstat", fname);
+	if (lstat(fname, &st) == -1) {
+		osec_error("lstat: %s: %m", fname);
+		goto end;
+	}
 
 	is_link = ((st.st_mode & S_IFMT) == S_IFLNK);
 
@@ -211,7 +257,12 @@ osec_xattr(struct record *rec, const char *fname)
 		goto empty;
 
 	xlist_len = (size_t) len;
-	xlist = xmalloc(xlist_len);
+	xlist = malloc(xlist_len);
+
+	if (xlist == NULL) {
+		osec_error("malloc: %m");
+		goto end;
+	}
 
 	while (1) {
 		len = (is_link)
@@ -224,18 +275,23 @@ osec_xattr(struct record *rec, const char *fname)
 		}
 
 		if (errno != ERANGE) {
-			osec_fatal(EXIT_FAILURE, errno, "%s: listxattr", fname);
-			goto empty;
+			osec_error("listxattr: %s: %m", fname);
+			goto end;
 		}
 
 		xlist_len <<= 1;
 
 		if (!xlist_len) {
-			osec_fatal(EXIT_FAILURE, 0, "%s: too many keys", fname);
-			goto empty;
+			osec_error("too many keys: %s", fname);
+			goto end;
 		}
 
-		xlist = xrealloc(xlist, (size_t) xlist_len);
+		ptr = realloc(xlist, (size_t) xlist_len);
+		if (ptr == NULL) {
+			osec_error("realloc: %m");
+			goto end;
+		}
+		xlist = ptr;
 	}
 
 	res_len = 0;
@@ -258,7 +314,12 @@ osec_xattr(struct record *rec, const char *fname)
 
 		if (xvalue_len < (size_t) len) {
 			xvalue_len += (size_t) len - xvalue_len;
-			xvalue = xrealloc(xvalue, (size_t) xvalue_len);
+			ptr = realloc(xvalue, (size_t) xvalue_len);
+			if (ptr == NULL) {
+				osec_error("realloc: %m");
+				goto end;
+			}
+			xvalue = ptr;
 		}
 
 		while (1) {
@@ -273,10 +334,15 @@ osec_xattr(struct record *rec, const char *fname)
 				case ERANGE:
 					xvalue_len += 20;
 					if (!xvalue_len) {
-						osec_fatal(EXIT_FAILURE, 0, "%s: value too long", fname);
-						goto empty;
+						osec_error("value too long: %s", fname);
+						goto end;
 					}
-					xvalue = xrealloc(xvalue, (size_t) xvalue_len);
+					ptr = realloc(xvalue, (size_t) xvalue_len);
+					if (ptr == NULL) {
+						osec_error("realloc: %m");
+						goto end;
+					}
+					xvalue = ptr;
 					continue;
 				case ENOATTR:
 					goto next;
@@ -291,7 +357,12 @@ osec_xattr(struct record *rec, const char *fname)
 		xkey_len = strlen(xkey) + 1;
 
 		res_len += xkey_len + sizeof(size_t) + (size_t) len + 1;
-		res = xrealloc(res, res_len);
+		ptr = realloc(res, res_len);
+		if (ptr == NULL) {
+			osec_error("realloc: %m");
+			goto end;
+		}
+		res = ptr;
 
 		memcpy(res + offset, xkey, xkey_len);
 		offset += xkey_len;
@@ -305,25 +376,26 @@ osec_xattr(struct record *rec, const char *fname)
 		res[offset] = '\0';
 		offset += 1;
 
-	next:
+next:
 		xkey += xkey_len;
 	}
 
-	append_value(OVALUE_XATTR, res, res_len, rec);
+	retval = append_value(OVALUE_XATTR, res, res_len, rec);
+end:
 	xfree(res);
 
 	xfree(xlist);
 	xfree(xvalue);
-	return;
+	return retval;
 
 empty:
-	append_value(OVALUE_XATTR, &empty, sizeof(empty), rec);
-	xfree(xlist);
-	xfree(xvalue);
+	retval = append_value(OVALUE_XATTR, &empty, sizeof(empty), rec);
+	goto end;
 }
 
-void *
-osec_csum_field(const char *name, size_t namelen, const void *data, size_t dlen, struct csum_field *ret)
+void *osec_csum_field(const char *name, size_t namelen,
+		const void *data, size_t dlen,
+		struct csum_field *ret)
 {
 
 	size_t item_namelen;
@@ -355,8 +427,8 @@ osec_csum_field(const char *name, size_t namelen, const void *data, size_t dlen,
 	return NULL;
 }
 
-void *
-osec_csum_field_next(const void *data, const size_t dlen, struct csum_field *ret, size_t *ret_len)
+void *osec_csum_field_next(const void *data, const size_t dlen,
+		struct csum_field *ret, size_t *ret_len)
 {
 
 	size_t namelen;
@@ -385,15 +457,21 @@ osec_csum_field_next(const void *data, const size_t dlen, struct csum_field *ret
 	return (void *) data + sizeof(size_t) * 2 + namelen + digestlen;
 }
 
-void
-osec_csum_append_value(const char *name, size_t namelen, const void *src, const size_t slen, struct record *rec)
+bool osec_csum_append_value(const char *name, size_t namelen,
+		const void *src, const size_t slen,
+		struct record *rec)
 {
-
+	char *ptr;
 	size_t sz = sizeof(size_t) * 2 + namelen + slen;
 
 	if (sz > (rec->len - rec->offset)) {
 		rec->len += sz - (rec->len - rec->offset);
-		rec->data = xrealloc(rec->data, rec->len);
+		ptr = realloc(rec->data, rec->len);
+		if (ptr == NULL) {
+			osec_error("realloc: %m");
+			return false;
+		}
+		rec->data = ptr;
 	}
 
 	memcpy(rec->data + rec->offset, &namelen, sizeof(size_t));
@@ -407,4 +485,6 @@ osec_csum_append_value(const char *name, size_t namelen, const void *src, const 
 
 	memcpy(rec->data + rec->offset, src, slen);
 	rec->offset += slen;
+
+	return true;
 }

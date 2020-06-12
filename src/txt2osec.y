@@ -196,7 +196,8 @@ endline		: EOL
 				osec_fatal(EXIT_FAILURE, 0, "%s:%d: Wrong file format",
 				           pathname, line_nr);
 
-			append_value(OVALUE_STAT, &ost, sizeof(ost), &rec);
+			if (!append_value(OVALUE_STAT, &ost, sizeof(ost), &rec))
+				exit(EXIT_FAILURE);
 
 			if (F_ISSET(flags, FLAG_XATTR)) {
 				char *s = xattr;
@@ -214,7 +215,8 @@ endline		: EOL
 					xattr_str[i] = (unsigned char) h;
 					s += 2;
 				}
-				append_value(OVALUE_XATTR, xattr_str, xattr_len, &rec);
+				if (!append_value(OVALUE_XATTR, xattr_str, xattr_len, &rec))
+					exit(EXIT_FAILURE);
 				xfree(xattr);
 				xfree(xattr_str);
 			}
@@ -222,7 +224,8 @@ endline		: EOL
 			{
 				/* if not xattr is found, it's probably data from database before version 3, just add empty xattr value for compatibility */
 				const char empty = '\0';
-				append_value(OVALUE_XATTR, &empty, sizeof(empty), &rec);
+				if (!append_value(OVALUE_XATTR, &empty, sizeof(empty), &rec))
+					exit(EXIT_FAILURE);
 			}
 
 			if (F_ISSET(flags, FLAG_CSUM)) {
@@ -270,10 +273,12 @@ endline		: EOL
 						buffer[i] = (unsigned char) h;
 					}
 
-					osec_csum_append_value(name, namelen, buffer, digestlen, &local_rec);
+					if (!osec_csum_append_value(name, namelen, buffer, digestlen, &local_rec))
+						exit(EXIT_FAILURE);
 				}
 
-				append_value(OVALUE_CSUM, local_rec.data, local_rec.offset, &rec);
+				if (!append_value(OVALUE_CSUM, local_rec.data, local_rec.offset, &rec))
+					exit(EXIT_FAILURE);
 
 				for (z = 0; z < chsum_count; ++z)
 					xfree(chsum[z]);
@@ -290,7 +295,8 @@ endline		: EOL
 					osec_fatal(EXIT_FAILURE, 0, "%s:%d: Wrong file format: symlink field for not symbolic link",
 					           pathname, line_nr);
 
-				append_value(OVALUE_LINK, slink, (size_t) strlen(slink)+1, &rec);
+				if (!append_value(OVALUE_LINK, slink, (size_t) strlen(slink)+1, &rec))
+					exit(EXIT_FAILURE);
 				xfree(slink);
 			}
 

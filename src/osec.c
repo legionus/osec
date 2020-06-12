@@ -219,16 +219,19 @@ create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data,
 		if (is_exclude(p->fts_path))
 			continue;
 
-		osec_state(&rec, p->fts_statp);
-		osec_xattr(&rec, p->fts_path);
+		if (!osec_state(&rec, p->fts_statp) ||
+		    !osec_xattr(&rec, p->fts_path))
+			goto end;
 
 		switch (p->fts_info) {
 			case FTS_F:
-				osec_digest(&rec, p->fts_path, primary_type_data, secondary_type_data);
+				if (!osec_digest(&rec, p->fts_path, primary_type_data, secondary_type_data))
+					goto end;
 				break;
 			case FTS_SL:
 			case FTS_SLNONE:
-				osec_symlink(&rec, p->fts_path);
+				if (!osec_symlink(&rec, p->fts_path))
+					goto end;
 				break;
 		}
 

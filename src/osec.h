@@ -116,20 +116,27 @@ int check_removed(const char *fname, void *data, size_t len, const hash_type_dat
 void *osec_field(const unsigned type, const void *data, const size_t dlen, struct field *ret)
 	__attribute__((nonnull(2)));
 
-void append_value(const unsigned type, const void *src, const size_t slen, struct record *rec)
-	__attribute__((nonnull(2, 4)));
+bool append_value(const unsigned type, const void *src, const size_t slen, struct record *rec)
+	__attribute__((nonnull(2, 4)))
+	__attribute__((warn_unused_result));
 
-void osec_state(struct record *rec, const struct stat *st)
-	__attribute__((nonnull(1, 2)));
+bool osec_state(struct record *rec, const struct stat *st)
+	__attribute__((nonnull(1, 2)))
+	__attribute__((warn_unused_result));
 
-void osec_digest(struct record *rec, const char *fname, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data)
-	__attribute__((nonnull(1, 2, 3, 4)));
+bool osec_digest(struct record *rec, const char *fname,
+		const hash_type_data_t *primary_type_data,
+		const hash_type_data_t *secondary_type_data)
+	__attribute__((nonnull(1, 2, 3, 4)))
+	__attribute__((warn_unused_result));
 
-void osec_symlink(struct record *rec, const char *fname)
-	__attribute__((nonnull(1, 2)));
+bool osec_symlink(struct record *rec, const char *fname)
+	__attribute__((nonnull(1, 2)))
+	__attribute__((warn_unused_result));
 
-void osec_xattr(struct record *rec, const char *fname)
-	__attribute__((nonnull(1, 2)));
+bool osec_xattr(struct record *rec, const char *fname)
+	__attribute__((nonnull(1, 2)))
+	__attribute__((warn_unused_result));
 
 void *osec_csum_field(const char *name, size_t namelen, const void *data, size_t dlen, struct csum_field *ret)
 	__attribute__((nonnull(1, 3)));
@@ -137,8 +144,11 @@ void *osec_csum_field(const char *name, size_t namelen, const void *data, size_t
 void *osec_csum_field_next(const void *data, const size_t dlen, struct csum_field *ret, size_t *ret_len)
 	__attribute__((nonnull(1)));
 
-void osec_csum_append_value(const char *name, size_t namelen, const void *src, const size_t slen, struct record *rec)
-	__attribute__((nonnull(1, 3, 5)));
+bool osec_csum_append_value(const char *name, size_t namelen,
+		const void *src, const size_t slen,
+		struct record *rec)
+	__attribute__((nonnull(1, 3, 5)))
+	__attribute__((warn_unused_result));
 
 /* dbvalue.c */
 int compat_db_version(int fd);

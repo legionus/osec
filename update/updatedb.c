@@ -85,9 +85,11 @@ osec_empty_digest(struct record *rec)
 	local_rec.len = 0;
 	local_rec.offset = 0;
 
-	osec_csum_append_value("sha1", sizeof("sha1") - 1, fdigest, digest_len_sha1, &local_rec);
+	if (!osec_csum_append_value("sha1", sizeof("sha1") - 1, fdigest, digest_len_sha1, &local_rec))
+		exit(EXIT_FAILURE);
 
-	append_value(OVALUE_CSUM, local_rec.data, local_rec.offset, rec);
+	if (!append_value(OVALUE_CSUM, local_rec.data, local_rec.offset, rec))
+		exit(EXIT_FAILURE);
 
 	xfree(local_rec.data);
 }
@@ -96,7 +98,8 @@ static void
 osec_empty_symlink(struct record *rec)
 {
 	char t = '\0';
-	append_value(OVALUE_LINK, &t, (size_t) 1, rec);
+	if (!append_value(OVALUE_LINK, &t, (size_t) 1, rec))
+		exit(EXIT_FAILURE);
 }
 
 static void
@@ -238,7 +241,9 @@ main(int argc, char **argv)
 
 			osec_empty_digest(&rec);
 			osec_empty_symlink(&rec);
-			osec_state(&rec, &st);
+
+			if (!osec_state(&rec, &st))
+				exit(EXIT_FAILURE);
 
 			if (cdb_make_add(&cdbn, key, (unsigned) klen + 1, rec.data, (unsigned) rec.offset) != 0)
 				osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", key);
