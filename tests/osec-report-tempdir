@@ -1,0 +1,23 @@
+#!/bin/sh -efu
+
+. "${0%/*}/tests-sh-functions"
+
+tc_init
+
+mkdir -p -- "$rootdir"/bin
+touch "$rootdir"/bin/aaa
+chmod 755 "$rootdir"/bin/aaa
+
+mkdir -p "$dbdir/temp"
+touch "$dbdir"/temp/foo
+
+chmod 500 "$dbdir"/temp
+
+printf >&2 'INFO: %s\n' "Expect an error because not enough rights to delete."
+! osec >/dev/null ||
+	exit 1
+
+chmod 755 "$dbdir"/temp
+rm -f "$dbdir"/temp/foo
+
+osec >/dev/null

@@ -34,7 +34,8 @@ remove_recursive(char *fname)
 		osec_fatal(EXIT_FAILURE, errno, "%s: lstat", fname);
 
 	if (!S_ISDIR(st.st_mode)) {
-		remove(fname);
+		if (remove(fname) == -1)
+			osec_error("remove: %s: %m\n", fname);
 		return retval;
 	}
 
@@ -63,8 +64,8 @@ remove_recursive(char *fname)
 	if (closedir(d) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: closedir", fname);
 
-	if (retval)
-		remove(fname);
+	if (retval && remove(fname) == -1)
+		osec_error("remove: %s: %m\n", fname);
 
 	return retval;
 }
@@ -73,24 +74,19 @@ void
 recreate_tempdir(void)
 {
 	struct stat st;
-	char *tempdir;
+	static char tempdir[MAXPATHLEN];
 
-	/* tempdir = db_path/temp */
-	size_t len = strlen(db_path) + 6;
+	snprintf(tempdir, sizeof(tempdir), "%s/temp", db_path);
 
-	tempdir = (char *) xmalloc(sizeof(char) * len);
-	sprintf(tempdir, "%s/temp", db_path);
+	errno = 0;
+	if (lstat(tempdir, &st) == -1 && errno != ENOENT)
+		osec_fatal(EXIT_FAILURE, errno, "%s: lstat", tempdir);
 
-	if (lstat(tempdir, &st) == -1) {
-		if (errno != ENOENT)
-			osec_fatal(EXIT_FAILURE, errno, "%s: lstat", tempdir);
-	} else if (remove_recursive(tempdir) == 0)
+	if (errno == 0 && remove_recursive(tempdir) == 0)
 		osec_fatal(EXIT_FAILURE, 0, "%s: remove_recursive: Unable to remove tempdir", tempdir);
 
 	if (mkdir(tempdir, 0700) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: mkdir", tempdir);
-
-	xfree(tempdir);
 }
 
 char *

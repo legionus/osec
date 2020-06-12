@@ -21,7 +21,12 @@ tc_init()
 	rootdir="$tmpdir/root"
 	dbdir="$tmpdir/db"
 
-	rm -rf -- "$rootdir" "$dbdir"
+	local d
+	for d in "$rootdir" "$dbdir"; do
+		[ -d "$d" ] || continue
+		chmod -R 755 "$d"
+		rm -rf -- "$d"
+	done
 	mkdir -p -- "$rootdir" "$dbdir"
 
 	trap exit_handler EXIT HUP PIPE INT QUIT TERM
