@@ -143,15 +143,20 @@ void osec_csum_append_value(const char *name, size_t namelen, const void *src, c
 /* dbvalue.c */
 int compat_db_version(int fd);
 
-void write_db_version(struct cdb_make *cdbm, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data)
-	__attribute__((nonnull(1, 2)));
+bool write_db_version(struct cdb_make *cdbm, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data)
+	__attribute__((nonnull(1, 2)))
+	__attribute__((warn_unused_result));
 
-void get_hashes_from_string(const char *buffer, const size_t buffer_len, const hash_type_data_t **new_hash, const hash_type_data_t **old_hash)
-	__attribute__((nonnull(1)));
+bool get_hashes_from_string(const char *buffer, const size_t buffer_len,
+		const hash_type_data_t **new_hash,
+		const hash_type_data_t **old_hash)
+	__attribute__((nonnull(1)))
+	__attribute__((warn_unused_result));
 
 /* exclude.c */
 int is_exclude(char *file)
-	__attribute__((nonnull(1)));
+	__attribute__((nonnull(1)))
+	__attribute__((warn_unused_result));
 
 void exclude_match_append(char *pattern)
 	__attribute__((nonnull(1)));

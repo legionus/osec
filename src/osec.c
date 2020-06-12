@@ -95,20 +95,30 @@ print_version(void)
 	exit(EXIT_SUCCESS);
 }
 
-static void
+static bool
 gen_db_name(char *dirname, char **dbname)
 {
 	int i = 0;
 	size_t j = strlen(db_path) + 10;
 	size_t len = j + strlen(dirname);
 
-	(*dbname) = (char *) xmalloc(sizeof(char) * len);
-	sprintf((*dbname), "%s/osec.cdb.", db_path);
+	*dbname = (char *) malloc(sizeof(char) * len);
+
+	if (*dbname == NULL) {
+		osec_error("malloc: %m");
+		return false;
+	}
+
+	sprintf(*dbname, "%s/osec.cdb.", db_path);
 
 	while (dirname[i] != '\0') {
 		if ((j + 3) >= len) {
 			len += 32;
-			(*dbname) = (char *) xrealloc((*dbname), sizeof(char) * len);
+			*dbname = (char *) realloc(*dbname, sizeof(char) * len);
+			if (*dbname == NULL) {
+				osec_error("realloc: %m");
+				return false;
+			}
 		}
 
 		if (!isprint(dirname[i]) || (dirname[i] == '/')) {
@@ -123,8 +133,15 @@ gen_db_name(char *dirname, char **dbname)
 	}
 	(*dbname)[j++] = '\0';
 
-	if (j < len)
-		(*dbname) = (char *) xrealloc((*dbname), sizeof(char) * j);
+	if (j < len) {
+		*dbname = (char *) realloc(*dbname, sizeof(char) * j);
+		if (*dbname == NULL) {
+			osec_error("realloc: %m");
+			return false;
+		}
+	}
+
+	return true;
 }
 
 static int
@@ -138,8 +155,9 @@ dsort(const FTSENT **a, const FTSENT **b)
 	return (strcmp((*a)->fts_name, (*b)->fts_name));
 }
 
-static int
-create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data)
+static bool
+create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data,
+		const hash_type_data_t *secondary_type_data)
 {
 	FTS *t;
 	FTSENT *p;
@@ -147,12 +165,14 @@ create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data, const h
 
 	struct stat st;
 	struct cdb_make cdbm;
-	int retval = 1;
+	bool retval = false;
 
-	struct record rec;
+	struct record rec = { 0 };
 
-	if (cdb_make_start(&cdbm, fd) < 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_make_start");
+	if (cdb_make_start(&cdbm, fd) < 0) {
+		osec_error("cdb_make_start: %m");
+		goto end;
+	}
 
 	if (lstat(dir, &st) == -1 || !S_ISDIR(st.st_mode))
 		goto skip;
@@ -160,15 +180,22 @@ create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data, const h
 	argv[0] = dir;
 	argv[1] = NULL;
 
-	if ((t = fts_open(argv, FTS_PHYSICAL, dsort)) == NULL)
-		osec_fatal(EXIT_FAILURE, errno, "%s: fts_open", dir);
+	if ((t = fts_open(argv, FTS_PHYSICAL, dsort)) == NULL) {
+		osec_error("fts_open: %s: %m", dir);
+		goto end;
+	}
 
 	/*
 	 * Set default data buffer. This value will increase in the process of
 	 * creating a database.
 	 */
 	rec.len = 1024;
-	rec.data = xmalloc(rec.len);
+	rec.data = malloc(rec.len);
+
+	if (rec.data == NULL) {
+		osec_error("malloc: %m");
+		goto end;
+	}
 
 	while ((p = fts_read(t))) {
 		rec.offset = 0;
@@ -177,7 +204,8 @@ create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data, const h
 			case FTS_DNR:
 			case FTS_ERR:
 			case FTS_NS:
-				osec_fatal(EXIT_FAILURE, errno, "%s: fts_read", p->fts_path);
+				osec_error("fts_read: %s: %m", p->fts_path);
+				goto end;
 			case FTS_D:
 			case FTS_DC:
 			case FTS_F:
@@ -205,28 +233,37 @@ create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data, const h
 		}
 
 		if (cdb_make_add(&cdbm, p->fts_path, (unsigned) p->fts_pathlen + 1,
-		                 rec.data, (unsigned) rec.offset) != 0)
-			osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", p->fts_path);
+		                 rec.data, (unsigned) rec.offset) != 0) {
+			osec_error("cdb_make_add: %s: %m", p->fts_path);
+			goto end;
+		}
 	}
 
-	xfree(rec.data);
-
-	if (fts_close(t) == -1)
-		osec_fatal(EXIT_FAILURE, errno, "%s: fts_close", dir);
+	if (fts_close(t) == -1) {
+		osec_error("fts_close: %s: %m", dir);
+		goto end;
+	}
 
 skip:
-	write_db_version(&cdbm, primary_type_data, secondary_type_data);
+	if (!write_db_version(&cdbm, primary_type_data, secondary_type_data))
+		goto end;
 
-	if (cdb_make_finish(&cdbm) < 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_make_finish");
+	if (cdb_make_finish(&cdbm) < 0) {
+		osec_error("cdb_make_finish: %m");
+		goto end;
+	}
 
+	retval = true;
+end:
+	xfree(rec.data);
 	return retval;
 }
 
-static void
+static bool
 show_changes(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *hashtype_data)
 {
 	int rc;
+	bool retval = false;
 	char *key = NULL;
 	void *old_data = NULL, *new_data = NULL;
 	unsigned cpos;
@@ -239,15 +276,24 @@ show_changes(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *h
 	cdb_seqinit(&cpos, new_cdb);
 
 	while ((rc = cdb_seqnext(&cpos, new_cdb)) > 0) {
+		char *p;
+
 		klen = (size_t) cdb_keylen(new_cdb);
 
 		if (klen > key_len) {
 			key_len += klen - key_len;
-			key = (char *) xrealloc(key, key_len + 1);
+			p = realloc(key, key_len + 1);
+			if (p == NULL) {
+				osec_error("realloc: %m");
+				goto end;
+			}
+			key = p;
 		}
 
-		if (cdb_read(new_cdb, key, (unsigned) klen, cdb_keypos(new_cdb)) < 0)
-			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
+		if (cdb_read(new_cdb, key, (unsigned) klen, cdb_keypos(new_cdb)) < 0) {
+			osec_error("cdb_read: %m");
+			goto end;
+		}
 
 		if (key[0] != '/')
 			continue;
@@ -258,11 +304,19 @@ show_changes(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *h
 
 		if (new_dlen > new_data_len) {
 			new_data_len += new_dlen - new_data_len;
-			new_data = xrealloc(new_data, new_data_len);
+			p = realloc(new_data, new_data_len);
+
+			if (p == NULL) {
+				osec_error("realloc: %m");
+				goto end;
+			}
+			new_data = p;
 		}
 
-		if (cdb_read(new_cdb, new_data, (unsigned) new_dlen, cdb_datapos(new_cdb)) < 0)
-			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
+		if (cdb_read(new_cdb, new_data, (unsigned) new_dlen, cdb_datapos(new_cdb)) < 0) {
+			osec_error("cdb_read: %m");
+			goto end;
+		}
 
 		// Search
 		if (old_cdb != NULL && cdb_find(old_cdb, key, (unsigned) klen) > 0) {
@@ -270,11 +324,19 @@ show_changes(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *h
 
 			if (old_dlen > old_data_len) {
 				old_data_len += old_dlen - old_data_len;
-				old_data = xrealloc(old_data, old_data_len);
+				p = realloc(old_data, old_data_len);
+
+				if (p == NULL) {
+					osec_error("realloc: %m");
+					goto end;
+				}
+				old_data = p;
 			}
 
-			if (cdb_read(old_cdb, old_data, (unsigned) old_dlen, cdb_datapos(old_cdb)) < 0)
-				osec_fatal(EXIT_FAILURE, errno, "cdb_read");
+			if (cdb_read(old_cdb, old_data, (unsigned) old_dlen, cdb_datapos(old_cdb)) < 0) {
+				osec_error("cdb_read: %m");
+				goto end;
+			}
 
 			if (!check_difference(key, new_data, new_dlen, old_data, old_dlen, hashtype_data))
 				check_bad_files(key, new_data, new_dlen);
@@ -282,18 +344,25 @@ show_changes(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *h
 			check_new(key, new_data, new_dlen, hashtype_data);
 	}
 
+	if (rc < 0) {
+		osec_error("cdb_seqnext(new_cdb): %m");
+		goto end;
+	}
+
+	retval = true;
+end:
 	xfree(new_data);
 	xfree(old_data);
 	xfree(key);
 
-	if (rc < 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_seqnext(new_cdb)");
+	return retval;
 }
 
-static void
+static bool
 show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *hashtype_data)
 {
 	int rc;
+	bool retval = false;
 	char *key = NULL;
 	void *data = NULL;
 	unsigned cpos, klen;
@@ -304,15 +373,25 @@ show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *
 	cdb_seqinit(&cpos, old_cdb);
 
 	while ((rc = cdb_seqnext(&cpos, old_cdb)) > 0) {
+		char *p;
+
 		klen = cdb_keylen(old_cdb);
 
 		if (klen > key_len) {
 			key_len += klen - key_len;
-			key = (char *) xrealloc(key, key_len + 1);
+			p = realloc(key, key_len + 1);
+
+			if (p == NULL) {
+				osec_error("realloc: %m");
+				goto end;
+			}
+			key = p;
 		}
 
-		if (cdb_read(old_cdb, key, klen, cdb_keypos(old_cdb)) < 0)
-			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
+		if (cdb_read(old_cdb, key, klen, cdb_keypos(old_cdb)) < 0) {
+			osec_error("cdb_read: %m");
+			goto end;
+		}
 
 		if (key[0] != '/')
 			continue;
@@ -324,48 +403,76 @@ show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *
 
 			if (dlen > data_len) {
 				data_len += dlen - data_len;
-				data = xrealloc(data, data_len);
+				p = realloc(data, data_len);
+
+				if (p == NULL) {
+					osec_error("realloc: %m");
+					goto end;
+				}
+				data = p;
 			}
 
-			if (cdb_read(old_cdb, data, dlen, cdb_datapos(old_cdb)) < 0)
-				osec_fatal(EXIT_FAILURE, errno, "cdb_read");
+			if (cdb_read(old_cdb, data, dlen, cdb_datapos(old_cdb)) < 0) {
+				osec_error("cdb_read: %m");
+				goto end;
+			}
 
 			check_removed(key, data, (size_t) dlen, hashtype_data);
 		}
 	}
 
+	if (rc < 0) {
+		osec_error("cdb_seqnext(old_cdb): %m");
+		goto end;
+	}
+
+	retval = true;
+end:
 	xfree(key);
 	xfree(data);
 
-	if (rc < 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_seqnext(old_cdb)");
+	return retval;
 }
 
-static void
+static bool
 database_get_hashes(struct cdb *cdbm, const hash_type_data_t **new_hash, const hash_type_data_t **old_hash)
 {
 	size_t buffersize = 0;
 	char *buffer = NULL;
 
-	if (cdb_find(cdbm, "hashnames", strlen("hashnames")) == 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_read(hashnames)");
+	if (cdb_find(cdbm, "hashnames", strlen("hashnames")) == 0) {
+		osec_error("cdb_read(hashnames): %m");
+		return false;
+	}
 
 	buffersize = (size_t) cdb_datalen(cdbm);
-	buffer = xmalloc(buffersize);
+	buffer = malloc(buffersize);
 
-	if (cdb_read(cdbm, buffer, (unsigned) buffersize, cdb_datapos(cdbm)) < 0)
-		osec_fatal(EXIT_FAILURE, errno, "cdb_read(hashnames)");
+	if (buffer == NULL) {
+		osec_error("malloc: %m");
+		return false;
+	}
 
-	get_hashes_from_string(buffer, buffersize, new_hash, old_hash);
+	if (cdb_read(cdbm, buffer, (unsigned) buffersize, cdb_datapos(cdbm)) < 0) {
+		osec_error("cdb_read(hashnames): %m");
+		xfree(buffer);
+		return false;
+	}
+
+	if (!get_hashes_from_string(buffer, buffersize, new_hash, old_hash)) {
+		xfree(buffer);
+		return false;
+	}
 
 	xfree(buffer);
+	return true;
 }
 
-static int
+static bool
 process(char *dirname)
 {
 	size_t len;
-	int retval = 1;
+	bool retval = false;
 	int new_fd, old_fd;
 	char *new_dbname, *old_dbname;
 	struct cdb old_cdb, new_cdb;
@@ -374,36 +481,54 @@ process(char *dirname)
 	const hash_type_data_t *secondary_type_data = NULL;
 
 	if (is_exclude(dirname))
-		return 1;
+		return true;
 
 	// Generate priv state database name
-	gen_db_name(dirname, &old_dbname);
+	if (!gen_db_name(dirname, &old_dbname))
+		return false;
+
+	new_fd = old_fd = -1;
+	new_dbname = NULL;
 
 	// Open old database
 	errno = 0;
 	if ((old_fd = open(old_dbname, OSEC_O_FLAGS)) != -1) {
-		if (!compat_db_version(old_fd))
-			osec_fatal(EXIT_FAILURE, 0, "%s: file not look like osec database", old_dbname);
+		if (!compat_db_version(old_fd)) {
+			osec_error("file not look like osec database: %s", old_dbname);
+			goto end;
+		}
 
 		printf("Processing %s ...\n", dirname);
 	} else if (errno == ENOENT) {
 		dbversion = 0;
 		printf("Init database for %s ...\n", dirname);
-	} else
-		osec_fatal(EXIT_FAILURE, errno, "%s: open", old_dbname);
+	} else {
+		osec_error("open: %s: %m", old_dbname);
+		goto end;
+	}
 
 	// Generate new state database
 	len = strlen(db_path) + 21;
-	new_dbname = (char *) xmalloc(sizeof(char) * len);
+	new_dbname = (char *) malloc(sizeof(char) * len);
+
+	if (new_dbname == NULL) {
+		osec_error("malloc: %m");
+		goto end;
+	}
+
 	sprintf(new_dbname, "%s/temp/osec.XXXXXXXXX", db_path);
 
 	// Open new database
-	if ((new_fd = mkstemp(new_dbname)) == -1)
-		osec_fatal(EXIT_FAILURE, errno, "%s: mkstemp", new_dbname);
+	if ((new_fd = mkstemp(new_dbname)) == -1) {
+		osec_error("mkstemp: %s: %m", new_dbname);
+		goto end;
+	}
 
 	// Unlink termporary file
-	if (read_only)
-		remove(new_dbname);
+	if (read_only) {
+		if (remove(new_dbname) == -1)
+			osec_error("remove: %s: %m", new_dbname);
+	}
 
 	primary_type_data = hash_type;
 	secondary_type_data = hash_type;
@@ -412,46 +537,66 @@ process(char *dirname)
 		const hash_type_data_t *old_hash = NULL;
 		const hash_type_data_t *new_hash = NULL;
 
-		if (cdb_init(&old_cdb, old_fd) < 0)
-			osec_fatal(EXIT_FAILURE, errno, "cdb_init(old_cdb)");
+		if (cdb_init(&old_cdb, old_fd) < 0) {
+			osec_error("cdb_init(old_cdb): %m");
+			goto end;
+		}
 
 		if (dbversion >= 4) {
-			database_get_hashes(&old_cdb, &new_hash, &old_hash);
+			if (!database_get_hashes(&old_cdb, &new_hash, &old_hash))
+				goto end;
 		} else {
 			old_hash = new_hash = get_hash_type_data_by_name("sha1", strlen("sha1"));
-			if (new_hash == NULL)
-				osec_fatal(EXIT_FAILURE, 0, "failed to find hash type 'sha1'");
+			if (new_hash == NULL) {
+				osec_error("failed to find hash type 'sha1'");
+				goto end;
+			}
 		}
 
 		/*
 		 * if old hash and new hash from database doesn't match with requested type, use last requested hash type
 		 */
-		if (((old_hash == NULL) || (strcmp(old_hash->hashname, hash_type->hashname) != 0)) && (strcmp(new_hash->hashname, hash_type->hashname) != 0)) {
+		if (((old_hash == NULL) || (strcmp(old_hash->hashname, hash_type->hashname) != 0)) &&
+		    (strcmp(new_hash->hashname, hash_type->hashname) != 0)) {
 			secondary_type_data = new_hash;
 		}
 	}
 
 	// Create new state
-	if ((retval = create_cdb(new_fd, dirname, primary_type_data, secondary_type_data)) == 1) {
-		if (cdb_init(&new_cdb, new_fd) < 0)
-			osec_fatal(EXIT_FAILURE, errno, "cdb_init(new_cdb)");
+	if (!create_cdb(new_fd, dirname, primary_type_data, secondary_type_data))
+		goto end;
 
-		if (old_fd != -1) {
-			show_changes(&new_cdb, &old_cdb, secondary_type_data);
-			show_oldfiles(&new_cdb, &old_cdb, secondary_type_data);
-		} else
-			show_changes(&new_cdb, NULL, primary_type_data);
+	if (cdb_init(&new_cdb, new_fd) < 0) {
+		osec_error("cdb_init(new_cdb): %m");
+		goto end;
 	}
 
-	if (old_fd != -1 && close(old_fd) == -1)
-		osec_fatal(EXIT_FAILURE, errno, "%s: close", old_dbname);
+	if (old_fd != -1) {
+		if (!show_changes(&new_cdb, &old_cdb, secondary_type_data))
+			goto end;
+		show_oldfiles(&new_cdb, &old_cdb, secondary_type_data);
+	} else {
+		if (!show_changes(&new_cdb, NULL, primary_type_data))
+			goto end;
+	}
 
-	if (close(new_fd) == -1)
-		osec_fatal(EXIT_FAILURE, errno, "%s: close", new_dbname);
+	retval = true;
+end:
+	if (old_fd != -1 && close(old_fd) == -1) {
+		osec_error("close: %s :%m", old_dbname);
+		goto end;
+	}
+
+	if (close(new_fd) == -1) {
+		osec_error("close: %s: %m", new_dbname);
+		goto end;
+	}
 
 	//replace database with new
-	if (retval && !read_only)
-		rename(new_dbname, old_dbname);
+	if (retval && !read_only && rename(new_dbname, old_dbname) == -1) {
+		osec_error("remove: %s -> %s: %m", old_dbname, new_dbname);
+		retval = false;
+	}
 
 	xfree(old_dbname);
 	xfree(new_dbname);

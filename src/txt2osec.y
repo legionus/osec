@@ -393,14 +393,16 @@ main(int argc, char **argv)
 	fclose(fp);
 
 	if (hashnames != NULL) {
-		get_hashes_from_string(hashnames, strlen(hashnames), &new_hash, &old_hash);
+		if (!get_hashes_from_string(hashnames, strlen(hashnames), &new_hash, &old_hash))
+			exit(EXIT_FAILURE);
 		xfree(hashnames);
 	} else {
 		new_hash = get_hash_type_data_by_name("sha1", strlen("sha1"));
 		old_hash = NULL;
 	}
 
-	write_db_version(&cdbm, new_hash, old_hash);
+	if (!write_db_version(&cdbm, new_hash, old_hash))
+		exit(EXIT_FAILURE);
 
 	if (cdb_make_finish(&cdbm) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_finish");
