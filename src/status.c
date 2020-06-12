@@ -170,12 +170,10 @@ static void print_state(const char *mode, const char *fname, osec_stat_t *st)
 	printf("\n");
 }
 
-static void
-show_digest(const char *dst, size_t len)
+static inline void print_digest(const char *dst, size_t len)
 {
-	size_t i = 0;
-	while (i < len)
-		printf("%02x", (unsigned char) dst[i++]);
+	for (size_t i = 0; i < len; i++)
+		printf("%02x", (unsigned char) dst[i]);
 }
 
 static void
@@ -222,10 +220,10 @@ check_checksum(const char *fname, void *ndata, size_t nlen, void *odata, size_t 
 
 	if ((old_csum_data.data_len != new_csum_data.data_len) || (memcmp(old_csum_data.data, new_csum_data.data, old_csum_data.data_len) != 0)) {
 		printf("%s\tchecksum\tchanged\told checksum=%s:", fname, hashtype_data->hashname);
-		show_digest(old_csum_data.data, old_csum_data.data_len);
+		print_digest(old_csum_data.data, old_csum_data.data_len);
 
 		printf("\tnew checksum=%s:", hashtype_data->hashname);
-		show_digest(new_csum_data.data, new_csum_data.data_len);
+		print_digest(new_csum_data.data, new_csum_data.data_len);
 
 		printf("\n");
 	}
@@ -502,7 +500,7 @@ check_new(const char *fname, void *data, size_t dlen, const hash_type_data_t *ha
 			           fname, hashtype_data->hashname);
 
 		printf("%s\tchecksum\tnew\t checksum=%s:", fname, hashtype_data->hashname);
-		show_digest(csum_field_data.data, csum_field_data.data_len);
+		print_digest(csum_field_data.data, csum_field_data.data_len);
 		printf("\n");
 	}
 
@@ -547,11 +545,11 @@ check_removed(const char *fname, void *data, size_t len, const hash_type_data_t 
 				           fname, hashtype_data->hashname);
 
 			printf("%s\tchecksum\tremoved\t checksum=%s:", fname, hashtype_data->hashname);
-			show_digest(csum_field_data.data, csum_field_data.data_len);
+			print_digest(csum_field_data.data, csum_field_data.data_len);
 			printf("\n");
 		} else {
 			printf("%s\tchecksum\tremoved\t checksum=sha1:", fname);
-			show_digest(csum, csum_data.len);
+			print_digest(csum, csum_data.len);
 			printf("\n");
 		}
 	}
