@@ -24,8 +24,8 @@
 extern char str[PATH_MAX];
 extern char *pathname;
 extern int line_nr;
-extern int yyerror(const char *s);
-extern void stringovfl(void);
+extern int yyerror(const char *s) __attribute__((nonnull(1)));
+extern void stringovfl(void) __attribute__((noreturn));
 
 char *p, *pmax;
 %}

@@ -77,8 +77,12 @@ typedef struct hash_type_data {
 #define digest_len_sha1 20 /* SHA1 */
 
 /* common.c */
-void osec_fatal(const int exitnum, const int errnum, const char *fmt, ...);
-int osec_error(const char *fmt, ...);
+void osec_fatal(const int exitnum, const int errnum, const char *fmt, ...)
+	__attribute__((format(printf, 3, 4)))
+	__attribute__((noreturn));
+
+int osec_error(const char *fmt, ...)
+	__attribute__((format(printf, 1, 2)));
 
 /* memory.c */
 void *xmempcpy(void *dest, const void *src, size_t n);
@@ -87,48 +91,84 @@ void *xrealloc(void *ptr, size_t size);
 void xfree(void *ptr);
 
 /* privs.c */
-void drop_privs(char *user, char *group);
+void drop_privs(char *user, char *group)
+	__attribute__((nonnull(1, 2)));
 
 /* status.c */
-void check_new(const char *fname, void *data, size_t len, const hash_type_data_t *hashtype_data);
+void check_new(const char *fname, void *data, size_t len, const hash_type_data_t *hashtype_data)
+	__attribute__((nonnull(1, 2, 4)));
 
 /* Return 1 if check is true. Otherwise, 0 is returned. */
-int check_insecure(osec_stat_t *st);
-int check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen, const hash_type_data_t *hashtype_data);
-int check_bad_files(const char *fname, void *data, size_t len);
-int check_removed(const char *fname, void *data, size_t len, const hash_type_data_t *hashtype_data);
+int check_insecure(osec_stat_t *st)
+	__attribute__((nonnull(1)));
+
+int check_difference(const char *fname, void *ndata, size_t nlen, void *odata, size_t olen, const hash_type_data_t *hashtype_data)
+	__attribute__((nonnull(1, 2, 4, 6)));
+
+int check_bad_files(const char *fname, void *data, size_t len)
+	__attribute__((nonnull(1, 2)));
+
+int check_removed(const char *fname, void *data, size_t len, const hash_type_data_t *hashtype_data)
+	__attribute__((nonnull(1, 2, 4)));
 
 /* dbvalue.c */
-void *osec_field(const unsigned type, const void *data, const size_t dlen, struct field *ret);
-void append_value(const unsigned type, const void *src, const size_t slen, struct record *rec);
-void osec_state(struct record *rec, const struct stat *st);
-void osec_digest(struct record *rec, const char *fname, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data);
-void osec_symlink(struct record *rec, const char *fname);
-void osec_xattr(struct record *rec, const char *fname);
+void *osec_field(const unsigned type, const void *data, const size_t dlen, struct field *ret)
+	__attribute__((nonnull(2)));
 
-void *osec_csum_field(const char *name, size_t namelen, const void *data, size_t dlen, struct csum_field *ret);
-void *osec_csum_field_next(const void *data, const size_t dlen, struct csum_field *ret, size_t *ret_len);
-void osec_csum_append_value(const char *name, size_t namelen, const void *src, const size_t slen, struct record *rec);
+void append_value(const unsigned type, const void *src, const size_t slen, struct record *rec)
+	__attribute__((nonnull(2, 4)));
+
+void osec_state(struct record *rec, const struct stat *st)
+	__attribute__((nonnull(1, 2)));
+
+void osec_digest(struct record *rec, const char *fname, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data)
+	__attribute__((nonnull(1, 2, 3, 4)));
+
+void osec_symlink(struct record *rec, const char *fname)
+	__attribute__((nonnull(1, 2)));
+
+void osec_xattr(struct record *rec, const char *fname)
+	__attribute__((nonnull(1, 2)));
+
+void *osec_csum_field(const char *name, size_t namelen, const void *data, size_t dlen, struct csum_field *ret)
+	__attribute__((nonnull(1, 3)));
+
+void *osec_csum_field_next(const void *data, const size_t dlen, struct csum_field *ret, size_t *ret_len)
+	__attribute__((nonnull(1)));
+
+void osec_csum_append_value(const char *name, size_t namelen, const void *src, const size_t slen, struct record *rec)
+	__attribute__((nonnull(1, 3, 5)));
 
 /* dbvalue.c */
 int compat_db_version(int fd);
-void write_db_version(struct cdb_make *cdbm, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data);
 
-void get_hashes_from_string(const char *buffer, const size_t buffer_len, const hash_type_data_t **new_hash, const hash_type_data_t **old_hash);
+void write_db_version(struct cdb_make *cdbm, const hash_type_data_t *primary_type_data, const hash_type_data_t *secondary_type_data)
+	__attribute__((nonnull(1, 2)));
+
+void get_hashes_from_string(const char *buffer, const size_t buffer_len, const hash_type_data_t **new_hash, const hash_type_data_t **old_hash)
+	__attribute__((nonnull(1)));
 
 /* exclude.c */
-int is_exclude(char *file);
-void exclude_match_append(char *pattern);
-void exclude_matches_file(char *file);
+int is_exclude(char *file)
+	__attribute__((nonnull(1)));
+
+void exclude_match_append(char *pattern)
+	__attribute__((nonnull(1)));
+
+void exclude_matches_file(char *file)
+	__attribute__((nonnull(1)));
 
 /* ignore.c */
-void process_ignore(const char *param);
+void process_ignore(const char *param)
+	__attribute__((nonnull(1)));
 
 /* path.c */
 void recreate_tempdir(void);
-char *validate_path(const char *path);
+char *validate_path(const char *path)
+	__attribute__((nonnull(1)));
 
 /* hashtype.c */
-const hash_type_data_t *get_hash_type_data_by_name(const char *hashname, const size_t hashname_len);
+const hash_type_data_t *get_hash_type_data_by_name(const char *hashname, const size_t hashname_len)
+	__attribute__((nonnull(1)));
 
 #endif /* OSEC_H */

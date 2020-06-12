@@ -78,7 +78,7 @@ get_hashes_from_string(const char *buffer, const size_t buffer_len, const hash_t
 
 		tmp_ptr = get_hash_type_data_by_name(buffer, buffer_len);
 		if (!tmp_ptr)
-			osec_fatal(EXIT_FAILURE, 0, "get_hashes_from_string: unknown hash type '%.*s'", buffer_len, buffer);
+			osec_fatal(EXIT_FAILURE, 0, "get_hashes_from_string: unknown hash type '%.*s'", (int) buffer_len, buffer);
 
 		if (new_hash)
 			*new_hash = tmp_ptr;
@@ -89,18 +89,18 @@ get_hashes_from_string(const char *buffer, const size_t buffer_len, const hash_t
 
 		new_delim = memchr(delim + 1, ':', second_len);
 		if (new_delim != NULL)
-			osec_fatal(EXIT_FAILURE, 0, "cdb_read(hashnames): invalid hashnames value '%.*s'", buffer_len, buffer);
+			osec_fatal(EXIT_FAILURE, 0, "cdb_read(hashnames): invalid hashnames value '%.*s'", (int) buffer_len, buffer);
 
 		tmp_ptr = get_hash_type_data_by_name(delim + 1, second_len);
 		if (!tmp_ptr)
-			osec_fatal(EXIT_FAILURE, 0, "cdb_read(hashnames): unknown hash type '%.*s'", second_len, delim + 1);
+			osec_fatal(EXIT_FAILURE, 0, "cdb_read(hashnames): unknown hash type '%.*s'", (int) second_len, delim + 1);
 
 		if (old_hash)
 			*old_hash = tmp_ptr;
 
 		tmp_ptr = get_hash_type_data_by_name(buffer, first_len);
 		if (!tmp_ptr)
-			osec_fatal(EXIT_FAILURE, 0, "cdb_read(hashnames): unknown hash type '%.*s'", first_len, buffer);
+			osec_fatal(EXIT_FAILURE, 0, "cdb_read(hashnames): unknown hash type '%.*s'", (int) first_len, buffer);
 
 		if (new_hash)
 			*new_hash = tmp_ptr;
