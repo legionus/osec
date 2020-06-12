@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <cdb.h>
 
 #define OSEC_O_FLAGS (O_RDONLY | O_NOCTTY | O_NONBLOCK | O_NOFOLLOW)
@@ -164,8 +165,8 @@ void process_ignore(const char *param)
 
 /* path.c */
 void recreate_tempdir(void);
-char *validate_path(const char *path)
-	__attribute__((nonnull(1)));
+bool validate_path(const char *path, char *ret)
+	__attribute__((nonnull(1, 2)));
 
 /* hashtype.c */
 const hash_type_data_t *get_hash_type_data_by_name(const char *hashname, const size_t hashname_len)

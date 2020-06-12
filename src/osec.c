@@ -464,7 +464,12 @@ allocate_globals(void)
 {
 	// Allocate buffer to read the files (digest.c).
 	read_bufsize = (size_t)(sysconf(_SC_PAGE_SIZE) - 1);
-	read_buf = xmalloc(read_bufsize);
+	read_buf = malloc(read_bufsize);
+
+	if (!read_buf) {
+		osec_error("malloc: %m");
+		exit(EXIT_FAILURE);
+	}
 
 	// (status.c)
 	long val;
@@ -484,8 +489,6 @@ main(int argc, char **argv)
 	int allow_root = 0;
 	char *dirslist_file = NULL;
 	char *user = NULL, *group = NULL;
-
-	char *path;
 
 	gcry_error_t gcrypt_error;
 
@@ -587,6 +590,8 @@ main(int argc, char **argv)
 
 	allocate_globals();
 
+	char path[MAXPATHLEN];
+
 	if (dirslist_file != NULL) {
 		FILE *fd;
 		char *line = NULL;
@@ -608,13 +613,11 @@ main(int argc, char **argv)
 			if (line[n - 1] == '\n')
 				line[n - 1] = '\0';
 
-			if ((path = validate_path((line + i))) == NULL)
+			if (!validate_path(line + i, path))
 				continue;
 
 			if (!process(path))
 				retval = EXIT_FAILURE;
-
-			xfree(path);
 		}
 
 		xfree(line);
@@ -624,13 +627,11 @@ main(int argc, char **argv)
 	}
 
 	while (optind < argc) {
-		if ((path = validate_path(argv[optind++])) == NULL)
+		if (!validate_path(argv[optind++], path))
 			continue;
 
 		if (!process(path))
 			retval = EXIT_FAILURE;
-
-		xfree(path);
 	}
 
 	xfree(read_buf);

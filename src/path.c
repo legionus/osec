@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/param.h>
@@ -89,37 +90,30 @@ recreate_tempdir(void)
 		osec_fatal(EXIT_FAILURE, errno, "%s: mkdir", tempdir);
 }
 
-char *
-validate_path(const char *path)
+bool
+validate_path(const char *path, char *ret)
 {
-	unsigned int i, j = 0;
-	char *buf = NULL;
-	size_t len;
-
-	len = strlen(path);
-
 	if (path[0] != '/' ||
 	    strstr(path, "/../") != NULL ||
 	    strstr(path, "/./") != NULL) {
 		osec_error("Canonical path required: %s", path);
-		return buf;
+		return false;
 	}
 
-	buf = (char *) xmalloc(sizeof(char) * (len + 1));
-	buf[j++] = '/';
+	unsigned int j = 0;
+	size_t len = strlen(path);
 
-	for (i = 1; i < len; i++) {
+	ret[j++] = '/';
+
+	for (unsigned int i = 1; i < len; i++) {
 		if (path[i - 1] == '/' && path[i] == '/')
 			continue;
-		buf[j++] = path[i];
+		ret[j++] = path[i];
 	}
-	buf[j] = '\0';
+	ret[j] = '\0';
 
-	if (buf[j - 1] == '/')
-		buf[j - 1] = '\0';
+	if (ret[j - 1] == '/')
+		ret[j - 1] = '\0';
 
-	if (j < len)
-		buf = xrealloc(buf, sizeof(char) * j);
-
-	return buf;
+	return true;
 }
