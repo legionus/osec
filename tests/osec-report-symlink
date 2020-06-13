@@ -1,0 +1,50 @@
+#!/bin/sh -efu
+
+. "${0%/*}/tests-sh-functions"
+
+tc_init
+
+mkdir -p -- "$rootdir"/bin
+touch "$rootdir"/bin/aaa
+chmod 755 "$rootdir"/bin/aaa
+ln -s -- aaaa "$rootdir"/bin/bbb
+
+tc_state 1
+
+subst < "$datadir/osec-$i.report" > "$tmpdir/expect-$i"
+osec | subst > "$tmpdir/output-$i"
+diff -u "$tmpdir/expect-$i" "$tmpdir/output-$i"
+
+ln -sf -- bbbb "$rootdir"/bin/bbb
+
+tc_state 2
+
+subst < "$datadir/osec-$i.report" > "$tmpdir/expect-$i"
+osec | subst > "$tmpdir/output-$i"
+diff -u "$tmpdir/expect-$i" "$tmpdir/output-$i"
+
+echo 123 > "$rootdir"/bin/ccc
+unlink -- "$rootdir"/bin/bbb
+mv -f -- "$rootdir"/bin/ccc "$rootdir"/bin/bbb
+
+tc_state 3
+
+subst < "$datadir/osec-$i.report" > "$tmpdir/expect-$i"
+osec | subst > "$tmpdir/output-$i"
+diff -u "$tmpdir/expect-$i" "$tmpdir/output-$i"
+
+ln -sf -- bbbb "$rootdir"/bin/bbb
+
+tc_state 4
+
+subst < "$datadir/osec-$i.report" > "$tmpdir/expect-$i"
+osec | subst > "$tmpdir/output-$i"
+diff -u "$tmpdir/expect-$i" "$tmpdir/output-$i"
+
+rm -f -- "$rootdir"/bin/bbb
+
+tc_state 5
+
+subst < "$datadir/osec-$i.report" > "$tmpdir/expect-$i"
+osec | subst > "$tmpdir/output-$i"
+diff -u "$tmpdir/expect-$i" "$tmpdir/output-$i"

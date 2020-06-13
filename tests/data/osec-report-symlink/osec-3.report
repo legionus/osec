@@ -1,0 +1,3 @@
+Processing root ...
+root/bin	stat	changed	old mtime=@MTIME2_bin@	new mtime=@MTIME3_bin@
+root/bin/bbb	stat	changed	old mode=120777 inode=@INODE2_bbb@ mtime=@MTIME2_bbb@	new mode=100644 inode=@INODE3_bbb@ mtime=@MTIME3_bbb@

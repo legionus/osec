@@ -1,9 +1,13 @@
 Processing root ...
+root/bin	stat	changed	old mtime=@MTIME1_bin@	new mtime=@MTIME2_bin@
 root/bin/aaa	checksum	changed	old checksum=sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709	new checksum=sha1:a8fdc205a9f19cc1c7507a60c4f01b13d11d7fd0
+root/bin/aaa	stat	changed	old mtime=@MTIME1_aaa@	new mtime=@MTIME2_aaa@
 root/bin/eee	checksum	new	 checksum=sha1:adc83b19e793491b1c6ea0fd8b46cd9f32e592fc
 root/bin/eee	stat	new	 uid=@USER@ gid=@GROUP@ mode=106755 inode=@INODE2_eee@ mtime=@MTIME2_eee@ [ suid=@USER@ sgid=@GROUP@ ]
+root/lib64	stat	changed	old mtime=@MTIME1_lib64@	new mtime=@MTIME2_lib64@
 root/lib64/ddd	checksum	new	 checksum=sha1:f9e21473daaa2674d862b67a1339f4570e86de17
 root/lib64/ddd	stat	new	 uid=@USER@ gid=@GROUP@ mode=100644 inode=@INODE2_ddd@ mtime=@MTIME2_ddd@
+root/sbin	stat	changed	old mtime=@MTIME1_sbin@	new mtime=@MTIME2_sbin@
 root/sbin/ccc	stat	info	 uid=@USER@ gid=@GROUP@ mode=106755 inode=@INODE2_ccc@ mtime=@MTIME2_ccc@ [ suid=@USER@ sgid=@GROUP@ ]
 root/sbin/bbb	checksum	removed	 checksum=sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 root/sbin/bbb	stat	removed	 uid=@USER@ gid=@GROUP@ mode=106750 inode=@INODE1_bbb@ mtime=@MTIME1_bbb@ [ suid=@USER@ sgid=@GROUP@ ]

@@ -1,0 +1,3 @@
+Processing root ...
+root/bin	stat	changed	old mtime=@MTIME4_bin@	new mtime=@MTIME5_bin@
+root/bin/bbb	stat	removed	 uid=@USER@ gid=@GROUP@ mode=120777 inode=@INODE4_bbb@ mtime=@MTIME4_bbb@

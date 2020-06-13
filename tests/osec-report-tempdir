@@ -12,11 +12,13 @@ mkdir -p "$dbdir/temp"
 touch "$dbdir"/temp/foo
 
 chmod 500 "$dbdir"/temp
+[ -z "$priviliged" ] || chattr +i "$dbdir"/temp
 
 printf >&2 'INFO: %s\n' "Expect an error because not enough rights to delete."
 ! osec >/dev/null ||
 	exit 1
 
+[ -z "$priviliged" ] || chattr -i "$dbdir"/temp
 chmod 755 "$dbdir"/temp
 rm -f "$dbdir"/temp/foo
 

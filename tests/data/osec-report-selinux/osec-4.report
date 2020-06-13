@@ -1,4 +1,5 @@
 Processing root ...
+root/bin	stat	changed	old mtime=@MTIME3_bin@	new mtime=@MTIME4_bin@
 root/bin/aaa	checksum	removed	 checksum=sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 root/bin/aaa	stat	removed	 uid=@USER@ gid=@GROUP@ mode=100755 inode=@INODE3_aaa@ mtime=@MTIME3_aaa@
 root/bin/aaa	xattr	old	security.selinux	bar

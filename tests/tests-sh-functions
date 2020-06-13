@@ -14,6 +14,7 @@ exit_handler()
 	exit "$rc"
 }
 
+priviliged=
 tc_init()
 {
 	topdir="$(readlink -ev ..)"
@@ -30,6 +31,9 @@ tc_init()
 		rm -rf -- "$d"
 	done
 	mkdir -p -- "$rootdir" "$dbdir"
+
+	[ "$(id -u)" != 0 ] ||
+		priviliged=1
 
 	trap exit_handler EXIT HUP PIPE INT QUIT TERM
 }

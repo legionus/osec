@@ -1,0 +1,4 @@
+Processing root ...
+root/bin	stat	changed	old mtime=@MTIME1_bin@	new mtime=@MTIME2_bin@
+root/bin/bbb	symlink	changed	old target=aaaa	new target=bbbb
+root/bin/bbb	stat	changed	old inode=@INODE1_bbb@ mtime=@MTIME1_bbb@	new inode=@INODE2_bbb@ mtime=@MTIME2_bbb@
