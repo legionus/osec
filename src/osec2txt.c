@@ -1,11 +1,9 @@
-/* osec2txt.c
+// SPDX-License-Identifier: GPL-3.0-only
+/*
+ * File: osec2txt.c
  *
- * This file is part of Osec (lightweight integrity checker)
- *  Copyright (C) 2009-2012  Alexey Gladkov <gladkov.alexey@gmail.com>
+ *  Copyright (C) 2009-2020  Alexey Gladkov <gladkov.alexey@gmail.com>
  *  Copyright (C) 2019  Aleksei Nikiforov <darktemplar@basealt.ru>
- *
- * This file is covered by the GNU General Public License,
- * which should be included with osec as the file COPYING.
  */
 #include "config.h"
 
@@ -40,8 +38,9 @@ static void print_version(void)
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "Modified by Aleksei Nikiforov <darktemplar@basealt.ru>\n"
 	       "\n"
-	       "Copyright (C) 2009-2010  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
+	       "Copyright (C) 2009-2020  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "Copyright (C) 2019  Aleksei Nikiforov <darktemplar@basealt.ru>\n"
+	       "\n"
 	       "This is free software; see the source for copying conditions.  There is NO\n"
 	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
 	       program_invocation_short_name);

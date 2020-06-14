@@ -1,10 +1,9 @@
-/* privs.c
+// SPDX-License-Identifier: GPL-3.0-only
+/*
+ * File: privs.c
  *
- * This file is part of Osec (lightweight integrity checker)
  * Copyright (c) 2002,2003,2004 by Stanislav Ievlev
- *
- * This file is covered by the GNU General Public License,
- * which should be included with osec as the file COPYING.
+ * Copyright (C) 2008-2020  Alexey Gladkov <gladkov.alexey@gmail.com>
  */
 #include "config.h"
 

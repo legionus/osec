@@ -1,11 +1,9 @@
-/* updatedb.c
+// SPDX-License-Identifier: GPL-3.0-only
+/*
+ * File: updatedb.c
  *
- * This file is part of Osec (lightweight integrity checker)
- *  Copyright (C) 2008-2012  Alexey Gladkov <gladkov.alexey@gmail.com>
+ *  Copyright (C) 2008-2020  Alexey Gladkov <gladkov.alexey@gmail.com>
  *  Copyright (C) 2019  Aleksei Nikiforov <darktemplar@basealt.ru>
- *
- * This file is covered by the GNU General Public License,
- * which should be included with osec as the file COPYING.
  */
 #include "config.h"
 

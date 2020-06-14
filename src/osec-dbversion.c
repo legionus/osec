@@ -1,3 +1,9 @@
+// SPDX-License-Identifier: GPL-3.0-only
+/*
+ * File: osec-dbversion.c
+ *
+ * Copyright (C) 2013-2020  Alexey Gladkov <gladkov.alexey@gmail.com>
+ */
 #include "config.h"
 
 #include <stdio.h>
@@ -28,7 +34,8 @@ static void print_version(void)
 	printf("%s version " PACKAGE_VERSION "\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "\n"
-	       "Copyright (C) 2013  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
+	       "Copyright (C) 2013-2020  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
+	       "\n"
 	       "This is free software; see the source for copying conditions.  There is NO\n"
 	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
 	       program_invocation_short_name);

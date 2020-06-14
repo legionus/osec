@@ -1,11 +1,9 @@
-/* txt2osec.analize.l
+/* SPDX-License-Identifier: GPL-3.0-only
  *
- * This file is part of Osec (lightweight integrity checker)
- *  Copyright (C) 2010  Alexey Gladkov <gladkov.alexey@gmail.com>
+ * File: txt2osec.analize.l
+ *
+ *  Copyright (C) 2010-2020  Alexey Gladkov <gladkov.alexey@gmail.com>
  *  Copyright (C) 2019  Aleksei Nikiforov <darktemplar@basealt.ru>
- *
- * This file is covered by the GNU General Public License,
- * which should be included with osec as the file COPYING.
  */
 %option nounput
 %{
