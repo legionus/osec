@@ -1,0 +1,30 @@
+#!/bin/sh -efu
+
+. "${0%/*}/tests-sh-functions"
+
+run_osec()
+{
+	local cmd=
+	[ -z "$priviliged" ] ||
+		cmd='capsh --drop=CAP_DAC_OVERRIDE,CAP_DAC_READ_SEARCH --'
+	$cmd "$tmpdir"/run.sh
+}
+
+tc_init
+
+cat >"$tmpdir"/run.sh <<EOF
+#!/bin/sh -efu
+exec "$srcdir/osec" -R -D "$dbdir" "$rootdir"
+EOF
+chmod 755 "$tmpdir"/run.sh
+
+mkdir -p -- "$rootdir"/bin
+echo 123 > "$rootdir"/bin/aaa
+
+tc_state 1
+
+chmod 0 "$rootdir"/bin/aaa
+
+subst < "$datadir/osec-$i.report" > "$tmpdir/expect-$i"
+run_osec 2>&1 | subst > "$tmpdir/output-$i"
+diff -u "$tmpdir/expect-$i" "$tmpdir/output-$i"

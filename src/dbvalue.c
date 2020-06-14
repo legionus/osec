@@ -97,32 +97,47 @@ bool osec_state(struct record *rec, const struct stat *st)
 	return append_value(OVALUE_STAT, &ost, sizeof(ost), rec);
 }
 
+static bool append_empty_digest(struct record *rec,
+		const hash_type_data_t *primary_type_data,
+		const hash_type_data_t *secondary_type_data)
+{
+	bool ret = false;
+	char data[] = "";
+	struct record local_rec = { 0 };
+
+	ret = osec_csum_append_value(primary_type_data->hashname, strlen(primary_type_data->hashname),
+			data, sizeof(data),
+			&local_rec);
+	if (!ret)
+		goto end;
+
+	if (primary_type_data->gcrypt_hashtype != secondary_type_data->gcrypt_hashtype) {
+		ret = osec_csum_append_value(secondary_type_data->hashname,
+				strlen(secondary_type_data->hashname),
+				data, sizeof(data),
+				&local_rec);
+		if (!ret)
+			goto end;
+	}
+
+	ret = append_value(OVALUE_CSUM, local_rec.data, local_rec.offset, rec);
+end:
+	free(local_rec.data);
+	return ret;
+}
+
 bool osec_digest(struct record *rec, const char *fname,
 		const hash_type_data_t *primary_type_data,
 		const hash_type_data_t *secondary_type_data)
 {
-	int fd;
+	int fd = -1;
 	ssize_t num;
 	gcry_error_t gcrypt_error;
 	gcry_md_hd_t handle = NULL;
 	unsigned char *data_ptr;
 	bool ret, retval = false;
 
-	struct record local_rec;
-
-	local_rec.offset = 0;
-	local_rec.len = 1024;
-	local_rec.data = malloc(local_rec.len);
-
-	if (local_rec.data == NULL) {
-		osec_error("malloc: %m");
-		return false;
-	}
-
-	if ((fd = open(fname, OSEC_O_FLAGS)) == -1) {
-		osec_error("open: %s: %m", fname);
-		goto end;
-	}
+	struct record local_rec = { 0 };
 
 	gcrypt_error = gcry_md_open(&handle, primary_type_data->gcrypt_hashtype, 0);
 	if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR) {
@@ -144,6 +159,12 @@ bool osec_digest(struct record *rec, const char *fname,
 		}
 	}
 
+	if ((fd = open(fname, OSEC_O_FLAGS)) == -1) {
+		osec_error("open: %s: %m", fname);
+		retval = append_empty_digest(rec, primary_type_data, secondary_type_data);
+		goto end;
+	}
+
 	/* Let the kernel know we are going to read everything in sequence. */
 	(void) posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
 
@@ -153,6 +174,7 @@ bool osec_digest(struct record *rec, const char *fname,
 
 	if (num == -1) {
 		osec_error("read: %s: %m", fname);
+		retval = append_empty_digest(rec, primary_type_data, secondary_type_data);
 		goto end;
 	}
 
@@ -161,6 +183,7 @@ bool osec_digest(struct record *rec, const char *fname,
 	data_ptr = gcry_md_read(handle, primary_type_data->gcrypt_hashtype);
 	if (data_ptr == NULL) {
 		osec_error("gcry_md_read returned NULL");
+		retval = append_empty_digest(rec, primary_type_data, secondary_type_data);
 		goto end;
 	}
 
@@ -198,12 +221,12 @@ end:
 	if (handle)
 		gcry_md_close(handle);
 
-	if (close(fd) == -1) {
+	if (fd >= 0 && close(fd) == -1) {
 		osec_error("close: %s: %m", fname);
 		retval = false;
 	}
 
-	xfree(local_rec.data);
+	free(local_rec.data);
 
 	return retval;
 }

@@ -1,0 +1,6 @@
+osec: open: root/bin/aaa: Permission denied
+Init database for root ...
+root	stat	new	 uid=@USER@ gid=@GROUP@ mode=40755 inode=@INODE1_root@
+root/bin	stat	new	 uid=@USER@ gid=@GROUP@ mode=40755 inode=@INODE1_bin@
+root/bin/aaa	checksum	new	 checksum=sha1:00
+root/bin/aaa	stat	new	 uid=@USER@ gid=@GROUP@ mode=100000 inode=@INODE1_aaa@
