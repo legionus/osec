@@ -1,4 +1,4 @@
-SUBDIRS = src update data tests
+SUBDIRS = src data tests
 
 format:
 	make -C src $@

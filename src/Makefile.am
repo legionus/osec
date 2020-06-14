@@ -16,7 +16,7 @@ AM_CPPFLAGS = -g -std=c99 -D_GNU_SOURCE \
 
 AM_YFLAGS = -d
 
-bin_PROGRAMS = osec osec2txt txt2osec osec-dbversion
+bin_PROGRAMS = osec osec2txt txt2osec osec-dbversion osec-migrade-db
 osec_SOURCES = osec.c osec.h \
 		common.c privs.c status.c dbvalue.c \
 		dbversion.c exclude.c ignore.c path.c \
@@ -38,6 +38,10 @@ txt2osec_LDFLAGS = -lgcrypt
 
 osec_dbversion_SOURCES = osec-dbversion.c
 osec_dbversion_LDADD = common.o dbversion.o hashtype.o
+
+osec_migrade_db_SOURCES = updatedb.c
+osec_migrade_db_LDADD = common.o dbvalue.o dbversion.o hashtype.o
+osec_migrade_db_LDFLAGS = -lcdb -lgcrypt
 
 CLEANFILES = $(bin_PROGRAMS) $(bin_PROGRAMS:=.1)
 
