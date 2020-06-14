@@ -27,10 +27,6 @@
 
 #include "osec.h"
 
-// Global variables
-extern void *read_buf;
-extern size_t read_bufsize;
-
 size_t pw_bufsize = 0;
 size_t gr_bufsize = 0;
 
@@ -612,15 +608,6 @@ end:
 
 static void allocate_globals(void)
 {
-	// Allocate buffer to read the files (digest.c).
-	read_bufsize = (size_t)(sysconf(_SC_PAGE_SIZE) - 1);
-	read_buf = malloc(read_bufsize);
-
-	if (!read_buf) {
-		osec_error("malloc: %m");
-		exit(EXIT_FAILURE);
-	}
-
 	// (status.c)
 	long val;
 
@@ -795,7 +782,6 @@ int main(int argc, char **argv)
 			retval = EXIT_FAILURE;
 	}
 
-	free(read_buf);
 	free(exclude_matches);
 
 	return retval;

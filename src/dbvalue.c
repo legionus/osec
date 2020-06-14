@@ -9,6 +9,7 @@
  */
 #include "config.h"
 
+#include <sys/user.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,9 +23,6 @@
 #include <gcrypt.h>
 
 #include "osec.h"
-
-void *read_buf;
-size_t read_bufsize;
 
 void *osec_field(const unsigned type, const void *data, const size_t dlen,
 		struct field *ret)
@@ -136,6 +134,7 @@ bool osec_digest(struct record *rec, const char *fname,
 	gcry_md_hd_t handle = NULL;
 	unsigned char *data_ptr;
 	bool ret, retval = false;
+	char read_buf[PAGE_SIZE];
 
 	struct record local_rec = { 0 };
 
@@ -168,9 +167,8 @@ bool osec_digest(struct record *rec, const char *fname,
 	/* Let the kernel know we are going to read everything in sequence. */
 	(void) posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
 
-	while ((num = read(fd, read_buf, read_bufsize)) > 0) {
+	while ((num = read(fd, read_buf, sizeof(read_buf))) > 0)
 		gcry_md_write(handle, read_buf, (size_t) num);
-	}
 
 	if (num == -1) {
 		osec_error("read: %s: %m", fname);
