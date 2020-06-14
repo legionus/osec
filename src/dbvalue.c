@@ -238,7 +238,7 @@ bool osec_symlink(struct record *rec, const char *fname)
 
 	if ((lnklen = readlink(fname, buf, (size_t) MAXPATHLEN)) == -1) {
 		osec_error("readlink: %s: %m", fname);
-		return false;
+		lnklen = 0;
 	}
 
 	buf[lnklen] = '\0';
