@@ -25,8 +25,8 @@
 
 #include "osec.h"
 
-extern size_t pw_bufsize;
-extern size_t gr_bufsize;
+size_t pw_bufsize = 0;
+size_t gr_bufsize = 0;
 
 extern int numeric_user_group;
 extern unsigned ignore;
@@ -39,6 +39,11 @@ static void printf_pwname(const char *var, uid_t uid)
 
 	if (numeric_user_group)
 		goto shownum;
+
+	if (!pw_bufsize) {
+		long val = sysconf(_SC_GETPW_R_SIZE_MAX);
+		pw_bufsize = (val > 0) ? (size_t) val : 1024;
+	}
 
 	while (1) {
 		buf = malloc(pw_bufsize);
@@ -79,6 +84,11 @@ static void printf_grname(const char *var, gid_t gid)
 
 	if (numeric_user_group)
 		goto shownum;
+
+	if (!gr_bufsize) {
+		long val = sysconf(_SC_GETGR_R_SIZE_MAX);
+		gr_bufsize = (val > 0) ? (size_t) val : 1024;
+	}
 
 	while (1) {
 		buf = malloc(gr_bufsize);

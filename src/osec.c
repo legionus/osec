@@ -27,9 +27,6 @@
 
 #include "osec.h"
 
-size_t pw_bufsize = 0;
-size_t gr_bufsize = 0;
-
 // FIXME: use config file for this variables.
 char def_db_path[] = "/tmp/osec";
 char def_user[] = "osec";
@@ -606,18 +603,6 @@ end:
 	return retval;
 }
 
-static void allocate_globals(void)
-{
-	// (status.c)
-	long val;
-
-	val = sysconf(_SC_GETPW_R_SIZE_MAX);
-	pw_bufsize = (val > 0) ? (size_t) val : 1024;
-
-	val = sysconf(_SC_GETGR_R_SIZE_MAX);
-	gr_bufsize = (val > 0) ? (size_t) val : 1024;
-}
-
 int main(int argc, char **argv)
 {
 	int c;
@@ -735,8 +720,6 @@ int main(int argc, char **argv)
 	}
 
 	recreate_tempdir();
-
-	allocate_globals();
 
 	char path[MAXPATHLEN];
 
