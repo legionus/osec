@@ -99,7 +99,7 @@ static bool gen_db_name(char *dirname, char **dbname)
 	size_t j = strlen(db_path) + 10;
 	size_t len = j + strlen(dirname);
 
-	*dbname = (char *) malloc(sizeof(char) * len);
+	*dbname = malloc(sizeof(char) * len);
 
 	if (*dbname == NULL) {
 		osec_error("malloc: %m");
@@ -111,7 +111,7 @@ static bool gen_db_name(char *dirname, char **dbname)
 	while (dirname[i] != '\0') {
 		if ((j + 3) >= len) {
 			len += 32;
-			*dbname = (char *) realloc(*dbname, sizeof(char) * len);
+			*dbname = realloc(*dbname, sizeof(char) * len);
 			if (*dbname == NULL) {
 				osec_error("realloc: %m");
 				return false;
@@ -131,7 +131,7 @@ static bool gen_db_name(char *dirname, char **dbname)
 	(*dbname)[j++] = '\0';
 
 	if (j < len) {
-		*dbname = (char *) realloc(*dbname, sizeof(char) * j);
+		*dbname = realloc(*dbname, sizeof(char) * j);
 		if (*dbname == NULL) {
 			osec_error("realloc: %m");
 			return false;
@@ -277,7 +277,7 @@ static bool show_changes(struct cdb *new_cdb, struct cdb *old_cdb,
 	while ((rc = cdb_seqnext(&cpos, new_cdb)) > 0) {
 		char *p;
 
-		klen = (size_t) cdb_keylen(new_cdb);
+		klen = cdb_keylen(new_cdb);
 
 		if (klen > key_len) {
 			key_len += klen - key_len;
@@ -299,7 +299,7 @@ static bool show_changes(struct cdb *new_cdb, struct cdb *old_cdb,
 
 		key[klen] = '\0';
 
-		new_dlen = (size_t) cdb_datalen(new_cdb);
+		new_dlen = cdb_datalen(new_cdb);
 
 		if (new_dlen > new_data_len) {
 			new_data_len += new_dlen - new_data_len;
@@ -452,7 +452,7 @@ static bool database_get_hashes(struct cdb *cdbm,
 		return false;
 	}
 
-	buffersize = (size_t) cdb_datalen(cdbm);
+	buffersize = cdb_datalen(cdbm);
 	buffer = malloc(buffersize);
 
 	if (buffer == NULL) {
@@ -515,7 +515,7 @@ static bool process(char *dirname)
 
 	// Generate new state database
 	len = strlen(db_path) + 21;
-	new_dbname = (char *) malloc(sizeof(char) * len);
+	new_dbname = malloc(sizeof(char) * len);
 
 	if (new_dbname == NULL) {
 		osec_error("malloc: %m");

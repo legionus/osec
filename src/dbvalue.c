@@ -236,7 +236,7 @@ bool osec_symlink(struct record *rec, const char *fname)
 	ssize_t lnklen;
 	char buf[MAXPATHLEN];
 
-	if ((lnklen = readlink(fname, buf, (size_t) MAXPATHLEN)) == -1) {
+	if ((lnklen = readlink(fname, buf, MAXPATHLEN)) == -1) {
 		osec_error("readlink: %s: %m", fname);
 		lnklen = 0;
 	}
@@ -337,7 +337,7 @@ bool osec_xattr(struct record *rec, const char *fname)
 
 		if (xvalue_len < (size_t) len) {
 			xvalue_len += (size_t) len - xvalue_len;
-			ptr = realloc(xvalue, (size_t) xvalue_len);
+			ptr = realloc(xvalue, xvalue_len);
 			if (ptr == NULL) {
 				osec_error("realloc: %m");
 				goto end;
@@ -360,7 +360,7 @@ bool osec_xattr(struct record *rec, const char *fname)
 						osec_error("value too long: %s", fname);
 						goto end;
 					}
-					ptr = realloc(xvalue, (size_t) xvalue_len);
+					ptr = realloc(xvalue, xvalue_len);
 					if (ptr == NULL) {
 						osec_error("realloc: %m");
 						goto end;
