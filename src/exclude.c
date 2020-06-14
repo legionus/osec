@@ -76,7 +76,7 @@ bool exclude_matches_file(char *file)
 	}
 	retval = true;
 end:
-	xfree(line);
+	free(line);
 
 	if (fclose(fd) != 0) {
 		osec_error("fclose: %s: %m", file);

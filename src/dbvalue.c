@@ -405,10 +405,10 @@ next:
 
 	retval = append_value(OVALUE_XATTR, res, res_len, rec);
 end:
-	xfree(res);
+	free(res);
 
-	xfree(xlist);
-	xfree(xvalue);
+	free(xlist);
+	free(xvalue);
 	return retval;
 
 empty:

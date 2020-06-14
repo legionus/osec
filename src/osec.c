@@ -254,7 +254,7 @@ skip:
 
 	retval = true;
 end:
-	xfree(rec.data);
+	free(rec.data);
 	return retval;
 }
 
@@ -356,9 +356,9 @@ static bool show_changes(struct cdb *new_cdb, struct cdb *old_cdb,
 
 	retval = true;
 end:
-	xfree(new_data);
-	xfree(old_data);
-	xfree(key);
+	free(new_data);
+	free(old_data);
+	free(key);
 
 	return retval;
 }
@@ -434,8 +434,8 @@ static bool show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb,
 
 	retval = true;
 end:
-	xfree(key);
-	xfree(data);
+	free(key);
+	free(data);
 
 	return retval;
 }
@@ -462,16 +462,16 @@ static bool database_get_hashes(struct cdb *cdbm,
 
 	if (cdb_read(cdbm, buffer, (unsigned) buffersize, cdb_datapos(cdbm)) < 0) {
 		osec_error("cdb_read(hashnames): %m");
-		xfree(buffer);
+		free(buffer);
 		return false;
 	}
 
 	if (!get_hashes_from_string(buffer, buffersize, new_hash, old_hash)) {
-		xfree(buffer);
+		free(buffer);
 		return false;
 	}
 
-	xfree(buffer);
+	free(buffer);
 	return true;
 }
 
@@ -604,8 +604,8 @@ end:
 		retval = false;
 	}
 
-	xfree(old_dbname);
-	xfree(new_dbname);
+	free(old_dbname);
+	free(new_dbname);
 
 	return retval;
 }
@@ -781,7 +781,7 @@ int main(int argc, char **argv)
 				retval = EXIT_FAILURE;
 		}
 
-		xfree(line);
+		free(line);
 
 		if (fclose(fd) != 0)
 			osec_fatal(EXIT_FAILURE, errno, "%s: fclose", dirslist_file);
@@ -795,8 +795,8 @@ int main(int argc, char **argv)
 			retval = EXIT_FAILURE;
 	}
 
-	xfree(read_buf);
-	xfree(exclude_matches);
+	free(read_buf);
+	free(exclude_matches);
 
 	return retval;
 }

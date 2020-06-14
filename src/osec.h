@@ -85,12 +85,6 @@ void osec_fatal(const int exitnum, const int errnum, const char *fmt, ...)
 int osec_error(const char *fmt, ...)
 	__attribute__((format(printf, 1, 2)));
 
-/* memory.c */
-void *xmempcpy(void *dest, const void *src, size_t n);
-void *xmalloc(size_t size);
-void *xrealloc(void *ptr, size_t size);
-void xfree(void *ptr);
-
 /* privs.c */
 void drop_privs(char *user, char *group)
 	__attribute__((nonnull(1, 2)));

@@ -191,7 +191,11 @@ int main(int argc, char **argv)
 		char *chardata = NULL;
 		dlen = cdb_datalen(&cdbm);
 
-		chardata = xmalloc((size_t) dlen + 1);
+		chardata = malloc((size_t) dlen + 1);
+		if (!chardata) {
+			osec_error("malloc: %m");
+			exit(EXIT_FAILURE);
+		}
 
 		if (cdb_read(&cdbm, chardata, (unsigned) dlen, cdb_datapos(&cdbm)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read(data)");
@@ -200,35 +204,45 @@ int main(int argc, char **argv)
 
 		dprintf(outfd, "hashnames=\"%s\"\n", chardata);
 
-		xfree(chardata);
+		free(chardata);
 	}
 
 	cdb_seqinit(&cpos, &cdbm);
 
 	while ((rc = cdb_seqnext(&cpos, &cdbm)) > 0) {
 		klen = cdb_keylen(&cdbm);
-		key = (char *) xmalloc((size_t)(klen + 1));
+		key = malloc((size_t)(klen + 1));
+
+		if (!key) {
+			osec_error("malloc: %m");
+			exit(EXIT_FAILURE);
+		}
 
 		if (cdb_read(&cdbm, key, (unsigned) klen, cdb_keypos(&cdbm)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read(key)");
 
 		if (key[0] != '/') {
-			xfree(key);
+			free(key);
 			continue;
 		}
 
 		key[klen] = '\0';
 
 		dlen = cdb_datalen(&cdbm);
-		data = xmalloc((size_t) dlen);
+		data = malloc((size_t) dlen);
+
+		if (!data) {
+			osec_error("malloc: %m");
+			exit(EXIT_FAILURE);
+		}
 
 		if (cdb_read(&cdbm, data, (unsigned) dlen, cdb_datapos(&cdbm)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read(data)");
 
 		dump_record(outfd, key, data, dlen);
 
-		xfree(data);
-		xfree(key);
+		free(data);
+		free(key);
 	}
 
 	if (close(outfd) == -1)

@@ -52,7 +52,7 @@ static void printf_pwname(const char *var, uid_t uid)
 
 		if (rc == ERANGE) {
 			pw_bufsize += 1024;
-			xfree(buf);
+			free(buf);
 			continue;
 		}
 
@@ -63,10 +63,10 @@ static void printf_pwname(const char *var, uid_t uid)
 		goto shownum;
 
 	printf(" %s=%s", var, pw->pw_name);
-	xfree(buf);
+	free(buf);
 	return;
 shownum:
-	xfree(buf);
+	free(buf);
 	printf(" %s=%ld", var, (long) uid);
 	return;
 }
@@ -92,7 +92,7 @@ static void printf_grname(const char *var, gid_t gid)
 
 		if (rc == ERANGE) {
 			gr_bufsize += 1024;
-			xfree(buf);
+			free(buf);
 			continue;
 		}
 
@@ -103,10 +103,10 @@ static void printf_grname(const char *var, gid_t gid)
 		goto shownum;
 
 	printf(" %s=%s", var, gr->gr_name);
-	xfree(buf);
+	free(buf);
 	return;
 shownum:
-	xfree(buf);
+	free(buf);
 	printf(" %s=%ld", var, (long) gid);
 	return;
 }

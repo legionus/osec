@@ -64,8 +64,10 @@ struct record rec;
 struct cdb_make cdbm;
 long flags = 0;
 
-void print_help(int ret);
-void print_version(void);
+void print_help(int ret)
+	__attribute__((noreturn));
+void print_version(void)
+	__attribute__((noreturn));
 int yyerror(const char *s);
 int yylex (void);
 
@@ -107,12 +109,18 @@ hashline	: HASHNAMES EQUALS STRLITERAL
 		}
 		;
 fileline	: FILENAME EQUALS STRLITERAL
-		{ fname = strdup(str);
-		  flags |= FLAG_FILE; }
+		{
+			fname = strdup(str);
+			if (!fname) {
+				osec_error("strdup: %m");
+				exit(EXIT_FAILURE);
+			}
+			flags |= FLAG_FILE;
+		}
 		;
 csumline	: CHECKSUM EQUALS STRLITERAL
 		{
-		  char *delim;
+		  char *delim, *ptr;
 		  size_t n = strlen(str);
 
 		  delim = strchr(str, ':');
@@ -125,9 +133,22 @@ csumline	: CHECKSUM EQUALS STRLITERAL
 			           pathname, line_nr, str);
 
 		  ++chsum_count;
-		  chsum = xrealloc(chsum, sizeof(char*) * chsum_count);
-		  chsum[chsum_count - 1] = strdup(str);
-		  flags |= FLAG_CSUM; }
+		  chsum = realloc(chsum, sizeof(char*) * chsum_count);
+		  if (!chsum) {
+			osec_error("realloc: %m");
+			exit(EXIT_FAILURE);
+		  }
+
+		  ptr = strdup(str);
+		  if (!ptr) {
+			osec_error("strdup: %m");
+			free(chsum);
+			exit(EXIT_FAILURE);
+		  }
+		  chsum[chsum_count - 1] = ptr;
+
+		  flags |= FLAG_CSUM;
+		}
 		;
 xattrline	: XATTR EQUALS STRLITERAL
 		{
@@ -136,13 +157,23 @@ xattrline	: XATTR EQUALS STRLITERAL
 			osec_fatal(1, 0, "%s:%d: Xattr value has invalid size: %s",
 			           pathname, line_nr, str);
 		  xattr = strdup(str);
-		  flags |= FLAG_XATTR; }
+		  if (!xattr) {
+			osec_error("strdup: %m");
+			exit(EXIT_FAILURE);
+		  }
+		  flags |= FLAG_XATTR;
+		}
 		;
 linkline	: SYMLINK EQUALS STRLITERAL
-		{ if (strlen(str) > 0) {
-			slink = strdup(str);
-		  	flags |= FLAG_LINK;
-		  }
+		{
+			if (strlen(str) > 0) {
+				slink = strdup(str);
+				if (!slink) {
+					osec_error("strdup: %m");
+					exit(EXIT_FAILURE);
+				}
+				flags |= FLAG_LINK;
+			}
 		}
 		;
 devline		: DEVICE EQUALS NUMBER
@@ -207,8 +238,12 @@ endline		: EOL
 				unsigned char *xattr_str = NULL;
 
 				xattr_len = strlen(xattr) / 2;
+				xattr_str = malloc(xattr_len);
 
-				xattr_str = xmalloc(xattr_len);
+				if (!xattr_str) {
+					osec_error("malloc: %m");
+					exit(EXIT_FAILURE);
+				}
 
 				for (i = 0; i < xattr_len; i++) {
 					sscanf(s, "%02x", &h);
@@ -217,8 +252,8 @@ endline		: EOL
 				}
 				if (!append_value(OVALUE_XATTR, xattr_str, xattr_len, &rec))
 					exit(EXIT_FAILURE);
-				xfree(xattr);
-				xfree(xattr_str);
+				free(xattr);
+				free(xattr_str);
 			}
 			else
 			{
@@ -235,11 +270,7 @@ endline		: EOL
 				char *buffer = NULL;
 				size_t buffer_size = 0;
 
-				struct record local_rec;
-
-				local_rec.offset = 0;
-				local_rec.len    = 1024;
-				local_rec.data   = xmalloc(local_rec.len);
+				struct record local_rec = { 0 };
 
 				if (!S_ISREG(ost.mode))
 					osec_fatal(EXIT_FAILURE, 0, "%s:%d: Wrong file format: checksum field for not regular file",
@@ -265,8 +296,16 @@ endline		: EOL
 						digest = chsum[z];
 					}
 
-					if (buffer_size < digestlen)
-						buffer = xrealloc(buffer, digestlen);
+					if (buffer_size < digestlen) {
+						char *ptr;
+						ptr = realloc(buffer, digestlen);
+						if (!ptr) {
+							osec_error("realloc: %m");
+							free(buffer);
+							exit(EXIT_FAILURE);
+						}
+						buffer = ptr;
+					}
 
 					for (i = 0; i < digestlen; ++i) {
 						sscanf(digest + i * 2, "%02x", &h);
@@ -281,13 +320,13 @@ endline		: EOL
 					exit(EXIT_FAILURE);
 
 				for (z = 0; z < chsum_count; ++z)
-					xfree(chsum[z]);
-				xfree(chsum);
+					free(chsum[z]);
+				free(chsum);
 				chsum = NULL;
 				chsum_count = 0;
 
-				xfree(local_rec.data);
-				xfree(buffer);
+				free(local_rec.data);
+				free(buffer);
 			}
 
 			if (F_ISSET(flags, FLAG_LINK)) {
@@ -297,13 +336,13 @@ endline		: EOL
 
 				if (!append_value(OVALUE_LINK, slink, (size_t) strlen(slink)+1, &rec))
 					exit(EXIT_FAILURE);
-				xfree(slink);
+				free(slink);
 			}
 
 			if (cdb_make_add(&cdbm, fname, (unsigned) strlen(fname)+1, rec.data, (unsigned) rec.offset) != 0)
 				osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", fname);
 
-			xfree(fname);
+			free(fname);
 			flags = 0;
 		}
 		;
@@ -391,13 +430,13 @@ int main(int argc, char **argv)
 	yyin = fp;
 	yyparse();
 
-	xfree(rec.data);
+	free(rec.data);
 	fclose(fp);
 
 	if (hashnames != NULL) {
 		if (!get_hashes_from_string(hashnames, strlen(hashnames), &new_hash, &old_hash))
 			exit(EXIT_FAILURE);
-		xfree(hashnames);
+		free(hashnames);
 	} else {
 		new_hash = get_hash_type_data_by_name("sha1", strlen("sha1"));
 		old_hash = NULL;

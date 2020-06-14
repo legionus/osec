@@ -43,7 +43,12 @@ decode_dirname(char *dir)
 	unsigned int i, j = 0;
 	int found = 0, ret;
 
-	ndir = (char *) xmalloc(sizeof(char) * len);
+	ndir = (char *) malloc(sizeof(char) * len);
+
+	if (!ndir) {
+		osec_error("malloc: %m");
+		exit(EXIT_FAILURE);
+	}
 
 	for (i = 0; i < len; i++) {
 		int c;
@@ -63,12 +68,17 @@ decode_dirname(char *dir)
 	}
 
 	if (!found) {
-		xfree(ndir);
+		free(ndir);
 		return NULL;
 	}
 
 	ndir[j++] = '\0';
-	ndir = (char *) xrealloc(ndir, (sizeof(char) * j));
+	ndir = realloc(ndir, (sizeof(char) * j));
+
+	if (!ndir) {
+		osec_error("realloc: %m");
+		exit(EXIT_FAILURE);
+	}
 
 	return ndir;
 }
@@ -91,7 +101,7 @@ osec_empty_digest(struct record *rec)
 	if (!append_value(OVALUE_CSUM, local_rec.data, local_rec.offset, rec))
 		exit(EXIT_FAILURE);
 
-	xfree(local_rec.data);
+	free(local_rec.data);
 }
 
 static void
@@ -109,13 +119,24 @@ gen_db_name(char *dirname, char **dbname)
 	size_t j = strlen(db_path) + 10;
 	size_t len = j + strlen(dirname);
 
-	(*dbname) = (char *) xmalloc(sizeof(char) * len);
+	*dbname = malloc(sizeof(char) * len);
+
+	if (!(*dbname)) {
+		osec_error("malloc: %m");
+		exit(EXIT_FAILURE);
+	}
+
 	sprintf((*dbname), "%s/osec.cdb.", db_path);
 
 	while (dirname[i] != '\0') {
 		if ((j + 3) >= len) {
 			len += 32;
-			(*dbname) = (char *) xrealloc((*dbname), sizeof(char) * len);
+			(*dbname) = realloc((*dbname), sizeof(char) * len);
+
+			if (!(*dbname)) {
+				osec_error("realloc: %m");
+				exit(EXIT_FAILURE);
+			}
 		}
 
 		if (!isprint(dirname[i]) || (dirname[i] == '/')) {
@@ -130,8 +151,14 @@ gen_db_name(char *dirname, char **dbname)
 	}
 	(*dbname)[j++] = '\0';
 
-	if (j < len)
-		(*dbname) = (char *) xrealloc((*dbname), sizeof(char) * j);
+	if (j < len) {
+		(*dbname) = realloc((*dbname), sizeof(char) * j);
+
+		if (!(*dbname)) {
+			osec_error("realloc: %m");
+			exit(EXIT_FAILURE);
+		}
+	}
 }
 
 int
@@ -192,7 +219,13 @@ main(int argc, char **argv)
 
 	// Generate new state database
 	len = strlen(dbfile) + 11;
-	dbtemp = (char *) xmalloc(sizeof(char) * len);
+	dbtemp = malloc(sizeof(char) * len);
+
+	if (!dbtemp) {
+		osec_error("malloc: %m");
+		exit(EXIT_FAILURE);
+	}
+
 	sprintf(dbtemp, "%s.XXXXXXXXX", dbfile);
 
 	// Open new database
@@ -204,21 +237,36 @@ main(int argc, char **argv)
 
 	// Allocate buffer for reading files.
 	read_bufsize = (size_t)(sysconf(_SC_PAGE_SIZE) - 1);
-	read_buf = xmalloc(read_bufsize);
+	read_buf = malloc(read_bufsize);
+
+	if (!read_buf) {
+		osec_error("malloc: %m");
+		exit(EXIT_FAILURE);
+	}
 
 	/*
 	 * Set default data buffer. This value will increase in the process of
 	 * creating a database.
 	 */
 	rec.len = 1024;
-	rec.data = xmalloc(rec.len);
+	rec.data = malloc(rec.len);
+
+	if (!rec.data) {
+		osec_error("malloc: %m");
+		exit(EXIT_FAILURE);
+	}
 
 	cdb_seqinit(&cpos, &cdbm);
 	while (cdb_seqnext(&cpos, &cdbm) > 0) {
 		char *type;
 
 		klen = cdb_keylen(&cdbm);
-		key = (char *) xmalloc((size_t)(klen + 1));
+		key = malloc((size_t)(klen + 1));
+
+		if (!key) {
+			osec_error("malloc: %m");
+			exit(EXIT_FAILURE);
+		}
 
 		if (cdb_read(&cdbm, key, (unsigned) klen, cdb_keypos(&cdbm)) < 0)
 			osec_fatal(EXIT_FAILURE, errno, "cdb_read");
@@ -249,7 +297,7 @@ main(int argc, char **argv)
 				osec_fatal(EXIT_FAILURE, errno, "%s: cdb_make_add", key);
 		}
 
-		xfree(key);
+		free(key);
 	}
 
 	tmp_ptr = get_hash_type_data_by_name("sha1", strlen("sha1"));
@@ -259,7 +307,7 @@ main(int argc, char **argv)
 	if (!write_db_version(&cdbn, tmp_ptr, NULL))
 		exit(EXIT_FAILURE);
 
-	xfree(rec.data);
+	free(rec.data);
 
 	if (cdb_make_finish(&cdbn) < 0)
 		osec_fatal(EXIT_FAILURE, errno, "cdb_make_finish");
@@ -276,9 +324,9 @@ main(int argc, char **argv)
 	rename(dbtemp, dbnewfile);
 	remove(dbfile);
 
-	xfree(dbtemp);
-	xfree(dirname);
-	xfree(dbnewfile);
+	free(dbtemp);
+	free(dirname);
+	free(dbnewfile);
 
 	return EXIT_SUCCESS;
 }

@@ -73,11 +73,11 @@ bool write_db_version(struct cdb_make *cdbm,
 
 	if (cdb_make_add(cdbm, "hashnames", strlen("hashnames"), buffer, (unsigned) hashes_len) != 0) {
 		osec_error("cdb_make_add: %m");
-		xfree(buffer);
+		free(buffer);
 		return false;
 	}
 
-	xfree(buffer);
+	free(buffer);
 
 	return true;
 }

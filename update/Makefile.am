@@ -16,7 +16,6 @@ AM_CPPFLAGS = -g -std=c99 -D_GNU_SOURCE \
 bin_PROGRAMS = osec-migrade-db
 osec_migrade_db_SOURCES = updatedb.c \
 	$(top_srcdir)/src/common.c \
-	$(top_srcdir)/src/memory.c \
 	$(top_srcdir)/src/dbversion.c \
 	$(top_srcdir)/src/dbvalue.c \
 	$(top_srcdir)/src/hashtype.c
