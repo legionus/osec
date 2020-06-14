@@ -20,8 +20,7 @@
 #include "osec.h"
 
 /** drop process privs */
-void
-drop_privs(char *user, char *group)
+void drop_privs(char *user, char *group)
 {
 	cap_t caps;
 	struct passwd *pw;

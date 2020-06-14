@@ -52,7 +52,7 @@ Gid		gid|Gid
 Mtime		mtime|Mtime
 Checksum	checksum|Checksum
 Symlink		symlink|Symlink
-Hashnames		hashnames|Hashnames
+Hashnames	hashnames|Hashnames
 Xattr		xattr|Xattr
 
 %%
@@ -60,8 +60,14 @@ Xattr		xattr|Xattr
 {Whitesp}		{ /* No action and no return */ }
 {Comment}.*{Eol}	{ line_nr++; }
 {Continuation}		{ line_nr++; }
-{Number}		{ yylval = strtoll(yytext,NULL,0);   return(NUMBER); }
-{Octa}			{ yylval = strtoll(yytext+1,NULL,8); return(OCTAL); }
+{Number}		{
+				yylval = strtoll(yytext, NULL, 0);
+				return(NUMBER);
+			}
+{Octa}			{
+				yylval = strtoll(yytext + 1, NULL, 8);
+				return(OCTAL);
+			}
 {Hashnames}		{ return(HASHNAMES); }
 {Filename}		{ return(FILENAME); }
 {Xattr}			{ return(XATTR); }
@@ -75,26 +81,47 @@ Xattr		xattr|Xattr
 {Mode}			{ return(MODE); }
 {Equals}		{ return(EQUALS); }
 {Dot}			{ return(DOT); }
-{Eol}			{ line_nr++;
-			  BEGIN(0);
-			  return(EOL); }
-\"			{ p = (char *) str;
-			  pmax = p + sizeof(str) - 1;
-			  BEGIN(STR); }
-<STR>\\\"		{ if (p >= pmax) stringovfl();
-			  *p++='"'; }
-<STR>\\\\		{ if (p >= pmax) stringovfl();
-			  *p++='\\'; }
-<STR>\\n		{ if (p >= pmax) stringovfl();
-	                  *p++='\n'; }
-<STR>[^\"\\]*		{ char *ptmp = p;
-			  p += strlen(yytext);
-			  if (p >= pmax) stringovfl();
-			  strcpy(ptmp, yytext); }
-<STR>\"			{ *p = '\0';
-			  BEGIN(0);
-			  return(STRLITERAL); }
-.			{ return(ERROR); /* report any unknown characters */}
+{Eol}			{
+				line_nr++;
+				BEGIN(0);
+				return(EOL);
+			}
+\"			{
+				p = (char *) str;
+				pmax = p + sizeof(str) - 1;
+				BEGIN(STR);
+			}
+<STR>\\\"		{
+				if (p >= pmax)
+					stringovfl();
+				*p++='"';
+			}
+<STR>\\\\		{
+				if (p >= pmax)
+					stringovfl();
+				*p++='\\';
+			}
+<STR>\\n		{
+				if (p >= pmax)
+					stringovfl();
+				*p++='\n';
+			}
+<STR>[^\"\\]*		{
+				char *ptmp = p;
+				p += strlen(yytext);
+				if (p >= pmax)
+					stringovfl();
+				strcpy(ptmp, yytext);
+			}
+<STR>\"			{
+				*p = '\0';
+				BEGIN(0);
+				return(STRLITERAL);
+			}
+.			{
+				/* report any unknown characters */
+				return(ERROR);
+			}
 
 %%
 

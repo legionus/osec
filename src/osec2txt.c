@@ -22,8 +22,7 @@
 
 #include "osec.h"
 
-static void __attribute__((noreturn))
-print_help(int ret)
+static void print_help(int ret)
 {
 	printf("Usage: %s [options] <DBFILE> <OUTFILE>\n"
 	       "\n"
@@ -35,8 +34,7 @@ print_help(int ret)
 	exit(ret);
 }
 
-static void __attribute__((noreturn))
-print_version(void)
+static void print_version(void)
 {
 	printf("%s version " PACKAGE_VERSION "\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
@@ -50,16 +48,14 @@ print_version(void)
 	exit(EXIT_SUCCESS);
 }
 
-static void
-show_digest(int fd, const char *dst, size_t len)
+static void show_digest(int fd, const char *dst, size_t len)
 {
 	size_t i = 0;
 	while (i < len)
 		dprintf(fd, "%02x", (unsigned char) dst[i++]);
 }
 
-static void
-dump_record(int fd, char *key, void *rec, size_t rlen)
+static void dump_record(int fd, char *key, void *rec, size_t rlen)
 {
 	osec_stat_t *st;
 	int i;
@@ -144,8 +140,7 @@ dump_record(int fd, char *key, void *rec, size_t rlen)
 	}
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int c, fd, outfd, rc;
 	size_t klen;

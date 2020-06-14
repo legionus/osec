@@ -12,8 +12,7 @@
 #include <errno.h>
 #include "osec.h"
 
-void *
-xmalloc(size_t size)
+void *xmalloc(size_t size)
 {
 	void *ptr;
 	if ((ptr = malloc(size)) == NULL)
@@ -21,16 +20,14 @@ xmalloc(size_t size)
 	return ptr;
 }
 
-void *
-xrealloc(void *ptr, size_t size)
+void *xrealloc(void *ptr, size_t size)
 {
 	if ((ptr = realloc(ptr, size)) == NULL)
 		osec_fatal(EXIT_FAILURE, errno, "realloc");
 	return ptr;
 }
 
-void
-xfree(void *ptr)
+void xfree(void *ptr)
 {
 	if (ptr != NULL)
 		free(ptr);

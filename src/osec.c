@@ -48,8 +48,7 @@ int numeric_user_group = 0;
 unsigned ignore = 0;
 const hash_type_data_t *hash_type = NULL;
 
-static void __attribute__((noreturn))
-print_help(int ret)
+static void print_help(int ret)
 {
 	printf("Usage: %1$s [OPTIONS] [DIRECTORY...]\n"
 	       "   or: %1$s [OPTIONS] --file=FILE [DIRECTORY...]\n"
@@ -80,8 +79,7 @@ print_help(int ret)
 	exit(ret);
 }
 
-static void __attribute__((noreturn))
-print_version(void)
+static void print_version(void)
 {
 	printf("%s version " PACKAGE_VERSION "\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
@@ -95,8 +93,7 @@ print_version(void)
 	exit(EXIT_SUCCESS);
 }
 
-static bool
-gen_db_name(char *dirname, char **dbname)
+static bool gen_db_name(char *dirname, char **dbname)
 {
 	int i = 0;
 	size_t j = strlen(db_path) + 10;
@@ -144,8 +141,7 @@ gen_db_name(char *dirname, char **dbname)
 	return true;
 }
 
-static int
-dsort(const FTSENT **a, const FTSENT **b)
+static int dsort(const FTSENT **a, const FTSENT **b)
 {
 	if (S_ISDIR((*a)->fts_statp->st_mode)) {
 		if (!S_ISDIR((*b)->fts_statp->st_mode))
@@ -155,8 +151,8 @@ dsort(const FTSENT **a, const FTSENT **b)
 	return (strcmp((*a)->fts_name, (*b)->fts_name));
 }
 
-static bool
-create_cdb(int fd, char *dir, const hash_type_data_t *primary_type_data,
+static bool create_cdb(int fd, char *dir,
+		const hash_type_data_t *primary_type_data,
 		const hash_type_data_t *secondary_type_data)
 {
 	FTS *t;
@@ -262,8 +258,8 @@ end:
 	return retval;
 }
 
-static bool
-show_changes(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *hashtype_data)
+static bool show_changes(struct cdb *new_cdb, struct cdb *old_cdb,
+		const hash_type_data_t *hashtype_data)
 {
 	int rc;
 	bool retval = false;
@@ -367,8 +363,8 @@ end:
 	return retval;
 }
 
-static bool
-show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb, const hash_type_data_t *hashtype_data)
+static bool show_oldfiles(struct cdb *new_cdb, struct cdb *old_cdb,
+		const hash_type_data_t *hashtype_data)
 {
 	int rc;
 	bool retval = false;
@@ -444,8 +440,9 @@ end:
 	return retval;
 }
 
-static bool
-database_get_hashes(struct cdb *cdbm, const hash_type_data_t **new_hash, const hash_type_data_t **old_hash)
+static bool database_get_hashes(struct cdb *cdbm,
+		const hash_type_data_t **new_hash,
+		const hash_type_data_t **old_hash)
 {
 	size_t buffersize = 0;
 	char *buffer = NULL;
@@ -478,8 +475,7 @@ database_get_hashes(struct cdb *cdbm, const hash_type_data_t **new_hash, const h
 	return true;
 }
 
-static bool
-process(char *dirname)
+static bool process(char *dirname)
 {
 	size_t len;
 	bool retval = false;
@@ -614,8 +610,7 @@ end:
 	return retval;
 }
 
-static void
-allocate_globals(void)
+static void allocate_globals(void)
 {
 	// Allocate buffer to read the files (digest.c).
 	read_bufsize = (size_t)(sysconf(_SC_PAGE_SIZE) - 1);
@@ -636,8 +631,7 @@ allocate_globals(void)
 	gr_bufsize = (val > 0) ? (size_t) val : 1024;
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int c;
 	int retval = EXIT_SUCCESS;
@@ -736,12 +730,22 @@ main(int argc, char **argv)
 	}
 
 	gcrypt_error = gcry_control(GCRYCTL_DISABLE_SECMEM, 0);
-	if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR)
-		osec_fatal(EXIT_FAILURE, gcry_err_code_to_errno(gcry_err_code(gcrypt_error)), "gcry_control error: %s, source: %s", gcry_strerror(gcrypt_error), gcry_strsource(gcrypt_error));
+	if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR) {
+		errno = gcry_err_code_to_errno(gcry_err_code(gcrypt_error));
+
+		osec_fatal(EXIT_FAILURE, 0, "gcry_control error: %s, source: %s: %m",
+				gcry_strerror(gcrypt_error),
+				gcry_strsource(gcrypt_error));
+	}
 
 	gcrypt_error = gcry_control(GCRYCTL_INITIALIZATION_FINISHED, 0);
-	if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR)
-		osec_fatal(EXIT_FAILURE, gcry_err_code_to_errno(gcry_err_code(gcrypt_error)), "gcry_control error: %s, source: %s", gcry_strerror(gcrypt_error), gcry_strsource(gcrypt_error));
+	if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR) {
+		errno = gcry_err_code_to_errno(gcry_err_code(gcrypt_error));
+
+		osec_fatal(EXIT_FAILURE, 0, "gcry_control error: %s, source: %s: %m",
+				gcry_strerror(gcrypt_error),
+				gcry_strsource(gcrypt_error));
+	}
 
 	recreate_tempdir();
 

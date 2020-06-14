@@ -32,8 +32,7 @@ static const struct ign_opts {
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
-static void
-set_ignore(char *param, long len)
+static void set_ignore(char *param, long len)
 {
 	unsigned i = 0;
 
@@ -48,8 +47,7 @@ set_ignore(char *param, long len)
 	}
 }
 
-void
-process_ignore(const char *params)
+void process_ignore(const char *params)
 {
 	char *ptr = (char *) params;
 	size_t len = strlen(params);

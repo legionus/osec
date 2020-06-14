@@ -11,8 +11,7 @@
 
 #include "osec.h"
 
-static void __attribute__((noreturn))
-print_help(int ret)
+static void print_help(int ret)
 {
 	printf("Usage: %s [options] <DBFILE>\n"
 	       "\n"
@@ -24,8 +23,7 @@ print_help(int ret)
 	exit(ret);
 }
 
-static void __attribute__((noreturn))
-print_version(void)
+static void print_version(void)
 {
 	printf("%s version " PACKAGE_VERSION "\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
@@ -37,8 +35,7 @@ print_version(void)
 	exit(EXIT_SUCCESS);
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int fd, c;
 	char *dbname;

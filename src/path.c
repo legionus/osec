@@ -23,8 +23,7 @@
 
 extern char *db_path;
 
-static int
-remove_recursive(char *fname)
+static int remove_recursive(char *fname)
 {
 	DIR *d;
 	struct dirent *dir;
@@ -71,8 +70,7 @@ remove_recursive(char *fname)
 	return retval;
 }
 
-void
-recreate_tempdir(void)
+void recreate_tempdir(void)
 {
 	struct stat st;
 	static char tempdir[MAXPATHLEN];
@@ -90,8 +88,7 @@ recreate_tempdir(void)
 		osec_fatal(EXIT_FAILURE, errno, "%s: mkdir", tempdir);
 }
 
-bool
-validate_path(const char *path, char *ret)
+bool validate_path(const char *path, char *ret)
 {
 	if (path[0] != '/' ||
 	    strstr(path, "/../") != NULL ||
