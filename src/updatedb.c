@@ -23,15 +23,33 @@
 char def_db_path[] = "/tmp/osec";
 char *db_path = NULL;
 
-static void __attribute__((noreturn))
-print_help(int ret)
+static void print_help(int ret)
 {
-	printf("Usage: osec-migrade-db [-h | -D <dbpath>] <DBFILE>\n");
+	printf("Usage: %s [options] <DBFILE>\n"
+	       "\n"
+	       "Options:\n"
+	       "  -D, --dbpath=PATH   path to the directory with databases;\n"
+	       "  -V, --version       print program version and exit;\n"
+	       "  -h, --help          output a brief help message.\n"
+	       "\n",
+	       program_invocation_short_name);
 	exit(ret);
 }
 
-static char *
-decode_dirname(char *dir)
+static void print_version(void)
+{
+	printf("%s version " PACKAGE_VERSION "\n"
+	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
+	       "\n"
+	       "Copyright (C) 2013-2020  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
+	       "\n"
+	       "This is free software; see the source for copying conditions.  There is NO\n"
+	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
+	       program_invocation_short_name);
+	exit(EXIT_SUCCESS);
+}
+
+static char *decode_dirname(char *dir)
 {
 	char *ndir = NULL;
 	size_t len = strlen(dir);
@@ -78,8 +96,7 @@ decode_dirname(char *dir)
 	return ndir;
 }
 
-static void
-osec_empty_digest(struct record *rec)
+static void osec_empty_digest(struct record *rec)
 {
 	struct record local_rec;
 
@@ -99,16 +116,14 @@ osec_empty_digest(struct record *rec)
 	free(local_rec.data);
 }
 
-static void
-osec_empty_symlink(struct record *rec)
+static void osec_empty_symlink(struct record *rec)
 {
 	char t = '\0';
 	if (!append_value(OVALUE_LINK, &t, (size_t) 1, rec))
 		exit(EXIT_FAILURE);
 }
 
-static void
-gen_db_name(char *dirname, char **dbname)
+static void gen_db_name(char *dirname, char **dbname)
 {
 	int i = 0;
 	size_t j = strlen(db_path) + 10;
@@ -156,8 +171,7 @@ gen_db_name(char *dirname, char **dbname)
 	}
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int c, fd, fdtemp;
 	size_t klen, len = 0;
@@ -173,6 +187,7 @@ main(int argc, char **argv)
 
 	struct option long_options[] = {
 		{ "help", no_argument, 0, 'h' },
+		{ "version", no_argument, 0, 'v' },
 		{ "dbpath", required_argument, 0, 'D' },
 		{ 0, 0, 0, 0 }
 	};
@@ -180,8 +195,11 @@ main(int argc, char **argv)
 	if (argc == 1)
 		print_help(EXIT_SUCCESS);
 
-	while ((c = getopt_long(argc, argv, "hD:", long_options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "hvD:", long_options, NULL)) != -1) {
 		switch (c) {
+			case 'v':
+				print_version();
+				break;
 			case 'D':
 				db_path = optarg;
 				break;
