@@ -1,0 +1,25 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - v*
+jobs:
+  tests:
+    name: Tests on ubuntu
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: check
+      run: |
+        sudo apt-get update;
+        sudo apt-get install -y autoconf automake make flex bison help2man
+        sudo apt-get install -y libc-dev libcdb-dev libcap-dev libattr1-dev libgcrypt-dev
+        ./autogen.sh
+        ./configure --enable-werror
+        make
+        make check
+
