@@ -441,7 +441,7 @@ int main(int argc, char **argv)
 		old_hash = NULL;
 	}
 
-	if (!write_db_version(&cdbm, new_hash, old_hash))
+	if (!write_db_metadata(&cdbm, new_hash, old_hash))
 		exit(EXIT_FAILURE);
 
 	if (cdb_make_finish(&cdbm) < 0)

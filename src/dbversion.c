@@ -35,7 +35,7 @@ bool compat_db_version(int fd)
 	return true;
 }
 
-bool write_db_version(struct cdb_make *cdbm,
+bool write_db_metadata(struct cdb_make *cdbm,
 		const hash_type_data_t *primary_type_data,
 		const hash_type_data_t *secondary_type_data)
 {

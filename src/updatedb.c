@@ -308,7 +308,7 @@ int main(int argc, char **argv)
 	if (tmp_ptr == NULL)
 		osec_fatal(EXIT_FAILURE, 0, "failed to find hash type 'sha1'\n");
 
-	if (!write_db_version(&cdbn, tmp_ptr, NULL))
+	if (!write_db_metadata(&cdbn, tmp_ptr, NULL))
 		exit(EXIT_FAILURE);
 
 	free(rec.data);

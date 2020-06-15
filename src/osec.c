@@ -236,7 +236,7 @@ static bool create_cdb(int fd, char *dir,
 	}
 
 skip:
-	if (!write_db_version(&cdbm, primary_type_data, secondary_type_data))
+	if (!write_db_metadata(&cdbm, primary_type_data, secondary_type_data))
 		goto end;
 
 	if (cdb_make_finish(&cdbm) < 0) {
