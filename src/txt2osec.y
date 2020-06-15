@@ -54,6 +54,7 @@ char **chsum = NULL;
 size_t chsum_count = 0;
 char *xattr = NULL;
 char *hashnames = NULL;
+char *basepath = NULL;
 
 osec_stat_t ost;
 
@@ -77,7 +78,7 @@ int yylex (void);
 %token FILENAME DEVICE INODE UID GID MTIME CHECKSUM SYMLINK MODE
 %token EQUALS DOT EOL ERROR
 %token NUMBER OCTAL STRLITERAL
-%token HASHNAMES
+%token HASHNAMES BASEPATH
 %token XATTR
 
 /* Grammar follows */
@@ -87,7 +88,8 @@ input		: /* empty string */
  		;
 line		: endline
 		| fileline range endline
-		| hashline hashlineend
+		| hashline eol
+		| basepathline eol
 		;
 range		: range range0
 		| range0
@@ -105,7 +107,18 @@ range0		: devline
 		;
 hashline	: HASHNAMES EQUALS STRLITERAL
 		{
+			if (current_db.basepath != NULL)
+				osec_fatal(EXIT_FAILURE, 0, "%s:%d: duplicate field: hashnames",
+					pathname, line_nr);
 			hashnames = strdup(str);
+		}
+		;
+basepathline	: BASEPATH EQUALS STRLITERAL
+		{
+			if (current_db.basepath != NULL)
+				osec_fatal(EXIT_FAILURE, 0, "%s:%d: duplicate field: basepath",
+					pathname, line_nr);
+			current_db.basepath = strdup(str);
 		}
 		;
 fileline	: FILENAME EQUALS STRLITERAL
@@ -215,7 +228,7 @@ modeline	: MODE EQUALS OCTAL
 		{ ost.mode = (mode_t) $3;
 		  flags |= FLAG_MODE; }
 		;
-hashlineend		: EOL
+eol		: EOL
 		{
 		}
 		;

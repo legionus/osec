@@ -162,14 +162,14 @@ static bool create_cdb(int fd)
 		goto end;
 	}
 
-	if (lstat(current_db.path, &st) == -1 || !S_ISDIR(st.st_mode))
+	if (lstat(current_db.basepath, &st) == -1 || !S_ISDIR(st.st_mode))
 		goto skip;
 
-	argv[0] = current_db.path;
+	argv[0] = current_db.basepath;
 	argv[1] = NULL;
 
 	if ((t = fts_open(argv, FTS_PHYSICAL, dsort)) == NULL) {
-		osec_error("fts_open: %s: %m", current_db.path);
+		osec_error("fts_open: %s: %m", current_db.basepath);
 		goto end;
 	}
 
@@ -231,7 +231,7 @@ static bool create_cdb(int fd)
 	}
 
 	if (fts_close(t) == -1) {
-		osec_error("fts_close: %s: %m", current_db.path);
+		osec_error("fts_close: %s: %m", current_db.basepath);
 		goto end;
 	}
 
@@ -482,7 +482,7 @@ static bool process(char *dirname)
 	if (!gen_db_name(dirname, &old_dbname))
 		return false;
 
-	current_db.path = dirname;
+	current_db.basepath = dirname;
 
 	new_fd = old_fd = -1;
 	new_dbname = NULL;

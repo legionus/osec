@@ -41,23 +41,31 @@ bool compat_db_version(int fd)
 bool write_db_metadata(struct cdb_make *cdbm)
 {
 	int ver = OSEC_DB_VERSION;
-	char *buffer;
+	size_t len = sizeof(ver);
 
-	if (cdb_make_add(cdbm, "version", (unsigned) 7, &ver, (unsigned) sizeof(ver)) != 0) {
+	if (cdb_make_add(cdbm, "version", (unsigned) 7, &ver, (unsigned) len) != 0) {
 		osec_error("cdb_make_add: %m");
 		return false;
 	}
 
-	size_t hashes_len = strlen(current_db.primary_hashtype->hashname);
+	len = sizeof(char) * strlen(current_db.basepath);
+	len += 1;
+
+	if (cdb_make_add(cdbm, "basepath", (unsigned) 8, current_db.basepath, (unsigned) len) != 0) {
+		osec_error("cdb_make_add: %m");
+		return false;
+	}
+
+	len = strlen(current_db.primary_hashtype->hashname);
 	int use_secondary = 0;
 
 	if (current_db.secondary_hashtype &&
 	    strcmp(current_db.primary_hashtype->hashname, current_db.secondary_hashtype->hashname) != 0) {
-		hashes_len += strlen(current_db.secondary_hashtype->hashname) + strlen(":");
+		len += strlen(current_db.secondary_hashtype->hashname) + strlen(":");
 		use_secondary = 1;
 	}
 
-	buffer = malloc(hashes_len + 1);
+	char *buffer = malloc(len + 1);
 
 	if (buffer == NULL) {
 		osec_error("malloc: %m");
@@ -71,7 +79,7 @@ bool write_db_metadata(struct cdb_make *cdbm)
 		strcat(buffer, current_db.secondary_hashtype->hashname);
 	}
 
-	if (cdb_make_add(cdbm, "hashnames", strlen("hashnames"), buffer, (unsigned) hashes_len) != 0) {
+	if (cdb_make_add(cdbm, "hashnames", strlen("hashnames"), buffer, (unsigned) len) != 0) {
 		osec_error("cdb_make_add: %m");
 		free(buffer);
 		return false;

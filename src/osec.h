@@ -20,7 +20,7 @@
 // OSEC_DB_VERSION 2 - mtime added
 // OSEC_DB_VERSION 3 - xattr added
 // OSEC_DB_VERSION 4 - csum now contains pairs of "hash name" and "hash value"
-// OSEC_DB_VERSION 5 - mtime_nsec added
+// OSEC_DB_VERSION 5 - mtime_nsec added, filesystem base directory
 #define OSEC_DB_VERSION 5
 
 #define OSEC_CSM (1 << 1)
@@ -74,7 +74,7 @@ typedef struct hash_type_data {
 
 struct database_metadata {
 	int version;
-	char *path;
+	char *basepath;
 	const struct hash_type_data *primary_hashtype;
 	const struct hash_type_data *secondary_hashtype;
 };

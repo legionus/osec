@@ -51,6 +51,7 @@ Mtime		mtime|Mtime
 Checksum	checksum|Checksum
 Symlink		symlink|Symlink
 Hashnames	hashnames|Hashnames
+BasePath	basepath|Basepath|BasePath
 Xattr		xattr|Xattr
 
 %%
@@ -67,6 +68,7 @@ Xattr		xattr|Xattr
 				return(OCTAL);
 			}
 {Hashnames}		{ return(HASHNAMES); }
+{BasePath}		{ return(BASEPATH); }
 {Filename}		{ return(FILENAME); }
 {Xattr}			{ return(XATTR); }
 {Checksum}		{ return(CHECKSUM); }

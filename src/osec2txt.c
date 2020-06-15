@@ -141,6 +141,29 @@ static void dump_record(int fd, char *key, void *rec, size_t rlen)
 	}
 }
 
+static void print_meta(struct cdb *cdbm, const char *name, int outfd)
+{
+	if (cdb_find(cdbm, name, (unsigned) strlen(name)) <= 0)
+		return;
+
+	unsigned dlen = cdb_datalen(cdbm);
+	char *chardata = malloc((size_t) dlen + 1);
+
+	if (!chardata) {
+		osec_error("malloc: %m");
+		exit(EXIT_FAILURE);
+	}
+
+	if (cdb_read(cdbm, chardata, dlen, cdb_datapos(cdbm)) < 0)
+		osec_fatal(EXIT_FAILURE, errno, "cdb_read(data)");
+
+	chardata[dlen] = 0;
+
+	dprintf(outfd, "%s=\"%s\"\n", name, chardata);
+
+	free(chardata);
+}
+
 int main(int argc, char **argv)
 {
 	int c, fd, outfd, rc;
@@ -187,26 +210,8 @@ int main(int argc, char **argv)
 	if ((outfd = open(outfile, O_WRONLY | O_CREAT | O_NOCTTY, S_IRUSR | S_IWUSR)) == -1)
 		osec_fatal(EXIT_FAILURE, errno, "%s: open", outfile);
 
-	if (cdb_find(&cdbm, "hashnames", strlen("hashnames")) > 0) {
-
-		char *chardata = NULL;
-		dlen = cdb_datalen(&cdbm);
-
-		chardata = malloc((size_t) dlen + 1);
-		if (!chardata) {
-			osec_error("malloc: %m");
-			exit(EXIT_FAILURE);
-		}
-
-		if (cdb_read(&cdbm, chardata, (unsigned) dlen, cdb_datapos(&cdbm)) < 0)
-			osec_fatal(EXIT_FAILURE, errno, "cdb_read(data)");
-
-		chardata[dlen] = 0;
-
-		dprintf(outfd, "hashnames=\"%s\"\n", chardata);
-
-		free(chardata);
-	}
+	print_meta(&cdbm, "hashnames", outfd);
+	print_meta(&cdbm, "basepath", outfd);
 
 	cdb_seqinit(&cpos, &cdbm);
 
