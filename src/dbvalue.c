@@ -129,7 +129,7 @@ bool osec_digest(struct record *rec, const char *fname)
 	gcry_md_hd_t handle = NULL;
 	unsigned char *data_ptr;
 	bool ret, retval = false;
-	char read_buf[PAGE_SIZE];
+	char read_buf[BUFSIZ];
 
 	struct record local_rec = { 0 };
 
