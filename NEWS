@@ -1,5 +1,13 @@
 list of user-visible changes between releases of osec:
 
+[1.3.0]
+* Database creation is more error tolerant:
+   - if osec failed to get the owner and user group by id, a numeric value will be used.
+   - if osec failed to read the file to calculate the checksum, an empty value will be used.
+   - if osec failed to read symlink an empty value will be used.
+* The mtime field includes nanoseconds.
+* The basepath field has been added to the database.
+
 [1.2.9]
 Initialize libgcrypt;
 Make sure that all messages end with newline.
