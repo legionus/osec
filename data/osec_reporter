@@ -33,145 +33,143 @@ my $process = 1;
 setlocale (LC_ALL, "C");
 
 while (<STDIN>) {
-    my @fields = split /\t+/;
+	my @fields = split /\t+/;
 
-    # s/^\s*(\S+.*?)\s*$/$1/ foreach (@fields); #trim
+	# s/^\s*(\S+.*?)\s*$/$1/ foreach (@fields); #trim
 
-    if (/^Init\s+(.*?)\.\.\.$/) {
-        print;
-        $process = 0;
-        next;
-    }
+	if (/^Init\s+(.*?)\.\.\.$/) {
+		print;
+		$process = 0;
+		next;
+	}
 
-    if (/^Processing\s+(.*?)\.\.\.$/) {
-        print;
-        $process = 1;
-        next;
-    }
+	if (/^Processing\s+(.*?)\.\.\.$/) {
+		print;
+		$process = 1;
+		next;
+	}
 
-    my $first_bad  = undef;    # First possible bad comment
-    my $second_bad = undef;    # Second possible bad comment
+	my $first_bad  = undef;    # First possible bad comment
+	my $second_bad = undef;    # Second possible bad comment
 
-    #
-    # Always save bad file information if we have it.
-    #
-    if ($fields[3] and $fields[3] =~ m/.*\[(.*)\]$/) {
-        $first_bad = $1;
-        $first_bad =~ s/^\s*(\S+.*?)\s*$/$1/;
-        $info_bad_files{$fields[0]} = $first_bad;
-    }
+	#
+	# Always save bad file information if we have it.
+	#
+	if ($fields[3] and $fields[3] =~ m/.*\[(.*)\]$/) {
+		$first_bad = $1;
+		$first_bad =~ s/^\s*(\S+.*?)\s*$/$1/;
+		$info_bad_files{$fields[0]} = $first_bad;
+	}
 
-    #
-    # It's a new dangerous status.
-    #
-    if ($fields[4] and $fields[4] =~ m/.*\[(.*)\]$/) {
-        $second_bad = $1;
-        $second_bad =~ s/^\s*(\S+.*?)\s*$/$1/;
-        $info_bad_files{$fields[0]} = $second_bad;
-    }
+	#
+	# It's a new dangerous status.
+	#
+	if ($fields[4] and $fields[4] =~ m/.*\[(.*)\]$/) {
+		$second_bad = $1;
+		$second_bad =~ s/^\s*(\S+.*?)\s*$/$1/;
+		$info_bad_files{$fields[0]} = $second_bad;
+	}
 
-    #
-    # Choose action
-    #
-    if ($fields[1] eq "symlink" and $fields[2] and ($fields[2] eq "changed")) {
-        $fields[3] =~ /^old\s+target=(.*)/
-          and $changed_symlinks{$fields[0]}{"old"} = $1;
-        $fields[4] =~ /^new\s+target=(.*)/
-          and $changed_symlinks{$fields[0]}{"new"} = $1;
-    }
-    elsif ($process and $fields[1] eq "xattr") {
-        chomp $fields[4];
+	#
+	# Choose action
+	#
+	if ($fields[1] eq "symlink" and $fields[2] and ($fields[2] eq "changed")) {
+		$fields[3] =~ /^old\s+target=(.*)/
+			and $changed_symlinks{$fields[0]}{"old"} = $1;
+		$fields[4] =~ /^new\s+target=(.*)/
+			and $changed_symlinks{$fields[0]}{"new"} = $1;
+	}
+	elsif ($process and $fields[1] eq "xattr") {
+		chomp $fields[4];
 
-        #
-        # Split the list in two parts: selinux and xattrs.
-        #
-        if ($fields[3] eq "security.selinux") {
-            $changed_selinux{$fields[0]}{$fields[2]} = $fields[4];
-            next;
-        }
-        $changed_xattrs{$fields[0]}{$fields[2]}{$fields[3]} = $fields[4];
-    }
-    elsif ($fields[1] eq "stat" and $fields[2] and ($fields[2] eq "new")) {
-        #
-        # Don't report about new files if we init database for this dir.
-        #
-        $process   and $new_normal_files{$fields[0]} = 1;
-        $first_bad and $new_bad_files{$fields[0]}    = $first_bad;
-    }
-    elsif ($fields[1] eq "stat" and $fields[2] and ($fields[2] eq "removed")) {
-        $del_normal_files{$fields[0]} = 1;
-        $first_bad and $del_bad_files{$fields[0]} = $first_bad;
-    }
-    elsif ($fields[1] eq "stat" and $fields[2] and ($fields[2] eq "changed")) {
-        $fields[3] =~ s/^old\s+//;    # Remove 'old' prefix
-        $fields[4] =~ s/^new\s+//;    # Remove 'new' prefix
+		#
+		# Split the list in two parts: selinux and xattrs.
+		#
+		if ($fields[3] eq "security.selinux") {
+			$changed_selinux{$fields[0]}{$fields[2]} = $fields[4];
+			next;
+		}
+		$changed_xattrs{$fields[0]}{$fields[2]}{$fields[3]} = $fields[4];
+	}
+	elsif ($fields[1] eq "stat" and $fields[2] and ($fields[2] eq "new")) {
+		#
+		# Don't report about new files if we init database for this dir.
+		#
+		$process   and $new_normal_files{$fields[0]} = 1;
+		$first_bad and $new_bad_files{$fields[0]} = $first_bad;
+	}
+	elsif ($fields[1] eq "stat" and $fields[2] and ($fields[2] eq "removed")) {
+		$del_normal_files{$fields[0]} = 1;
+		$first_bad and $del_bad_files{$fields[0]} = $first_bad;
+	}
+	elsif ($fields[1] eq "stat" and $fields[2] and ($fields[2] eq "changed")) {
+		$fields[3] =~ s/^old\s+//;    # Remove 'old' prefix
+		$fields[4] =~ s/^new\s+//;    # Remove 'new' prefix
 
-        /(.*?)=(.*)/ and $change_normal_files{$fields[0]}{$1}{"old"} = $2
-          foreach (split / /, $fields[3]);
-        /(.*?)=(.*)/ and $change_normal_files{$fields[0]}{$1}{"new"} = $2
-          foreach (split / /, $fields[4]);
+		/(.*?)=(.*)/ and $change_normal_files{$fields[0]}{$1}{"old"} = $2 foreach (split / /, $fields[3]);
+		/(.*?)=(.*)/ and $change_normal_files{$fields[0]}{$1}{"new"} = $2 foreach (split / /, $fields[4]);
 
-        #
-        # Also process bad file transformations.
-        #
-        if (not($first_bad) and $second_bad) {
-            $new_bad_files{$fields[0]} = $second_bad;
-        }
-        elsif ($first_bad and not($second_bad)) {
-            $del_bad_files{$fields[0]} = $first_bad;
-        }
-        elsif ($first_bad and $second_bad) {
-            my %old_bad_status = ();
-            my %new_bad_status = ();
+		#
+		# Also process bad file transformations.
+		#
+		if (not($first_bad) and $second_bad) {
+			$new_bad_files{$fields[0]} = $second_bad;
+		}
+		elsif ($first_bad and not($second_bad)) {
+			$del_bad_files{$fields[0]} = $first_bad;
+		}
+		elsif ($first_bad and $second_bad) {
+			my %old_bad_status = ();
+			my %new_bad_status = ();
 
-            foreach (split / /, $first_bad) {
-                /\s*(.*)=(.*)/
-                  ? $old_bad_status{$1} = $_
-                  : $old_bad_status{$_} = $_;
-            }
-            foreach (split / /, $second_bad) {
-                /\s*(.*)=(.*)/
-                  ? $new_bad_status{$1} = $_
-                  : $new_bad_status{$_} = $_;
-            }
+			foreach (split / /, $first_bad) {
+				/\s*(.*)=(.*)/
+					? $old_bad_status{$1} = $_
+					: $old_bad_status{$_} = $_;
+			}
+			foreach (split / /, $second_bad) {
+				/\s*(.*)=(.*)/
+					? $new_bad_status{$1} = $_
+					: $new_bad_status{$_} = $_;
+			}
 
-            my $out = "";
-            my @bad_fields = ("suid", "sgid", "ww");
-            foreach (@bad_fields) {
-                (not($old_bad_status{$_}) and $new_bad_status{$_})
-                  and $out .= " +$new_bad_status{$_}";
-                ($old_bad_status{$_} and not($new_bad_status{$_}))
-                  and $out .= " -$old_bad_status{$_}";
-            }
-            if (    $change_normal_files{$fields[0]}{"uid"}
-                and $old_bad_status{"suid"}
-                and $new_bad_status{"suid"}) {
-                $out .= " suid($change_normal_files{$fields[0]}{uid}{old}->";
-                $out .= "$change_normal_files{$fields[0]}{uid}{new})";
-            }
-            if (    $change_normal_files{$fields[0]}{"gid"}
-                and $old_bad_status{"sgid"}
-                and $new_bad_status{"sgid"}) {
-                $out .= " sgid($change_normal_files{$fields[0]}{gid}{old}->";
-                $out .= "$change_normal_files{$fields[0]}{gid}{new})";
-            }
-            $change_bad_files{$fields[0]} = $out;
-        }
-    }
+			my $out = "";
+			my @bad_fields = ("suid", "sgid", "ww");
+			foreach (@bad_fields) {
+				(not($old_bad_status{$_}) and $new_bad_status{$_})
+					and $out .= " +$new_bad_status{$_}";
+				($old_bad_status{$_} and not($new_bad_status{$_}))
+					and $out .= " -$old_bad_status{$_}";
+			}
+			if ($change_normal_files{$fields[0]}{"uid"}
+					and $old_bad_status{"suid"}
+					and $new_bad_status{"suid"}) {
+				$out .= " suid($change_normal_files{$fields[0]}{uid}{old}->";
+				$out .= "$change_normal_files{$fields[0]}{uid}{new})";
+			}
+			if ($change_normal_files{$fields[0]}{"gid"}
+					and $old_bad_status{"sgid"}
+					and $new_bad_status{"sgid"}) {
+				$out .= " sgid($change_normal_files{$fields[0]}{gid}{old}->";
+				$out .= "$change_normal_files{$fields[0]}{gid}{new})";
+			}
+			$change_bad_files{$fields[0]} = $out;
+		}
+	}
 }
 
 #
 # Additional check for checksum changes in bad files and check for files became symlinks
 #
 foreach (keys %change_normal_files) {
-    if (    $change_normal_files{$_}{"mode"}
-        and $change_normal_files{$_}{"mode"}{"new"} =~ /^12/) {
-        $symlinks{$_} = readlink($_);
-        delete $change_normal_files{$_};
-        next;
-    }
-    ($change_normal_files{$_}{"checksum"} and $info_bad_files{$_})
-      and $change_bad_files{$_} .= " checksum";
+	if ($change_normal_files{$_}{"mode"}
+			and $change_normal_files{$_}{"mode"}{"new"} =~ /^12/) {
+		$symlinks{$_} = readlink($_);
+		delete $change_normal_files{$_};
+		next;
+	}
+	($change_normal_files{$_}{"checksum"} and $info_bad_files{$_})
+		and $change_bad_files{$_} .= " checksum";
 }
 
 #
@@ -184,117 +182,118 @@ print "\nThis is a report generated by osec at '$date'\n\n";
 # Has any bad info ?
 #
 if (%new_bad_files or %del_bad_files or %change_bad_files) {
-    print "-- PLEASE PAY ATTENTION TO --\n";
-    if (%new_bad_files) {
-        print "New dangerous files :\n";
-        print "\t- $_ is $new_bad_files{$_}\n"
-          foreach (sort keys %new_bad_files);
-    }
+	print "-- PLEASE PAY ATTENTION TO --\n";
+	if (%new_bad_files) {
+		print "New dangerous files :\n";
+		print "\t- $_ is $new_bad_files{$_}\n"
+			foreach (sort keys %new_bad_files);
+	}
 
-    if (%del_bad_files) {
-        print "Removed from dangerous files list:\n";
-        print "\t- $_ was $del_bad_files{$_}\n"
-          foreach (sort keys %del_bad_files);
-    }
+	if (%del_bad_files) {
+		print "Removed from dangerous files list:\n";
+		print "\t- $_ was $del_bad_files{$_}\n"
+			foreach (sort keys %del_bad_files);
+	}
 
-    if (%change_bad_files) {
-        print "Changed dangerous files:\n";
-        print "\t- $_ "
-          . "[ $info_bad_files{$_} ]  "
-          . "$change_bad_files{$_}\n"
-          foreach (sort keys %change_bad_files);
-    }
-    print "\n";
+	if (%change_bad_files) {
+		print "Changed dangerous files:\n";
+		print "\t- $_ "
+			. "[ $info_bad_files{$_} ]  "
+			. "$change_bad_files{$_}\n"
+			foreach (sort keys %change_bad_files);
+	}
+	print "\n";
 }
 
 if (%changed_selinux) {
-    print "Changes in SELINUX policy:\n";
+	print "Changes in SELINUX policy:\n";
 
-    my %act = ("changed" => "changed policy",
-               "new"     => "got policy",
-               "old"     => "lost policy"
-              );
+	my %act = (
+		"changed" => "changed policy",
+		"new"     => "got policy",
+		"old"     => "lost policy"
+	);
 
-    foreach my $file (sort keys %changed_selinux) {
-        my $item = \%{$changed_selinux{$file}};
-        print "\t- $file $act{$_} $item->{$_}\n" foreach (sort keys %{$item});
-    }
-    print "\n";
+	foreach my $file (sort keys %changed_selinux) {
+		my $item = \%{$changed_selinux{$file}};
+		print "\t- $file $act{$_} $item->{$_}\n" foreach (sort keys %{$item});
+	}
+	print "\n";
 }
 
 if (%symlinks) {
-    print "These regular files turned into symlinks:\n";
-    print "\t- $_ --> $symlinks{$_}\n" foreach (sort keys %symlinks);
-    print "\n";
+	print "These regular files turned into symlinks:\n";
+	print "\t- $_ --> $symlinks{$_}\n" foreach (sort keys %symlinks);
+	print "\n";
 }
 
 if (%changed_symlinks) {
-    print "These symlinks changed their target:\n";
-    print "\t- $_ -> "
-      . "'$changed_symlinks{$_}{'new'}', was "
-      . "'$changed_symlinks{$_}{'old'}'\n"
-      foreach (sort keys %changed_symlinks);
-    print "\n";
+	print "These symlinks changed their target:\n";
+	print "\t- $_ -> "
+		. "'$changed_symlinks{$_}{'new'}', was "
+		. "'$changed_symlinks{$_}{'old'}'\n"
+		foreach (sort keys %changed_symlinks);
+	print "\n";
 }
 
 if (%new_normal_files) {
-    print "New files added to control:\n";
-    print "\t- $_\n" foreach (sort keys %new_normal_files);
+	print "New files added to control:\n";
+	print "\t- $_\n" foreach (sort keys %new_normal_files);
 }
 
 if (%del_normal_files) {
-    print "Removed from control:\n";
-    print "\t- $_\n" foreach (sort keys %del_normal_files);
+	print "Removed from control:\n";
+	print "\t- $_\n" foreach (sort keys %del_normal_files);
 }
 
 if (%change_normal_files) {
-    print "Changed controlled files:\n";
-    foreach (sort keys %change_normal_files) {
-        print "\t- $_\n";
-        my %item = %{$change_normal_files{$_}};
+	print "Changed controlled files:\n";
+	foreach (sort keys %change_normal_files) {
+		print "\t- $_\n";
+		my %item = %{$change_normal_files{$_}};
 
-        #
-        # Print additional info except of checksum.
-        #
-        foreach (keys %item) {
-            if ("$_" eq "mtime") {
-                $item{$_}{old} = localtime($item{$_}{old});
-                $item{$_}{new} = localtime($item{$_}{new});
-            }
+		#
+		# Print additional info except of checksum.
+		#
+		foreach (keys %item) {
+			if ("$_" eq "mtime") {
+				$item{$_}{old} = localtime($item{$_}{old});
+				$item{$_}{new} = localtime($item{$_}{new});
+			}
 
-            $item{$_}{old} = 'report-parse-error' if !defined $item{$_}{old};
-            $item{$_}{new} = 'report-parse-error' if !defined $item{$_}{new};
+			$item{$_}{old} = 'report-parse-error' if !defined $item{$_}{old};
+			$item{$_}{new} = 'report-parse-error' if !defined $item{$_}{new};
 
-            print "\t\t$_: $item{$_}{old} -> $item{$_}{new}\n"
-              unless ($_ eq "checksum");
-        }
-    }
+			print "\t\t$_: $item{$_}{old} -> $item{$_}{new}\n"
+				unless ($_ eq "checksum");
+		}
+	}
 }
 
 if (%changed_xattrs) {
-    print "Changed extended attributes:\n";
-    foreach my $file (sort keys %changed_xattrs) {
-        print "\t- $file\n";
-        foreach (sort keys %{$changed_xattrs{$file}}) {
-            my $item = \%{$changed_xattrs{$file}{$_}};
-            print "\t\t$_:\n";
-            print "\t\t\t$_: $item->{$_}\n" foreach (sort keys %{$item});
-        }
-    }
-    print "\n";
+	print "Changed extended attributes:\n";
+	foreach my $file (sort keys %changed_xattrs) {
+		print "\t- $file\n";
+		foreach (sort keys %{$changed_xattrs{$file}}) {
+			my $item = \%{$changed_xattrs{$file}{$_}};
+			print "\t\t$_:\n";
+			print "\t\t\t$_: $item->{$_}\n" foreach (sort keys %{$item});
+		}
+	}
+	print "\n";
 
 }
 
 print "No changes\n"
-  unless (   %new_normal_files
-          or %del_normal_files
-          or %change_normal_files
-          or %new_bad_files
-          or %del_bad_files
-          or %change_bad_files
-          or %symlinks
-          or %changed_symlinks
-          or %changed_xattrs
-          or %changed_selinux);
+unless (%new_normal_files
+		or %del_normal_files
+		or %change_normal_files
+		or %new_bad_files
+		or %del_bad_files
+		or %change_bad_files
+		or %symlinks
+		or %changed_symlinks
+		or %changed_xattrs
+		or %changed_selinux);
 
 print "\n";

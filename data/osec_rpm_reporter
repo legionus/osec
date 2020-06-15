@@ -16,12 +16,12 @@ use RPM2;
 my $rpm = RPM2->open_rpm_db();
 
 while (<STDIN>) {
-    if (/^\s+-\s+(.*)/) {
-        my $name = join(',', map {$_->{name}} $rpm->find_by_file ($1));
-        $name eq "" and $name = "unknown";
-        print "\t- [$name] $1\n";
-    }
-    else {
-        print;
-    }
+	if (/^\s+-\s+(.*)/) {
+		my $name = join(',', map {$_->{name}} $rpm->find_by_file ($1));
+		$name eq "" and $name = "unknown";
+		print "\t- [$name] $1\n";
+	}
+	else {
+		print;
+	}
 }
