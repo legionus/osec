@@ -18,6 +18,7 @@ bool compat_db_version(int fd)
 	struct cdb cdbm;
 	char key[] = "version";
 	size_t klen = 7;
+	int dbversion;
 
 	if (cdb_init(&cdbm, fd) < 0) {
 		osec_error("cdb_init(db): %m");
@@ -32,12 +33,12 @@ bool compat_db_version(int fd)
 		return false;
 	}
 
+	current_db.version = dbversion;
+
 	return true;
 }
 
-bool write_db_metadata(struct cdb_make *cdbm,
-		const hash_type_data_t *primary_type_data,
-		const hash_type_data_t *secondary_type_data)
+bool write_db_metadata(struct cdb_make *cdbm)
 {
 	int ver = OSEC_DB_VERSION;
 	char *buffer;
@@ -47,11 +48,12 @@ bool write_db_metadata(struct cdb_make *cdbm,
 		return false;
 	}
 
-	size_t hashes_len = strlen(primary_type_data->hashname);
+	size_t hashes_len = strlen(current_db.primary_hashtype->hashname);
 	int use_secondary = 0;
 
-	if (secondary_type_data && (strcmp(primary_type_data->hashname, secondary_type_data->hashname) != 0)) {
-		hashes_len += strlen(secondary_type_data->hashname) + strlen(":");
+	if (current_db.secondary_hashtype &&
+	    strcmp(current_db.primary_hashtype->hashname, current_db.secondary_hashtype->hashname) != 0) {
+		hashes_len += strlen(current_db.secondary_hashtype->hashname) + strlen(":");
 		use_secondary = 1;
 	}
 
@@ -62,11 +64,11 @@ bool write_db_metadata(struct cdb_make *cdbm,
 		return false;
 	}
 
-	strcpy(buffer, primary_type_data->hashname);
+	strcpy(buffer, current_db.primary_hashtype->hashname);
 
 	if (use_secondary) {
 		strcat(buffer, ":");
-		strcat(buffer, secondary_type_data->hashname);
+		strcat(buffer, current_db.secondary_hashtype->hashname);
 	}
 
 	if (cdb_make_add(cdbm, "hashnames", strlen("hashnames"), buffer, (unsigned) hashes_len) != 0) {

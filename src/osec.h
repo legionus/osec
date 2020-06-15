@@ -22,7 +22,6 @@
 // OSEC_DB_VERSION 4 - csum now contains pairs of "hash name" and "hash value"
 // OSEC_DB_VERSION 5 - mtime_nsec added
 #define OSEC_DB_VERSION 5
-int dbversion;
 
 #define OSEC_CSM (1 << 1)
 #define OSEC_LNK (1 << 2)
@@ -73,6 +72,15 @@ typedef struct hash_type_data {
 	const char *hashname;
 } hash_type_data_t;
 
+struct database_metadata {
+	int version;
+	char *path;
+	const struct hash_type_data *primary_hashtype;
+	const struct hash_type_data *secondary_hashtype;
+};
+
+extern struct database_metadata current_db;
+
 #define digest_len_sha1 20 /* SHA1 */
 
 /* common.c */
@@ -116,10 +124,8 @@ bool osec_state(struct record *rec, const struct stat *st)
 	__attribute__((nonnull(1, 2)))
 	__attribute__((warn_unused_result));
 
-bool osec_digest(struct record *rec, const char *fname,
-		const hash_type_data_t *primary_type_data,
-		const hash_type_data_t *secondary_type_data)
-	__attribute__((nonnull(1, 2, 3, 4)))
+bool osec_digest(struct record *rec, const char *fname)
+	__attribute__((nonnull(1, 2)))
 	__attribute__((warn_unused_result));
 
 bool osec_symlink(struct record *rec, const char *fname)
@@ -142,14 +148,12 @@ bool osec_csum_append_value(const char *name, size_t namelen,
 	__attribute__((nonnull(1, 3, 5)))
 	__attribute__((warn_unused_result));
 
-/* dbvalue.c */
+/* dbversion.c */
 bool compat_db_version(int fd)
 	__attribute__((warn_unused_result));
 
-bool write_db_metadata(struct cdb_make *cdbm,
-		const hash_type_data_t *primary_type_data,
-		const hash_type_data_t *secondary_type_data)
-	__attribute__((nonnull(1, 2)))
+bool write_db_metadata(struct cdb_make *cdbm)
+	__attribute__((nonnull(1)))
 	__attribute__((warn_unused_result));
 
 bool get_hashes_from_string(const char *buffer, const size_t buffer_len,

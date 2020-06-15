@@ -161,9 +161,9 @@ static void print_state(const char *mode, const char *fname, osec_stat_t *st)
 	printf_pwname("uid", st->uid);
 	printf_grname("gid", st->gid);
 	printf(" mode=%lo inode=%ld", (unsigned long) st->mode, (long) st->ino);
-	if (dbversion > 1) {
+	if (current_db.version > 1) {
 		printf(" mtime=%lld", st->mtime);
-		if (dbversion > 4)
+		if (current_db.version > 4)
 			/*
 			 * Format the nanoseconds part.  Leave a trailing zero to
 			 * discourage people from writing scripts which extract the
@@ -210,7 +210,7 @@ static bool check_checksum(const char *fname,
 		return false;
 	}
 
-	if (dbversion >= 4) {
+	if (current_db.version >= 4) {
 		old = osec_csum_field(hashtype_data->hashname, strlen(hashtype_data->hashname),
 				old, old_data.len, &old_csum_data);
 		if (old == NULL) {
@@ -439,7 +439,7 @@ int check_difference(const char *fname,
 			return -1;
 	}
 
-	if (dbversion > 2 && !check_xattr(fname, ndata, nlen, odata, olen))
+	if (current_db.version > 2 && !check_xattr(fname, ndata, nlen, odata, olen))
 		return -1;
 
 	// clang-format off
@@ -447,10 +447,10 @@ int check_difference(const char *fname,
 	if (!(ignore & OSEC_GID) && old_st->gid   != new_st->gid)    state |= OSEC_GID;
 	if (!(ignore & OSEC_MOD) && old_st->mode  != new_st->mode)   state |= OSEC_MOD;
 	if (!(ignore & OSEC_INO) && old_st->ino   != new_st->ino)    state |= OSEC_INO;
-	if (dbversion > 1 && !(ignore & OSEC_MTS)) {
+	if (current_db.version > 1 && !(ignore & OSEC_MTS)) {
 		if (old_st->mtime != new_st->mtime)
 			state |= OSEC_MTS;
-		if (dbversion > 4 && old_st->mtime_nsec != new_st->mtime_nsec)
+		if (current_db.version > 4 && old_st->mtime_nsec != new_st->mtime_nsec)
 			state |= OSEC_MTS;
 	}
 	// clang-format on
@@ -557,7 +557,7 @@ bool check_new(const char *fname, void *data, size_t dlen,
 
 	print_state("new", fname, st);
 
-	if (dbversion > 2) {
+	if (current_db.version > 2) {
 		if ((osec_field(OVALUE_XATTR, data, dlen, &attrs)) == NULL) {
 			osec_error("osec_field: unable to parse `xattr' field");
 			return false;
@@ -593,7 +593,7 @@ bool check_removed(const char *fname, void *data, size_t len,
 			return false;
 		}
 
-		if (dbversion >= 4) {
+		if (current_db.version >= 4) {
 			struct csum_field csum_field_data;
 
 			csum = osec_csum_field(hashtype_data->hashname, strlen(hashtype_data->hashname),
@@ -615,7 +615,7 @@ bool check_removed(const char *fname, void *data, size_t len,
 	}
 	print_state("removed", fname, st);
 
-	if (dbversion > 2) {
+	if (current_db.version > 2) {
 		if ((osec_field(OVALUE_XATTR, data, len, &attrs)) == NULL) {
 			osec_error("osec_field: unable to parse `xattr' field");
 			return false;

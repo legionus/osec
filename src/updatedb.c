@@ -22,6 +22,7 @@
 // FIXME: use config file for this variables.
 char def_db_path[] = "/tmp/osec";
 char *db_path = NULL;
+struct database_metadata current_db = { 0 };
 
 static void print_help(int ret)
 {
@@ -183,8 +184,6 @@ int main(int argc, char **argv)
 
 	struct record rec;
 
-	const hash_type_data_t *tmp_ptr;
-
 	struct option long_options[] = {
 		{ "help", no_argument, 0, 'h' },
 		{ "version", no_argument, 0, 'v' },
@@ -304,11 +303,13 @@ int main(int argc, char **argv)
 		free(key);
 	}
 
-	tmp_ptr = get_hash_type_data_by_name("sha1", strlen("sha1"));
-	if (tmp_ptr == NULL)
+	current_db.primary_hashtype = get_hash_type_data_by_name("sha1", strlen("sha1"));
+	if (current_db.primary_hashtype == NULL)
 		osec_fatal(EXIT_FAILURE, 0, "failed to find hash type 'sha1'\n");
 
-	if (!write_db_metadata(&cdbn, tmp_ptr, NULL))
+	current_db.secondary_hashtype = NULL;
+
+	if (!write_db_metadata(&cdbn))
 		exit(EXIT_FAILURE);
 
 	free(rec.data);

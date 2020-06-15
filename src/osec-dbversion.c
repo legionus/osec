@@ -17,6 +17,8 @@
 
 #include "osec.h"
 
+struct database_metadata current_db = { 0 };
+
 static void print_help(int ret)
 {
 	printf("Usage: %s [options] <DBFILE>\n"
@@ -77,7 +79,7 @@ int main(int argc, char **argv)
 			osec_fatal(EXIT_FAILURE, 0, "%s: file not look like osec database", dbname);
 	}
 
-	printf("%d\n", dbversion);
+	printf("%d\n", current_db.version);
 
 	return 0;
 }

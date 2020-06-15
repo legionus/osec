@@ -20,6 +20,8 @@
 
 #include "osec.h"
 
+struct database_metadata current_db = { 0 };
+
 static void print_help(int ret)
 {
 	printf("Usage: %s [options] <DBFILE> <OUTFILE>\n"
@@ -74,7 +76,7 @@ static void dump_record(int fd, char *key, void *rec, size_t rlen)
 	}
 	dprintf(fd, "\" \\\n");
 
-	if (dbversion > 2) {
+	if (current_db.version > 2) {
 		if ((field = (char *) osec_field(OVALUE_XATTR, rec, rlen, &field_data)) == NULL)
 			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'xattr' from dbvalue", key);
 
@@ -87,7 +89,7 @@ static void dump_record(int fd, char *key, void *rec, size_t rlen)
 		if ((field = (char *) osec_field(OVALUE_CSUM, rec, rlen, &field_data)) == NULL)
 			osec_fatal(EXIT_FAILURE, 0, "%s: osec_field: Unable to get 'checksum' from dbvalue", key);
 
-		if (dbversion >= 4) {
+		if (current_db.version >= 4) {
 			struct csum_field csum_field_data;
 
 			while (field_data.len > 0) {
@@ -130,9 +132,9 @@ static void dump_record(int fd, char *key, void *rec, size_t rlen)
 	dprintf(fd, "\tmode=\\%06lo \\\n", (unsigned long) st->mode);
 	dprintf(fd, "\tuid=%ld \\\n", (long) st->uid);
 	dprintf(fd, "\tgid=%ld \\\n", (long) st->gid);
-	if (dbversion > 1) {
+	if (current_db.version > 1) {
 		dprintf(fd, "\tmtime=%lld", st->mtime);
-		dprintf(fd, ".%09lld0", (dbversion > 4) ? st->mtime_nsec : 0);
+		dprintf(fd, ".%09lld0", (current_db.version > 4) ? st->mtime_nsec : 0);
 		dprintf(fd, "\n");
 	} else {
 		dprintf(fd, "\tmtime=0.0\n");

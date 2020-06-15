@@ -62,6 +62,8 @@ struct record rec;
 struct cdb_make cdbm;
 long flags = 0;
 
+struct database_metadata current_db = { 0 };
+
 void print_help(int ret)
 	__attribute__((noreturn));
 void print_version(void)
@@ -441,7 +443,10 @@ int main(int argc, char **argv)
 		old_hash = NULL;
 	}
 
-	if (!write_db_metadata(&cdbm, new_hash, old_hash))
+	current_db.primary_hashtype = new_hash;
+	current_db.secondary_hashtype = old_hash;
+
+	if (!write_db_metadata(&cdbm))
 		exit(EXIT_FAILURE);
 
 	if (cdb_make_finish(&cdbm) < 0)

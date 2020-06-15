@@ -93,23 +93,22 @@ bool osec_state(struct record *rec, const struct stat *st)
 	return append_value(OVALUE_STAT, &ost, sizeof(ost), rec);
 }
 
-static bool append_empty_digest(struct record *rec,
-		const hash_type_data_t *primary_type_data,
-		const hash_type_data_t *secondary_type_data)
+static bool append_empty_digest(struct record *rec)
 {
 	bool ret = false;
 	char data[] = "";
 	struct record local_rec = { 0 };
 
-	ret = osec_csum_append_value(primary_type_data->hashname, strlen(primary_type_data->hashname),
+	ret = osec_csum_append_value(current_db.primary_hashtype->hashname,
+			strlen(current_db.primary_hashtype->hashname),
 			data, sizeof(data),
 			&local_rec);
 	if (!ret)
 		goto end;
 
-	if (primary_type_data->gcrypt_hashtype != secondary_type_data->gcrypt_hashtype) {
-		ret = osec_csum_append_value(secondary_type_data->hashname,
-				strlen(secondary_type_data->hashname),
+	if (current_db.primary_hashtype->gcrypt_hashtype != current_db.secondary_hashtype->gcrypt_hashtype) {
+		ret = osec_csum_append_value(current_db.secondary_hashtype->hashname,
+				strlen(current_db.secondary_hashtype->hashname),
 				data, sizeof(data),
 				&local_rec);
 		if (!ret)
@@ -122,9 +121,7 @@ end:
 	return ret;
 }
 
-bool osec_digest(struct record *rec, const char *fname,
-		const hash_type_data_t *primary_type_data,
-		const hash_type_data_t *secondary_type_data)
+bool osec_digest(struct record *rec, const char *fname)
 {
 	int fd = -1;
 	ssize_t num;
@@ -136,7 +133,7 @@ bool osec_digest(struct record *rec, const char *fname,
 
 	struct record local_rec = { 0 };
 
-	gcrypt_error = gcry_md_open(&handle, primary_type_data->gcrypt_hashtype, 0);
+	gcrypt_error = gcry_md_open(&handle, current_db.primary_hashtype->gcrypt_hashtype, 0);
 	if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR) {
 		errno = gcry_err_code_to_errno(gcry_err_code(gcrypt_error));
 		osec_error("gcry_md_open error: %s, source: %s: %m",
@@ -145,8 +142,8 @@ bool osec_digest(struct record *rec, const char *fname,
 		goto end;
 	}
 
-	if (secondary_type_data->gcrypt_hashtype != primary_type_data->gcrypt_hashtype) {
-		gcrypt_error = gcry_md_enable(handle, secondary_type_data->gcrypt_hashtype);
+	if (current_db.secondary_hashtype->gcrypt_hashtype != current_db.primary_hashtype->gcrypt_hashtype) {
+		gcrypt_error = gcry_md_enable(handle, current_db.secondary_hashtype->gcrypt_hashtype);
 		if (gcry_err_code(gcrypt_error) != GPG_ERR_NO_ERROR) {
 			errno = gcry_err_code_to_errno(gcry_err_code(gcrypt_error));
 			osec_error("gcry_md_enable error: %s, source: %s: %m",
@@ -158,7 +155,7 @@ bool osec_digest(struct record *rec, const char *fname,
 
 	if ((fd = open(fname, OSEC_O_FLAGS)) == -1) {
 		osec_error("open: %s: %m", fname);
-		retval = append_empty_digest(rec, primary_type_data, secondary_type_data);
+		retval = append_empty_digest(rec);
 		goto end;
 	}
 
@@ -170,42 +167,42 @@ bool osec_digest(struct record *rec, const char *fname,
 
 	if (num == -1) {
 		osec_error("read: %s: %m", fname);
-		retval = append_empty_digest(rec, primary_type_data, secondary_type_data);
+		retval = append_empty_digest(rec);
 		goto end;
 	}
 
 	gcry_md_final(handle);
 
-	data_ptr = gcry_md_read(handle, primary_type_data->gcrypt_hashtype);
+	data_ptr = gcry_md_read(handle, current_db.primary_hashtype->gcrypt_hashtype);
 	if (data_ptr == NULL) {
 		osec_error("gcry_md_read returned NULL");
-		retval = append_empty_digest(rec, primary_type_data, secondary_type_data);
+		retval = append_empty_digest(rec);
 		goto end;
 	}
 
 	ret = osec_csum_append_value(
-	    primary_type_data->hashname,
-	    strlen(primary_type_data->hashname),
+	    current_db.primary_hashtype->hashname,
+	    strlen(current_db.primary_hashtype->hashname),
 	    data_ptr,
-	    gcry_md_get_algo_dlen(primary_type_data->gcrypt_hashtype),
+	    gcry_md_get_algo_dlen(current_db.primary_hashtype->gcrypt_hashtype),
 	    &local_rec);
 
 	if (!ret)
 		goto end;
 
-	if (secondary_type_data->gcrypt_hashtype != primary_type_data->gcrypt_hashtype) {
-		data_ptr = gcry_md_read(handle, secondary_type_data->gcrypt_hashtype);
+	if (current_db.secondary_hashtype->gcrypt_hashtype != current_db.primary_hashtype->gcrypt_hashtype) {
+		data_ptr = gcry_md_read(handle, current_db.secondary_hashtype->gcrypt_hashtype);
 		if (data_ptr == NULL) {
 			osec_error("gcry_md_read returned NULL");
 			goto end;
 		}
 
 		ret = osec_csum_append_value(
-		    secondary_type_data->hashname,
-		    strlen(secondary_type_data->hashname),
-		    data_ptr,
-		    gcry_md_get_algo_dlen(secondary_type_data->gcrypt_hashtype),
-		    &local_rec);
+			current_db.secondary_hashtype->hashname,
+			strlen(current_db.secondary_hashtype->hashname),
+			data_ptr,
+			gcry_md_get_algo_dlen(current_db.secondary_hashtype->gcrypt_hashtype),
+			&local_rec);
 
 		if (!ret)
 			goto end;

@@ -39,6 +39,8 @@ int numeric_user_group = 0;
 unsigned ignore = 0;
 const hash_type_data_t *hash_type = NULL;
 
+struct database_metadata current_db = { 0 };
+
 static void print_help(int ret)
 {
 	printf("Usage: %1$s [OPTIONS] [DIRECTORY...]\n"
@@ -143,9 +145,7 @@ static int dsort(const FTSENT **a, const FTSENT **b)
 	return (strcmp((*a)->fts_name, (*b)->fts_name));
 }
 
-static bool create_cdb(int fd, char *dir,
-		const hash_type_data_t *primary_type_data,
-		const hash_type_data_t *secondary_type_data)
+static bool create_cdb(int fd)
 {
 	FTS *t;
 	FTSENT *p;
@@ -162,14 +162,14 @@ static bool create_cdb(int fd, char *dir,
 		goto end;
 	}
 
-	if (lstat(dir, &st) == -1 || !S_ISDIR(st.st_mode))
+	if (lstat(current_db.path, &st) == -1 || !S_ISDIR(st.st_mode))
 		goto skip;
 
-	argv[0] = dir;
+	argv[0] = current_db.path;
 	argv[1] = NULL;
 
 	if ((t = fts_open(argv, FTS_PHYSICAL, dsort)) == NULL) {
-		osec_error("fts_open: %s: %m", dir);
+		osec_error("fts_open: %s: %m", current_db.path);
 		goto end;
 	}
 
@@ -213,7 +213,7 @@ static bool create_cdb(int fd, char *dir,
 
 		switch (p->fts_info) {
 			case FTS_F:
-				if (!osec_digest(&rec, p->fts_path, primary_type_data, secondary_type_data))
+				if (!osec_digest(&rec, p->fts_path))
 					goto end;
 				break;
 			case FTS_SL:
@@ -231,12 +231,12 @@ static bool create_cdb(int fd, char *dir,
 	}
 
 	if (fts_close(t) == -1) {
-		osec_error("fts_close: %s: %m", dir);
+		osec_error("fts_close: %s: %m", current_db.path);
 		goto end;
 	}
 
 skip:
-	if (!write_db_metadata(&cdbm, primary_type_data, secondary_type_data))
+	if (!write_db_metadata(&cdbm))
 		goto end;
 
 	if (cdb_make_finish(&cdbm) < 0) {
@@ -475,15 +475,14 @@ static bool process(char *dirname)
 	char *new_dbname, *old_dbname;
 	struct cdb old_cdb, new_cdb;
 
-	const hash_type_data_t *primary_type_data = NULL;
-	const hash_type_data_t *secondary_type_data = NULL;
-
 	if (is_exclude(dirname))
 		return true;
 
 	// Generate priv state database name
 	if (!gen_db_name(dirname, &old_dbname))
 		return false;
+
+	current_db.path = dirname;
 
 	new_fd = old_fd = -1;
 	new_dbname = NULL;
@@ -498,7 +497,7 @@ static bool process(char *dirname)
 
 		printf("Processing %s ...\n", dirname);
 	} else if (errno == ENOENT) {
-		dbversion = 0;
+		current_db.version = 0;
 		printf("Init database for %s ...\n", dirname);
 	} else {
 		osec_error("open: %s: %m", old_dbname);
@@ -528,8 +527,8 @@ static bool process(char *dirname)
 			osec_error("remove: %s: %m", new_dbname);
 	}
 
-	primary_type_data = hash_type;
-	secondary_type_data = hash_type;
+	current_db.primary_hashtype = hash_type;
+	current_db.secondary_hashtype = hash_type;
 
 	if (old_fd != -1) {
 		const hash_type_data_t *old_hash = NULL;
@@ -540,7 +539,7 @@ static bool process(char *dirname)
 			goto end;
 		}
 
-		if (dbversion >= 4) {
+		if (current_db.version >= 4) {
 			if (!database_get_hashes(&old_cdb, &new_hash, &old_hash))
 				goto end;
 		} else {
@@ -556,12 +555,12 @@ static bool process(char *dirname)
 		 */
 		if (((old_hash == NULL) || (strcmp(old_hash->hashname, hash_type->hashname) != 0)) &&
 		    (strcmp(new_hash->hashname, hash_type->hashname) != 0)) {
-			secondary_type_data = new_hash;
+			current_db.secondary_hashtype = new_hash;
 		}
 	}
 
 	// Create new state
-	if (!create_cdb(new_fd, dirname, primary_type_data, secondary_type_data))
+	if (!create_cdb(new_fd))
 		goto end;
 
 	if (cdb_init(&new_cdb, new_fd) < 0) {
@@ -570,11 +569,11 @@ static bool process(char *dirname)
 	}
 
 	if (old_fd != -1) {
-		if (!show_changes(&new_cdb, &old_cdb, secondary_type_data) ||
-		    !show_oldfiles(&new_cdb, &old_cdb, secondary_type_data))
+		if (!show_changes(&new_cdb, &old_cdb, current_db.secondary_hashtype) ||
+		    !show_oldfiles(&new_cdb, &old_cdb, current_db.secondary_hashtype))
 			goto end;
 	} else {
-		if (!show_changes(&new_cdb, NULL, primary_type_data))
+		if (!show_changes(&new_cdb, NULL, current_db.primary_hashtype))
 			goto end;
 	}
 
