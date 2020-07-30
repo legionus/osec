@@ -133,8 +133,15 @@ while read l; do
 				exit 0
 			;;
 		'New files added to control:') t='ADDED'        ;;
+		'New dangerous files:')       t='ADDED'        ;;
 		'Changed controlled files:')   t='CHANGED'      ;;
+		'Changed dangerous files:')    t='CHANGED'      ;;
+		'These regular files turned into symlinks:') t='CHANGED' ;;
+		'These symlinks changed their target:')      t='CHANGED' ;;
+		'Changed extended attributes:') t='CHANGED'     ;;
+		'Changes in SELINUX policy:')  t='CHANGED'      ;;
 		'Removed from control:')       t='REMOVED'      ;;
+		'Removed from dangerous files list:') t='REMOVED' ;;
 		'- /'*) [ -z "${t-}" ] || eval "$t=\$((\$t+1))" ;;
 	esac
 done < "$TEMPFILE"
