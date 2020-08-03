@@ -1,0 +1,8 @@
+[Unit]
+Description=Run OSEC every day at midnight
+
+[Timer]
+OnCalendar=*-*-* 00:00:00
+
+[Install]
+WantedBy=multi-user.target
