@@ -110,6 +110,13 @@ case "${PRESERVE_PRIVILEGES-}" in
 		;;
 esac
 
+read_only=
+case "${IMMUTABLE_DATABASE-}" in
+	1|[Yy]|[Yy][Ee][Ss])
+		read_only=1
+		;;
+esac
+
 (
 	rc=0
 	$cmd /usr/bin/osec \
@@ -117,6 +124,7 @@ esac
 		${IGNORE_FIELDS:+-i "$IGNORE_FIELDS"} \
 		${HASH_TYPE:+-t "$HASH_TYPE"} \
 		${allow_root:+-R} \
+		${read_only:+-r} \
 		-D "$DATABASE_DIR" \
 		-f "$DIRS_FILE" ||
 		rc=$?
