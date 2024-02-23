@@ -582,7 +582,7 @@ end:
 	if (old_fd != -1 && close(old_fd) == -1)
 		osec_error("close: %s :%m", old_dbname);
 
-	if (close(new_fd) == -1)
+	if (new_fd != -1 && close(new_fd) == -1)
 		osec_error("close: %s: %m", new_dbname);
 
 	//replace database with new
