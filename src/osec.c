@@ -579,15 +579,11 @@ static bool process(char *dirname)
 
 	retval = true;
 end:
-	if (old_fd != -1 && close(old_fd) == -1) {
+	if (old_fd != -1 && close(old_fd) == -1)
 		osec_error("close: %s :%m", old_dbname);
-		goto end;
-	}
 
-	if (close(new_fd) == -1) {
+	if (close(new_fd) == -1)
 		osec_error("close: %s: %m", new_dbname);
-		goto end;
-	}
 
 	//replace database with new
 	if (retval && !read_only && rename(new_dbname, old_dbname) == -1) {
