@@ -38,6 +38,8 @@ int read_only = 0;
 int numeric_user_group = 0;
 unsigned ignore = 0;
 const hash_type_data_t *hash_type = NULL;
+char *dirslist_file = NULL;
+int virtual_mode = 0;
 
 struct database_metadata current_db = { 0 };
 
@@ -55,16 +57,23 @@ static void print_help(int ret)
 	       "  -n, --numeric-ids         dont convert uid/gid into username;\n"
 	       "  -u, --user=USER           non-privelege user account name;\n"
 	       "  -g, --group=GROUP         non-privelege group account name;\n"
-	       "  -D, --dbpath=PATH         path to the directory with databases;\n"
-	       "  -f, --file=FILE           obtain directories from file FILE;\n"
-	       "  -x, --exclude=PATTERN     exclude files matching PATTERN;\n"
-	       "  -X, --exclude-from=FILE   read exclude patterns from FILE;\n"
+	       "  -D, --dbpath=PATH         path to the directory with databases\n"
+	       "                            (or the database file in virtual\n"
+	       "                            directory mode);\n"
+	       "  -f, --file=FILE           obtain directories from file FILE\n"
+	       "                            (or the list of files in virtual\n"
+               "                            directory mode);\n"
+	       "  -x, --exclude=PATTERN     exclude files matching PATTERN\n"
+	       "                            (ignored in virtual directory mode);\n"
+	       "  -X, --exclude-from=FILE   read exclude patterns from FILE\n"
+	       "                            (ignored in virtual directory mode);\n"
 	       "  -i, --ignore=LIST         dont show changes: checksum, symlink,\n"
 	       "                            user, group, mode, mtime or inode;\n"
 	       "  -t, --hash-type=NAME      use specified hash type,\n"
 	       "                            currently supported hash types:\n"
 	       "                            sha1, sha256, sha512, stribog512,\n"
 	       "                            default is sha1;\n"
+	       "  -V, --virtual             virtual directory mode;\n"
 	       "  -v, --version             print program version and exit;\n"
 	       "  -h, --help                output a brief help message.\n"
 	       "\n",
@@ -93,11 +102,19 @@ static bool gen_db_name(char *dirname, char **dbname)
 	size_t j = strlen(db_path) + 10;
 	size_t len = j + strlen(dirname);
 
-	*dbname = malloc(sizeof(char) * len);
+	if (virtual_mode)
+		*dbname = malloc(sizeof(char) * j);
+	else
+		*dbname = malloc(sizeof(char) * len);
 
 	if (*dbname == NULL) {
 		osec_error("malloc: %m");
 		return false;
+	}
+
+	if (virtual_mode) {
+		sprintf(*dbname, "%s", db_path);
+		return true;
 	}
 
 	sprintf(*dbname, "%s/osec.cdb.", db_path);
@@ -247,6 +264,114 @@ skip:
 	retval = true;
 end:
 	free(rec.data);
+	return retval;
+}
+
+static bool create_virtual_cdb(int fd)
+{
+	struct cdb_make cdbm;
+	bool retval = false;
+
+	struct record rec = { 0 };
+
+	if (cdb_make_start(&cdbm, fd) < 0) {
+		osec_error("cdb_make_start: %m");
+		goto end;
+	}
+
+	if (!dirslist_file)
+		osec_fatal(EXIT_FAILURE, errno,
+			   "No list file! Please, specify the contents of the virtual directory using -f | --file option");
+
+	FILE *list_fd;
+
+	if ((list_fd = fopen(dirslist_file, "r")) == NULL)
+		osec_fatal(EXIT_FAILURE, errno, "%s: fopen", dirslist_file);
+
+	/*
+	 * Allocate the default data buffer. The buffer will be
+	 * enlarged by osec_state() and osec_xattr() as necessary.
+	 */
+	rec.len = 1024;
+	rec.data = malloc(rec.len);
+
+	if (rec.data == NULL) {
+		osec_error("malloc: %m");
+		goto end;
+	}
+
+	char path[MAXPATHLEN];
+	struct stat st;
+	char *line = NULL;
+	size_t len = 0;
+	ssize_t n;
+
+	while ((n = getline(&line, &len, list_fd)) != -1) {
+		int i = 0;
+
+		rec.offset = 0;
+
+		while (isspace(line[i]))
+			i++;
+		if (strlen((line + i)) == 0 || line[i] == '#')
+			continue;
+		if (line[n - 1] == '\n')
+			line[n - 1] = '\0';
+
+		if (!validate_path(line + i, path))
+			continue;
+
+		if (lstat(path, &st) == -1) {
+			osec_error("lstat: %s: %m", path);
+			continue;
+		}
+
+		if (S_ISDIR(st.st_mode)) {
+			osec_error("Directories not supported in virtual directory mode: %s", path);
+			continue;
+		}
+
+		if (!osec_state(&rec, &st) ||
+		    !osec_xattr(&rec, path))
+			goto end;
+
+		switch (st.st_mode & S_IFMT) {
+			case S_IFREG:
+				if (!osec_digest(&rec, path))
+					goto end;
+				break;
+			case S_IFLNK:
+				if (!osec_symlink(&rec, path))
+					goto end;
+				break;
+			default:
+				continue;
+		}
+
+		if (cdb_make_add(&cdbm, path, (unsigned) strlen(path) + 1,
+				 rec.data, (unsigned) rec.offset) != 0) {
+			osec_error("cdb_make_add: %s: %m", path);
+			goto end;
+		}
+	}
+
+skip:
+	if (!write_db_metadata(&cdbm))
+		goto end;
+
+	if (cdb_make_finish(&cdbm) < 0) {
+		osec_error("cdb_make_finish: %m");
+		goto end;
+	}
+
+	retval = true;
+end:
+	free(line);
+	free(rec.data);
+
+	if (fclose(list_fd) != 0)
+		osec_fatal(EXIT_FAILURE, errno, "%s: fclose", dirslist_file);
+
 	return retval;
 }
 
@@ -560,8 +685,13 @@ static bool process(char *dirname)
 	}
 
 	// Create new state
-	if (!create_cdb(new_fd))
-		goto end;
+	if (virtual_mode) {
+		if (!create_virtual_cdb(new_fd))
+			goto end;
+	} else {
+		if (!create_cdb(new_fd))
+			goto end;
+	}
 
 	if (cdb_init(&new_cdb, new_fd) < 0) {
 		osec_error("cdb_init(new_cdb): %m");
@@ -602,7 +732,6 @@ int main(int argc, char **argv)
 	int c;
 	int retval = EXIT_SUCCESS;
 	int allow_root = 0;
-	char *dirslist_file = NULL;
 	char *user = NULL, *group = NULL;
 
 	gcry_error_t gcrypt_error;
@@ -621,6 +750,7 @@ int main(int argc, char **argv)
 		{ "exclude", required_argument, 0, 'x' },
 		{ "exclude-from", required_argument, 0, 'X' },
 		{ "hash-type", required_argument, 0, 't' },
+		{ "virtual", no_argument, 0, 'V' },
 		{ 0, 0, 0, 0 }
 	};
 
@@ -671,6 +801,9 @@ int main(int argc, char **argv)
 				if (hash_type == NULL)
 					osec_fatal(EXIT_FAILURE, 0, "unknown hash type: %s", optarg);
 				break;
+			case 'V':
+				virtual_mode = 1;
+				break;
 			default:
 			case 'h':
 				print_help(EXIT_SUCCESS);
@@ -678,8 +811,12 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (db_path == NULL)
-		db_path = def_db_path;
+	if (db_path == NULL) {
+		if (virtual_mode)
+			osec_fatal(EXIT_FAILURE, 0, "Database file must be specified in virtual directory mode!");
+		else
+			db_path = def_db_path;
+	}
 
 	//drop program privileges if we are root
 	if (!allow_root && !geteuid()) {
@@ -714,6 +851,12 @@ int main(int argc, char **argv)
 	}
 
 	recreate_tempdir();
+
+	if (virtual_mode) {
+		if (!process("!VIRTUAL!"))
+			retval = EXIT_FAILURE;
+		goto end;
+	}
 
 	char path[MAXPATHLEN];
 
@@ -759,6 +902,7 @@ int main(int argc, char **argv)
 			retval = EXIT_FAILURE;
 	}
 
+end:
 	free(exclude_matches);
 
 	return retval;
