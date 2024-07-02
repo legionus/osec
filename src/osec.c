@@ -47,6 +47,7 @@ static void print_help(int ret)
 {
 	printf("Usage: %1$s [OPTIONS] [DIRECTORY...]\n"
 	       "   or: %1$s [OPTIONS] --file=FILE [DIRECTORY...]\n"
+	       "   or: %1$s [OPTIONS] -V -D DBFILE -f LISTFILE\n"
 	       "\n"
 	       "This utility help you to see difference between\n"
 	       "two states of your system.\n"
