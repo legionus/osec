@@ -638,7 +638,10 @@ static bool process(char *dirname)
 		goto end;
 	}
 
-	sprintf(new_dbname, "%s/temp/osec.XXXXXXXXX", db_path);
+	if (virtual_mode)
+		sprintf(new_dbname, "%s.temp.XXXXXXXXX", db_path);
+	else
+		sprintf(new_dbname, "%s/temp/osec.XXXXXXXXX", db_path);
 
 	// Open new database
 	if ((new_fd = mkstemp(new_dbname)) == -1) {
@@ -850,13 +853,13 @@ int main(int argc, char **argv)
 				gcry_strsource(gcrypt_error));
 	}
 
-	recreate_tempdir();
-
 	if (virtual_mode) {
 		if (!process("!VIRTUAL!"))
 			retval = EXIT_FAILURE;
 		goto end;
 	}
+
+	recreate_tempdir();
 
 	char path[MAXPATHLEN];
 
