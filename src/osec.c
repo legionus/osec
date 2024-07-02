@@ -759,7 +759,7 @@ int main(int argc, char **argv)
 	if (argc == 1)
 		print_help(EXIT_SUCCESS);
 
-	while ((c = getopt_long(argc, argv, "hvnrRi:u:g:D:f:x:X:t:", long_options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "hvnrRi:u:g:D:f:x:X:t:V", long_options, NULL)) != -1) {
 		switch (c) {
 			case 'v':
 				print_version();
