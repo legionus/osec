@@ -87,9 +87,11 @@ static void print_version(void)
 	printf("%s version " PACKAGE_VERSION "\n"
 	       "Written by Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "Modified by Aleksei Nikiforov <darktemplar@basealt.ru>\n"
+	       "Modified by Paul Wolneykien <manowar@altlinux.org>\n"
 	       "\n"
 	       "Copyright (C) 2008-2020  Alexey Gladkov <gladkov.alexey@gmail.com>\n"
 	       "Copyright (C) 2019  Aleksei Nikiforov <darktemplar@basealt.ru>\n"
+	       "Copyright (C) 2024  Paul Wolneykien <manowar@altlinux.org>\n"
 	       "\n"
 	       "This is free software; see the source for copying conditions.  There is NO\n"
 	       "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
