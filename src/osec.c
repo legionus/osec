@@ -855,7 +855,7 @@ int main(int argc, char **argv)
 	}
 
 	if (virtual_mode) {
-		if (!process("!VIRTUAL!"))
+		if (!process(dirslist_file))
 			retval = EXIT_FAILURE;
 		goto end;
 	}
