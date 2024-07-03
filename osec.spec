@@ -93,6 +93,9 @@ mkdir -p -- .%osec_statedir
 %triggerpostun -- %name < 0:1.0.0-alt1
 rm -f %osec_statedir/osec.db.*
 
+%check
+%make_build check || ( cat tests/test-suite.log && exit 1 )
+
 %files
 %doc ChangeLog NEWS README src/restore data/osec-recheck
 %_bindir/osec
