@@ -1,0 +1,6 @@
+Processing vdir.list ...
+root/testfile_02	checksum	changed	old checksum=sha1:0908cbeb2fbd745cc950e39787ccde1971093238	new checksum=sha1:a8fdc205a9f19cc1c7507a60c4f01b13d11d7fd0
+root/testfile_02	stat	changed	old mtime=@MTIME1_testfile_02@	new mtime=@MTIME2_testfile_02@
+root/testfile_06	stat	changed	old mtime=@MTIME1_testfile_06@	new mtime=@MTIME2_testfile_06@
+root/testfile_10	stat	changed	old mtime=@MTIME1_testfile_10@	new mtime=@MTIME2_testfile_10@
+root/testlink_14	stat	changed	old mtime=@MTIME1_testlink_14@	new mtime=@MTIME2_testlink_14@

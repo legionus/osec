@@ -12,6 +12,7 @@ check_SCRIPTS = \
 	osec-report-tempdir \
 	osec-report-ww \
 	osec-report-xattr \
+	osec-report-virtual \
 	$(NULL)
 
 TESTS = $(check_SCRIPTS)

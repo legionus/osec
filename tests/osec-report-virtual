@@ -1,0 +1,37 @@
+#!/bin/sh -efu
+
+. "${0%/*}/tests-sh-functions"
+
+tc_init
+
+mkdir -p -- "$rootdir"
+
+for n in `seq 0 19`; do
+    n="$(printf '%02d' "$n")"
+    echo "$n" >"$rootdir/testfile_$n"
+    ln -s "testfile_$n" "$rootdir/testlink_$n"
+done
+
+find "$rootdir" \( -type f -o -type l \) -name 'test*_[0-9][02468]' | \
+    sort >"$tmpdir/vdir.list"
+
+tc_state 1
+
+subst < "$datadir/osec-$i.report" > "$tmpdir/expect-$i"
+"$srcdir/osec" -V -D "$tmpdir/vdir.db" -f "$tmpdir/vdir.list" | \
+    subst > "$tmpdir/output-$i"
+diff -u "$tmpdir/expect-$i" "$tmpdir/output-$i"
+
+echo "123" > "$rootdir/testfile_02"
+echo "456" > "$rootdir/testlink_05"
+echo "06" > "$rootdir/testlink_06"
+touch "$rootdir/testfile_10"
+touch -h "$rootdir/testlink_14"
+touch -h "$rootdir/testlink_15"
+
+tc_state 2
+
+subst < "$datadir/osec-$i.report" > "$tmpdir/expect-$i"
+"$srcdir/osec" --virtual -D "$tmpdir/vdir.db" -f "$tmpdir/vdir.list" | \
+    subst > "$tmpdir/output-$i"
+diff -u "$tmpdir/expect-$i" "$tmpdir/output-$i"

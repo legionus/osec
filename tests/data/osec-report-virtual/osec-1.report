@@ -1,0 +1,31 @@
+Init database for vdir.list ...
+root/testfile_00	checksum	new	 checksum=sha1:188d51466bf230309c7d232db058dc574a5df5b3
+root/testfile_00	stat	new	 uid=@USER@ gid=@USER@ mode=100644 inode=@INODE1_testfile_00@
+root/testfile_02	checksum	new	 checksum=sha1:0908cbeb2fbd745cc950e39787ccde1971093238
+root/testfile_02	stat	new	 uid=@USER@ gid=@USER@ mode=100644 inode=@INODE1_testfile_02@
+root/testfile_04	checksum	new	 checksum=sha1:c249d3e14b7a14a3464bf490cafc81d3372fa4da
+root/testfile_04	stat	new	 uid=@USER@ gid=@USER@ mode=100644 inode=@INODE1_testfile_04@
+root/testfile_06	checksum	new	 checksum=sha1:b649682b92a811746098e5c91e891e5142a41950
+root/testfile_06	stat	new	 uid=@USER@ gid=@USER@ mode=100644 inode=@INODE1_testfile_06@
+root/testfile_08	checksum	new	 checksum=sha1:c7e80dc713c241193f886165d0c126d4e5bd4fd5
+root/testfile_08	stat	new	 uid=@USER@ gid=@USER@ mode=100644 inode=@INODE1_testfile_08@
+root/testfile_10	checksum	new	 checksum=sha1:4143d3a341877154d6e95211464e1df1015b74bd
+root/testfile_10	stat	new	 uid=@USER@ gid=@USER@ mode=100644 inode=@INODE1_testfile_10@
+root/testfile_12	checksum	new	 checksum=sha1:ad552e6dc057d1d825bf49df79d6b98eba846ebe
+root/testfile_12	stat	new	 uid=@USER@ gid=@USER@ mode=100644 inode=@INODE1_testfile_12@
+root/testfile_14	checksum	new	 checksum=sha1:030514d80869744a4e2f60d2fd37d6081f5ed01a
+root/testfile_14	stat	new	 uid=@USER@ gid=@USER@ mode=100644 inode=@INODE1_testfile_14@
+root/testfile_16	checksum	new	 checksum=sha1:3596ea087bfdaf52380eae441077572ed289d657
+root/testfile_16	stat	new	 uid=@USER@ gid=@USER@ mode=100644 inode=@INODE1_testfile_16@
+root/testfile_18	checksum	new	 checksum=sha1:24b9c1f3fddff79893e5304f998f2f95ebebd149
+root/testfile_18	stat	new	 uid=@USER@ gid=@USER@ mode=100644 inode=@INODE1_testfile_18@
+root/testlink_00	stat	new	 uid=@USER@ gid=@USER@ mode=120777 inode=@INODE1_testlink_00@
+root/testlink_02	stat	new	 uid=@USER@ gid=@USER@ mode=120777 inode=@INODE1_testlink_02@
+root/testlink_04	stat	new	 uid=@USER@ gid=@USER@ mode=120777 inode=@INODE1_testlink_04@
+root/testlink_06	stat	new	 uid=@USER@ gid=@USER@ mode=120777 inode=@INODE1_testlink_06@
+root/testlink_08	stat	new	 uid=@USER@ gid=@USER@ mode=120777 inode=@INODE1_testlink_08@
+root/testlink_10	stat	new	 uid=@USER@ gid=@USER@ mode=120777 inode=@INODE1_testlink_10@
+root/testlink_12	stat	new	 uid=@USER@ gid=@USER@ mode=120777 inode=@INODE1_testlink_12@
+root/testlink_14	stat	new	 uid=@USER@ gid=@USER@ mode=120777 inode=@INODE1_testlink_14@
+root/testlink_16	stat	new	 uid=@USER@ gid=@USER@ mode=120777 inode=@INODE1_testlink_16@
+root/testlink_18	stat	new	 uid=@USER@ gid=@USER@ mode=120777 inode=@INODE1_testlink_18@
