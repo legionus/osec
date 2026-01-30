@@ -162,7 +162,7 @@ static bool create_cdb(int fd)
 		goto end;
 	}
 
-	if (lstat(current_db.basepath, &st) == -1 || !S_ISDIR(st.st_mode))
+	if (lstat(current_db.basepath, &st) == -1)
 		goto skip;
 
 	argv[0] = current_db.basepath;
